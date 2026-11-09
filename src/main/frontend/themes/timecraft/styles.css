@@ -1,0 +1,164 @@
+/* Gemeinsame Optik von TimeCraft. Farben und Schrift stammen aus den Mockups. */
+html {
+  --tc-dunkel: #1b2430;
+  --tc-akzent: #f2a96a;
+  --tc-hintergrund: #f4f6f8;
+  --tc-rahmen: #e3e7ec;
+  --tc-text: #1b2430;
+  --tc-text-gedaempft: #556070;
+  --tc-fehler-hintergrund: #fdf0e6;
+  --tc-fehler-rahmen: #f2c9a5;
+  --tc-fehler-text: #6b3000;
+
+  --lumo-primary-color: #1f5fae;
+  --lumo-primary-color-50pct: rgba(31, 95, 174, 0.5);
+  --lumo-primary-color-10pct: rgba(31, 95, 174, 0.1);
+  --lumo-primary-text-color: #1f5fae;
+  --lumo-header-text-color: var(--tc-text);
+  --lumo-body-text-color: var(--tc-text);
+  --lumo-secondary-text-color: var(--tc-text-gedaempft);
+  --lumo-font-family: 'Source Sans 3', 'Source Sans Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --lumo-border-radius-m: 0.5rem;
+  --lumo-border-radius-l: 0.75rem;
+}
+
+body {
+  background: var(--tc-hintergrund);
+}
+
+/* Anmeldeseite: links dunkler Markenbereich, rechts Karte mit Formular */
+.login-view {
+  display: flex;
+  min-height: 100vh;
+}
+
+.login-marke {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  flex: 0 0 33%;
+  min-width: 18rem;
+  padding: 3.5rem;
+  background: var(--tc-dunkel);
+  color: #ffffff;
+}
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.login-logo vaadin-icon {
+  color: var(--tc-akzent);
+}
+
+.login-titel h1 {
+  margin: 0 0 1rem;
+  font-size: 2.25rem;
+  line-height: 1.15;
+  color: #ffffff;
+}
+
+.login-titel p {
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.5;
+  color: #c9d1dc;
+}
+
+.login-fusszeile {
+  font-size: 0.875rem;
+  color: #c9d1dc;
+}
+
+.login-formular {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.login-karte {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 25rem;
+  padding: 2.5rem 2.5rem 2rem;
+  background: #ffffff;
+  border: 1px solid var(--tc-rahmen);
+  border-radius: 0.75rem;
+}
+
+.login-karte h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+}
+
+.login-karte p {
+  margin: 0 0 1.5rem;
+  font-size: 0.9375rem;
+  color: var(--tc-text-gedaempft);
+}
+
+@media (max-width: 800px) {
+  .login-view {
+    flex-direction: column;
+  }
+
+  .login-marke {
+    flex: none;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+}
+
+/* Anmeldeformular (Vaadin LoginForm) innerhalb der Karte */
+vaadin-login-form-wrapper::part(form) {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
+
+vaadin-login-form-wrapper::part(form-title),
+vaadin-login-form-wrapper::part(error-message-title) {
+  display: none;
+}
+
+/* Kein display setzen: sonst wird das Attribut "hidden" der Fehlermeldung ueberstimmt */
+vaadin-login-form-wrapper::part(error-message) {
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--tc-fehler-text);
+  background: var(--tc-fehler-hintergrund);
+  border: 1px solid var(--tc-fehler-rahmen);
+  border-radius: 0.5rem;
+}
+
+vaadin-login-form-wrapper::part(error-message-description) {
+  display: inline;
+  margin: 0;
+}
+
+/* Eingabefelder: weiss mit Rahmen, Beschriftung fett, ohne Pflichtfeld-Punkt */
+vaadin-text-field::part(input-field),
+vaadin-password-field::part(input-field) {
+  background: #ffffff;
+  border: 1px solid #c5ccd6;
+  border-radius: 0.5rem;
+}
+
+vaadin-text-field::part(label),
+vaadin-password-field::part(label) {
+  font-weight: 700;
+  color: var(--tc-text);
+}
+
+vaadin-text-field::part(required-indicator),
+vaadin-password-field::part(required-indicator) {
+  display: none;
+}
