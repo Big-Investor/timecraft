@@ -1,14 +1,14 @@
 # Status Gerüst
-Stand: 2026-11-09, letztes AP: G3 Anmeldung, Tests: grün
+Stand: 2026-11-10, letztes AP: G4 Layout und Startseite, Tests: grün
 
 ## Erledigt
 - **G1 Projekt und Datenbank:** Maven-Projekt (`pom.xml`), `TimeCraftApplication`, `docker-compose.yml` (PostgreSQL 16, Volume, Port 5432), `application.properties` (Entwicklung), `application-test.properties` (H2, PostgreSQL-Modus), `.gitignore`, Smoke-Test „Kontext lädt“ (läuft ohne Docker). Start gegen PostgreSQL ausprobiert.
 - **G2 Common und Clock:** `geruest.common` (`FachlicheException`, `ZugriffVerweigertException`, `NichtAngemeldetException`, `NichtGefundenException`, `Meldungen`), `geruest.config.ClockKonfiguration` (Clock für Europe/Berlin), `benutzer.api.Rolle` (Text exakt nach CLAUDE.md). Tests: `MeldungenTest`, `ClockKonfigurationTest`.
-
 - **G3 Anmeldung:** `geruest.config.SicherheitsKonfiguration` (Spring Security mit `VaadinSecurityConfigurer`, BCrypt), `geruest.config.PlatzhalterBenutzer` (`mitarbeiter`=1, `projektleitung`=2, `admin`=3, gemeinsames Entwicklungspasswort `timecraft` aus `application.properties`), `geruest.common.TimeCraftBenutzer`, `geruest.common.AktuelleSitzung`, `geruest.layout.LoginView`, Theme `timecraft` (Farben, Schrift, Anmeldeseite) in `src/main/frontend/themes/timecraft/styles.css`. Session-Timeout 30 Minuten. Tests: `AktuelleSitzungTest`, `PlatzhalterBenutzerTest`, `SicherheitsKonfigurationTest` (nicht angemeldet → Umleitung auf `/login`, Anmeldung je Rolle, falsches Passwort, Timeout). App gestartet und im Browser mit dem Mockup verglichen, Anmeldung mit `admin` ausprobiert.
+- **G4 Layout und Startseite:** `geruest.layout.HauptLayout` (Seitenleiste mit Logo, Menü und „Abmelden“, Kopfzeile mit Gruppe, Seitentitel, Initialen, Benutzername und Rolle), `MenuEintrag` (Schnittstelle nach CLAUDE.md 6.4), `SeitenMenue` (zeigt nur Einträge der Rolle, sortiert, in Gruppen), `Rollenanzeige`, `StartView` (`@PermitAll`, Begrüßung mit Name und Rolle), `StartMenuEintrag`; Theme um Seitenleiste, Kopfzeile und die Karte `.karte` erweitert. Tests: `SeitenMenueTest`, `HauptLayoutTest`. Im Browser mit den Mockups `M2 · Startseite Stempeln` und `M3 · Projektliste` verglichen; Anmelden und Abmelden ausprobiert.
 
 ## Als Nächstes
-- **G4 Layout und Startseite:** `HauptLayout` (Kopfzeile mit Abmelden über `AuthenticationContext.logout()`, Seitenmenü), `MenuEintrag`, `StartView` mit `@PermitAll`; Theme erweitern; Mockup vorher ansehen (z. B. `M2 · Startseite Stempeln@1x.png` für Kopfzeile und Menü); Test „Menü zeigt nur Einträge der Rolle“.
+- **G5 Beispielmodul:** Paket `beispiel` mit `Notiz`, `NotizRepository`, `NotizService`, `NotizView`, `NotizMenuEintrag`; Service-Tests und Repository-Test gegen H2 (CLAUDE.md Abschnitt 7).
 
 ## Entscheidungen
 - **Versionen (von Tim bestätigt, 2026-11-09):** Spring Boot 3.5.16, Vaadin 24.10.14 (über `vaadin-bom`), Java 21. Vaadin 25 braucht Spring Boot 4 und wird deshalb nicht genommen.
@@ -22,6 +22,9 @@ Stand: 2026-11-09, letztes AP: G3 Anmeldung, Tests: grün
 - **Session-Timeout:** `server.servlet.session.timeout=30m` und zusätzlich `vaadin.closeIdleSessions=true`, sonst verlängert der Vaadin-Heartbeat die Sitzung bei offener Seite endlos.
 - **Anmeldeseite, Abweichungen vom Mockup:** (1) Fehlermeldung steht über den Feldern statt zwischen Passwort und Button (Vaadin-`LoginForm` legt das so fest), (2) Text nur „Benutzername oder Passwort ist falsch.“ ohne „Noch 3 Versuche bis zur Sperre“ (Sperre ist Sache von M1), (3) ohne das „!“-Symbol vor der Meldung, (4) Schrift: Source Sans 3 aus dem Mockup wird nicht mitgeliefert (keine Zusatzbibliothek), Rückfall auf Systemschrift. Der Satz „Passwort vergessen? … Einmalpasswort per E-Mail“ steht wörtlich nach Mockup, die Funktion dahinter baut M1.
 - **Theme:** Alle Stile liegen in `themes/timecraft/styles.css`. Stile in `themes/timecraft/components/` greifen im Entwicklungsmodus nicht (Vaadin lädt das fertige Standard-Bundle); Vaadin-Komponenten werden deshalb per `::part(...)` im Dokument gestaltet.
+- **Menü-Gruppen über `reihenfolge()`:** Die Mockups gruppieren das Menü (ZEIT, BETRIEB, VERWALTUNG), die Schnittstelle `MenuEintrag` aus CLAUDE.md hat dafür kein Feld. Die Gruppe ergibt sich deshalb aus der Reihenfolge: 100 bis 199 = Zeit, 200 bis 299 = Betrieb, ab 300 = Verwaltung. Der Eintrag „Start“ hat 100. Die Gruppe steht auch als kleine Zeile über dem Seitentitel in der Kopfzeile (wenn die Route einen Menüeintrag hat). Die Modul-Dateien müssen diese Zahlenbereiche kennen (siehe Offene Fragen).
+- **Layout per `layout = HauptLayout.class`:** Jede View trägt `@Route(value = "...", layout = HauptLayout.class)`; kein automatisches Layout, damit die Anmeldeseite ohne Rahmen bleibt und nichts versteckt passiert. Der Seitentitel der Kopfzeile kommt aus `@PageTitle` der View (ohne Zusatz „| TimeCraft“).
+- **Kopfzeile, Abweichungen vom Mockup:** (1) Zeigt Benutzername statt Klarname (das Gerüst kennt nur den Benutzernamen; M1 liefert später den Namen) und als Initialen die ersten zwei Buchstaben, (2) Begrüßung („Guten Morgen, Jonas“), Datum und Karten der Startseite sind Fachinhalt von M2 und fehlen, (3) „Abmelden“ steht am unteren Rand der Seitenleiste statt direkt unter den Menüpunkten, (4) Seitenleiste und Kopfzeile schalten auf schmalen Fenstern auf das Vaadin-Standardverhalten (ausklappbares Menü) um.
 - **Pakete:** Sie entstehen mit den Arbeitspaketen (Git kennt keine leeren Ordner): `geruest.common`, `geruest.config`, `benutzer.api` mit G2, `geruest.layout` mit G3; `beispiel` folgt mit G5.
 - **Open-in-View aus:** `spring.jpa.open-in-view=false`. Lazy-Zugriffe in Views außerhalb einer Transaktion schlagen fehl; Module laden, was sie brauchen, im Service.
 - **Vaadin-Frontend-Dateien:** `src/main/frontend/index.html` ist im Repository. Weitere von Vaadin erzeugte Dateien (`package.json`, `vite.config.ts` u. a.) entstehen beim ersten Start; ob sie ins Repository kommen (Vaadin-Standard, weniger Merge-Konflikte zwischen Modul-Branches), wird in G6 nach dem ersten vollständigen Start entschieden.
@@ -29,6 +32,9 @@ Stand: 2026-11-09, letztes AP: G3 Anmeldung, Tests: grün
 
 ## Offene Fragen
 - Remote-Repository für das Team: Wo liegt es (GitHub/GitLab HSBI)? Vorschlag: Tim legt es an, `geruest` wird dorthin gepusht, `main` bleibt per Pull Request geschützt.
+
+- Menü-Gruppen: Passen die Zahlenbereiche 100er (Zeit), 200er (Betrieb), 300er (Verwaltung) für `MenuEintrag.reihenfolge()` für alle sieben Module? Vorschlag: ja, M2/M5/M6/M7 nehmen 1xx, M3/M4 2xx, M1 und „Anträge prüfen“ 3xx. Sonst bräuchte `MenuEintrag` eine Methode `gruppe()` (Änderung am Gerüst und in allen Modul-Dateien).
+- Klarname in der Kopfzeile: `AktuelleSitzung` liefert nur den Benutzernamen. Soll M1 später Vor- und Nachname in `TimeCraftBenutzer` ergänzen? Vorschlag: ja.
 
 ## Hinweise aus Reviews
 - G1, Review OK (keine Blocker/Mängel). Hinweise:
@@ -43,3 +49,10 @@ Stand: 2026-11-09, letztes AP: G3 Anmeldung, Tests: grün
   - `vaadin.closeIdleSessions=true` ist nicht durch einen Test abgesichert, nur die Property `server.servlet.session.timeout` (Begründung steht unter „Entscheidungen“).
   - Kein Test, dass `/login` anonym erreichbar ist: MockMvc erreicht den Vaadin-Servlet nicht; das wurde von Hand im Browser geprüft.
   - Uhr-Symbol ist `VaadinIcon.CLOCK` (gefüllt), im Mockup eine Kontur; unwesentlich.
+- G4, Review OK (keine Blocker/Mängel). Hinweise:
+  - Übernommen: `Rollenanzeige` nutzt `toLowerCase(Locale.GERMAN)`; Tests für die Gruppengrenzen (199/200/299/300) und den Rollentext.
+  - Die Gruppierung über `reihenfolge()` ist unsichtbar: Eine Zahl unter 100 landet still in „Zeit“. Module nehmen Zahlen im Bereich 1xx/2xx/3xx, möglichst eindeutig (gleiche Zahlen in einer Gruppe: Reihenfolge dann zufällig). Steht in README (G6). Als spätere Alternative bleibt `default String gruppe()` in `MenuEintrag`.
+  - Jede View braucht `@PageTitle`, sonst bleibt der Titel in der Kopfzeile leer (Views mit `HasDynamicTitle` ebenso). Steht in README und im Beispielmodul.
+  - Die Gruppenzeile über dem Titel erscheint nur bei exakter Route eines Menüeintrags, nicht bei Unterseiten wie `projekte/123`.
+  - Nicht einzeln getestet: `afterNavigation` und `StartView`; im Browser geprüft.
+  - Browser-Hinweis: Das Screenshot-Werkzeug hing mehrfach direkt nach der Anmeldung (Seite selbst war in Ordnung, per DOM geprüft); kein Fehler der Anwendung bekannt.
