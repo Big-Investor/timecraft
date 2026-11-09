@@ -314,6 +314,10 @@ vaadin-app-layout vaadin-drawer-toggle {
   border-radius: 0.75rem;
 }
 
+.karte vaadin-grid {
+  margin-top: 1.5rem;
+}
+
 .karte h2 {
   margin: 0 0 0.5rem;
   font-size: 1.25rem;
