@@ -1,0 +1,17 @@
+# Entwicklungsdatenbank. Start: docker compose up -d db
+# Die Zugangsdaten sind reine Entwicklungswerte (nicht geheim), siehe application.properties.
+# Anderer Host-Port (z. B. wenn 5432 belegt ist): DB_PORT=5433 docker compose up -d db
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: timecraft
+      POSTGRES_USER: timecraft
+      POSTGRES_PASSWORD: timecraft
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - timecraft-db-daten:/var/lib/postgresql/data
+
+volumes:
+  timecraft-db-daten:

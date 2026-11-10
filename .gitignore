@@ -1,0 +1,24 @@
+# Maven
+target/
+
+# Vaadin / Node (werden erzeugt)
+node_modules/
+src/main/bundles/
+src/main/frontend/generated/
+vite.generated.ts
+.vaadin/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Betriebssystem
+.DS_Store
+Thumbs.db
+
+# Lokale Claude-Code-Einstellungen
+.claude/settings.local.json
