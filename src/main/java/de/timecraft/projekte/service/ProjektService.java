@@ -4,8 +4,10 @@ import de.timecraft.benutzer.api.MitarbeiterAuskunft;
 import de.timecraft.benutzer.api.MitarbeiterInfo;
 import de.timecraft.benutzer.api.Rolle;
 import de.timecraft.geruest.common.FachlicheException;
+import de.timecraft.geruest.common.NichtGefundenException;
 import de.timecraft.projekte.model.Projekt;
 import de.timecraft.projekte.model.ProjektDaten;
+import de.timecraft.projekte.model.ProjektStatus;
 import de.timecraft.projekte.repository.ProjektRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -60,6 +62,56 @@ public class ProjektService {
         Projekt projekt = new Projekt(daten.projektleitungId(), daten.name().strip(),
                 bereinigeBeschreibung(daten.beschreibung()), daten.startdatum(), daten.zieldatum());
         return repository.save(projekt);
+    }
+
+    /**
+     * Ändert Name, Beschreibung, Start, Ziel und Projektleitung eines Projekts. Nur der Admin darf das,
+     * auch bei einem archivierten Projekt. Projekt-ID, Status und Angebotspreis bleiben unverändert.
+     * <p>
+     * Erst werden alle Eingaben geprüft, dann geändert. Bei einem Fehler bleibt das Projekt also
+     * ganz wie es war.
+     */
+    @Transactional
+    public Projekt aendern(long mitarbeiterId, Rolle rolle, long projektId, ProjektDaten daten) {
+        berechtigung.pruefeAdmin(rolle);
+        Projekt projekt = ladeProjekt(projektId);
+        pruefeDaten(daten);
+        // Die Projektleitung wird nur geprüft, wenn der Admin sie wechselt. Sonst würde eine
+        // inzwischen deaktivierte Projektleitung jede andere Änderung (z. B. am Namen) blockieren.
+        if (daten.projektleitungId() != projekt.getProjektleitungId()) {
+            pruefeProjektleitung(daten.projektleitungId());
+        }
+
+        projekt.setName(daten.name().strip());
+        projekt.setBeschreibung(bereinigeBeschreibung(daten.beschreibung()));
+        projekt.setStartdatum(daten.startdatum());
+        projekt.setZieldatum(daten.zieldatum());
+        projekt.setProjektleitungId(daten.projektleitungId());
+        return repository.save(projekt);
+    }
+
+    /**
+     * Ändert nur die Beschreibung. Das darf die verantwortliche Projektleitung des Projekts,
+     * und nur solange das Projekt aktiv ist. Alle anderen Felder kann sie nicht ändern.
+     * Der Admin ändert die Beschreibung über {@link #aendern}.
+     */
+    @Transactional
+    public Projekt beschreibungAendern(long mitarbeiterId, Rolle rolle, long projektId, String beschreibung) {
+        berechtigung.pruefeAngemeldet(rolle);
+        Projekt projekt = ladeProjekt(projektId);
+        berechtigung.pruefeVerantwortlicheProjektleitung(mitarbeiterId, rolle, projekt);
+        if (projekt.getStatus() != ProjektStatus.AKTIV) {
+            throw new FachlicheException("Die Beschreibung eines archivierten Projekts kann nicht geändert werden.");
+        }
+
+        projekt.setBeschreibung(bereinigeBeschreibung(beschreibung));
+        return repository.save(projekt);
+    }
+
+    /** Holt das Projekt aus der Datenbank. Gibt es die ID nicht, kommt eine verständliche Meldung. */
+    private Projekt ladeProjekt(long projektId) {
+        return repository.findById(projektId)
+                .orElseThrow(() -> new NichtGefundenException("Das Projekt wurde nicht gefunden."));
     }
 
     /**

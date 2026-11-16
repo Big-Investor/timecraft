@@ -110,6 +110,30 @@ public class Projekt {
         return angebotspreis;
     }
 
+    // Setter zum Ändern eines bestehenden Projekts. Sie speichern nur, was sie bekommen:
+    // Ob ein Wert erlaubt ist, prüft der ProjektService, bevor er einen Setter aufruft.
+    // Die Projekt-ID hat absichtlich keinen Setter: Sie bleibt für immer gleich.
+
+    public void setProjektleitungId(long projektleitungId) {
+        this.projektleitungId = projektleitungId;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setBeschreibung(String beschreibung) {
+        this.beschreibung = beschreibung;
+    }
+
+    public void setStartdatum(LocalDate startdatum) {
+        this.startdatum = startdatum;
+    }
+
+    public void setZieldatum(LocalDate zieldatum) {
+        this.zieldatum = zieldatum;
+    }
+
     public void setStatus(ProjektStatus status) {
         this.status = status;
     }
