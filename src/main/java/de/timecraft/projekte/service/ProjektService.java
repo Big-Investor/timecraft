@@ -108,6 +108,36 @@ public class ProjektService {
         return repository.save(projekt);
     }
 
+    /**
+     * Archiviert ein Projekt. Nur der Admin darf das. Archivierte Projekte erscheinen nicht mehr
+     * in der Auswahl zum Einstempeln (M2), Zuordnungen und bisherige Buchungen bleiben erhalten.
+     * Ist das Projekt schon archiviert, gibt es eine Meldung und nichts ändert sich.
+     */
+    @Transactional
+    public Projekt archivieren(long mitarbeiterId, Rolle rolle, long projektId) {
+        berechtigung.pruefeAdmin(rolle);
+        Projekt projekt = ladeProjekt(projektId);
+        if (projekt.getStatus() == ProjektStatus.ARCHIVIERT) {
+            throw new FachlicheException("Das Projekt ist bereits archiviert.");
+        }
+
+        projekt.setStatus(ProjektStatus.ARCHIVIERT);
+        return repository.save(projekt);
+    }
+
+    /** Macht ein archiviertes Projekt wieder aktiv. Nur der Admin darf das. Ist es schon aktiv, gibt es eine Meldung. */
+    @Transactional
+    public Projekt reaktivieren(long mitarbeiterId, Rolle rolle, long projektId) {
+        berechtigung.pruefeAdmin(rolle);
+        Projekt projekt = ladeProjekt(projektId);
+        if (projekt.getStatus() == ProjektStatus.AKTIV) {
+            throw new FachlicheException("Das Projekt ist bereits aktiv.");
+        }
+
+        projekt.setStatus(ProjektStatus.AKTIV);
+        return repository.save(projekt);
+    }
+
     /** Holt das Projekt aus der Datenbank. Gibt es die ID nicht, kommt eine verständliche Meldung. */
     private Projekt ladeProjekt(long projektId) {
         return repository.findById(projektId)
