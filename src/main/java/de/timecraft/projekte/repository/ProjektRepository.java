@@ -39,6 +39,11 @@ public interface ProjektRepository extends JpaRepository<Projekt, Long> {
      *       Beide Texte werden vorher klein geschrieben, daher ist die Schreibweise egal.
      *       Anders als bei "like" haben "%" und "_" im Suchtext keine Sonderbedeutung.</li>
      * </ul>
+     * Wozu "cast(... as ...)"? Ist ein Filter leer, übergibt Java den Wert null. PostgreSQL kann bei einem
+     * null ohne Typangabe nicht erraten, ob es ein Datum oder ein Text ist, und bricht ab
+     * ("could not determine data type"). Mit cast steht der Typ fest. Die H2-Datenbank der Tests
+     * ist da großzügiger und hätte den Fehler nicht gezeigt, deshalb wurde die Abfrage auch gegen
+     * echtes PostgreSQL geprüft.
      */
     @Query("""
             select p from Projekt p
@@ -46,11 +51,11 @@ public interface ProjektRepository extends JpaRepository<Projekt, Long> {
                       select z from Projektzuordnung z
                       where z.projektId = p.projektId and z.mitarbeiterId = :mitarbeiterId))
               and (:status is null or p.status = :status)
-              and (:startVon is null or p.startdatum >= :startVon)
-              and (:startBis is null or p.startdatum <= :startBis)
-              and (:zielVon is null or p.zieldatum >= :zielVon)
-              and (:zielBis is null or p.zieldatum <= :zielBis)
-              and (:name is null or locate(lower(:name), lower(p.name)) > 0)
+              and (cast(:startVon as LocalDate) is null or p.startdatum >= :startVon)
+              and (cast(:startBis as LocalDate) is null or p.startdatum <= :startBis)
+              and (cast(:zielVon as LocalDate) is null or p.zieldatum >= :zielVon)
+              and (cast(:zielBis as LocalDate) is null or p.zieldatum <= :zielBis)
+              and (:name is null or locate(lower(cast(:name as string)), lower(p.name)) > 0)
             order by p.projektId
             """)
     List<Projekt> sucheProjekte(
