@@ -279,6 +279,12 @@ class KalenderServicePersonWaehlenTest {
     }
 
     @Test
+    void mitarbeiterWirdAuchMitEigenerIdAbgewiesen() {
+        assertThatThrownBy(() -> woche(JONAS, Rolle.MITARBEITER, JONAS, KalenderFilter.KEINER))
+                .isInstanceOf(ZugriffVerweigertException.class);
+    }
+
+    @Test
     void eigenePersonGehtNurUeberMeinKalender() {
         assertThatThrownBy(() -> woche(PETRA_PL, Rolle.PROJEKTLEITUNG, PETRA_PL, KalenderFilter.KEINER))
                 .isInstanceOf(FachlicheException.class)

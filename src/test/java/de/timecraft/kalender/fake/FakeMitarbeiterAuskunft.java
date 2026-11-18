@@ -19,7 +19,6 @@ import java.util.Set;
 public class FakeMitarbeiterAuskunft implements MitarbeiterAuskunft {
 
     private final Map<Long, MitarbeiterInfo> personen = new LinkedHashMap<>();
-    private MitarbeiterInfo angemeldet;
 
     /** Legt eine Person mit Beispielwerten an; nur ID, Name, Rolle und aktiv sind fuer den Kalender wichtig. */
     public MitarbeiterInfo hinzufuegen(long id, String vorname, String nachname, Rolle rolle, boolean aktiv) {
@@ -31,16 +30,10 @@ public class FakeMitarbeiterAuskunft implements MitarbeiterAuskunft {
         return person;
     }
 
-    public void anmelden(long id) {
-        angemeldet = personen.get(id);
-    }
-
+    /** Der Kalender bekommt die angemeldete Person als Parameter aus dem Geruest; hier ist niemand angemeldet. */
     @Override
     public MitarbeiterInfo angemeldetePerson() {
-        if (angemeldet == null) {
-            throw new NichtAngemeldetException("Bitte melden Sie sich an.");
-        }
-        return angemeldet;
+        throw new NichtAngemeldetException("Bitte melden Sie sich an.");
     }
 
     @Override

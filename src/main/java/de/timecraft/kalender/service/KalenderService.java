@@ -148,6 +148,9 @@ public class KalenderService {
     public KalenderInhalt fremderKalender(long mitarbeiterId, Rolle rolle, long personId, Kalenderansicht ansicht,
             LocalDate bezugstag, KalenderFilter filter) {
         pruefeAngemeldet(rolle);
+        if (rolle == Rolle.MITARBEITER) {
+            throw new ZugriffVerweigertException(NUR_EIGENER_KALENDER);
+        }
         if (personId == mitarbeiterId) {
             throw new FachlicheException("Ihren eigenen Kalender öffnen Sie über „Mein Kalender“.");
         }
