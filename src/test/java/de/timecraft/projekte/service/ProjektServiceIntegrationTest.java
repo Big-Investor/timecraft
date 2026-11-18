@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 import de.timecraft.benutzer.api.MitarbeiterAuskunft;
 import de.timecraft.benutzer.api.MitarbeiterInfo;
 import de.timecraft.benutzer.api.Rolle;
+import de.timecraft.projekte.FesteUhr;
 import de.timecraft.projekte.model.Projekt;
 import de.timecraft.projekte.model.ProjektDaten;
 import de.timecraft.projekte.model.ProjektStatus;
@@ -31,7 +32,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
-@Import({ProjektService.class, ProjektBerechtigung.class})
+@Import({ProjektService.class, ProjektBerechtigung.class, FesteUhr.class})
 class ProjektServiceIntegrationTest {
 
     private static final long ADMIN_ID = 3L;

@@ -16,6 +16,7 @@ import de.timecraft.geruest.common.FachlicheException;
 import de.timecraft.geruest.common.NichtAngemeldetException;
 import de.timecraft.geruest.common.NichtGefundenException;
 import de.timecraft.geruest.common.ZugriffVerweigertException;
+import de.timecraft.projekte.FesteUhr;
 import de.timecraft.projekte.model.Projekt;
 import de.timecraft.projekte.model.ProjektDaten;
 import de.timecraft.projekte.model.ProjektStatus;
@@ -47,7 +48,7 @@ class ProjektServiceAendernTest {
     private final ProjektRepository repository = mock(ProjektRepository.class);
     private final MitarbeiterAuskunft mitarbeiterAuskunft = mock(MitarbeiterAuskunft.class);
     private final ProjektService service = new ProjektService(repository, mock(ProjektzuordnungRepository.class),
-            new ProjektBerechtigung(), mitarbeiterAuskunft);
+            new ProjektBerechtigung(), mitarbeiterAuskunft, FesteUhr.UHR);
 
     private Projekt projekt;
 

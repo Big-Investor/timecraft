@@ -5,6 +5,7 @@ import de.timecraft.benutzer.api.MitarbeiterInfo;
 import de.timecraft.benutzer.api.Rolle;
 import de.timecraft.geruest.common.FachlicheException;
 import de.timecraft.geruest.common.NichtGefundenException;
+import de.timecraft.geruest.common.ZugriffVerweigertException;
 import de.timecraft.projekte.model.Projekt;
 import de.timecraft.projekte.model.ProjektDaten;
 import de.timecraft.projekte.model.ProjektFilter;
@@ -12,6 +13,10 @@ import de.timecraft.projekte.model.ProjektStatus;
 import de.timecraft.projekte.model.Projektzuordnung;
 import de.timecraft.projekte.repository.ProjektRepository;
 import de.timecraft.projekte.repository.ProjektzuordnungRepository;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -20,7 +25,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Die Fachlogik für Projekte: anlegen, ändern, archivieren, reaktivieren und die Projektliste.
+ * Die Fachlogik für Projekte: anlegen, ändern, archivieren, reaktivieren, die Projektliste und
+ * die Zuordnung von Mitarbeitern zu Projekten (zuordnen und entfernen).
  * <p>
  * Hier liegen alle Regeln und Rechteprüfungen. Die Oberfläche ruft nur diesen Service auf.
  * Die angemeldete Person kommt als Parameter (Mitarbeiter-ID und Rolle), damit der Service auch
@@ -39,18 +45,21 @@ public class ProjektService {
     private final ProjektzuordnungRepository zuordnungRepository;
     private final ProjektBerechtigung berechtigung;
     private final MitarbeiterAuskunft mitarbeiterAuskunft;
+    private final Clock clock;
 
     /**
      * "@Lazy" heißt: Spring besorgt sich die MitarbeiterAuskunft (gehört zu Modul M1) erst, wenn
      * sie zum ersten Mal gebraucht wird. Solange M1 in diesem Branch noch fehlt, kann die
      * Anwendung so trotzdem starten.
+     * Die Uhr (Europe/Berlin) kommt aus dem Gerüst, damit Tests die Zeit festlegen können.
      */
     public ProjektService(ProjektRepository repository, ProjektzuordnungRepository zuordnungRepository,
-            ProjektBerechtigung berechtigung, @Lazy MitarbeiterAuskunft mitarbeiterAuskunft) {
+            ProjektBerechtigung berechtigung, @Lazy MitarbeiterAuskunft mitarbeiterAuskunft, Clock clock) {
         this.repository = repository;
         this.zuordnungRepository = zuordnungRepository;
         this.berechtigung = berechtigung;
         this.mitarbeiterAuskunft = mitarbeiterAuskunft;
+        this.clock = clock;
     }
 
     /**
@@ -174,6 +183,116 @@ public class ProjektService {
                 .map(Projektzuordnung::getProjektId)
                 .collect(Collectors.toSet());
         return treffer.stream().filter(projekt -> eigeneProjekte.contains(projekt.getProjektId())).toList();
+    }
+
+    /**
+     * Die Mitarbeiter, die die Projektleitung dem Projekt noch zuordnen kann (Auswahl im Dialog
+     * "Mitarbeiter zuordnen"): aktive Personen mit der Rolle MITARBEITER, die dem Projekt noch nicht
+     * zugeordnet sind, sortiert nach Nachname und Vorname. Ist die Liste leer, sind alle schon zugeordnet
+     * und die Oberfläche zeigt einen Hinweis.
+     * <p>
+     * Nur die verantwortliche Projektleitung darf das, und nur bei einem aktiven Projekt.
+     */
+    @Transactional(readOnly = true)
+    public List<MitarbeiterInfo> zuordenbareMitarbeiter(long mitarbeiterId, Rolle rolle, long projektId) {
+        Projekt projekt = ladeProjektFuerZuordnung(mitarbeiterId, rolle, projektId);
+        Set<Long> schonZugeordnet = zugeordneteIds(projekt.getProjektId());
+
+        return mitarbeiterAuskunft.aktive().stream()
+                .filter(person -> person.rolle() == Rolle.MITARBEITER)
+                .filter(person -> !schonZugeordnet.contains(person.mitarbeiterId()))
+                .sorted(Comparator.comparing(MitarbeiterInfo::nachname).thenComparing(MitarbeiterInfo::vorname))
+                .toList();
+    }
+
+    /**
+     * Ordnet einen oder mehrere Mitarbeiter dem Projekt zu. Nur die verantwortliche Projektleitung
+     * darf das, und nur bei einem aktiven Projekt. Niemand kann sich selbst zuordnen.
+     * <p>
+     * Erst wird jede gewählte Person geprüft (es gibt sie, sie ist aktiv, hat die Rolle MITARBEITER und ist
+     * noch nicht zugeordnet), dann wird gespeichert. Bei einem Fehler wird also gar nichts gespeichert.
+     * Wird dieselbe Person in der Liste mehrfach genannt, zählt sie einmal. Das Zuordnungsdatum kommt
+     * aus der Uhr des Gerüsts.
+     */
+    @Transactional
+    public void zuordnen(long mitarbeiterId, Rolle rolle, long projektId, List<Long> neueMitarbeiterIds) {
+        Projekt projekt = ladeProjektFuerZuordnung(mitarbeiterId, rolle, projektId);
+        if (neueMitarbeiterIds == null || neueMitarbeiterIds.isEmpty()) {
+            throw new FachlicheException("Bitte wählen Sie mindestens einen Mitarbeiter aus.");
+        }
+        Set<Long> schonZugeordnet = zugeordneteIds(projekt.getProjektId());
+
+        Set<Long> gewaehlt = new LinkedHashSet<>(neueMitarbeiterIds);
+        for (long neueId : gewaehlt) {
+            if (neueId == mitarbeiterId) {
+                throw new ZugriffVerweigertException("Sie können sich nicht selbst einem Projekt zuordnen.");
+            }
+            MitarbeiterInfo person = pruefeZuordenbar(neueId);
+            if (schonZugeordnet.contains(neueId)) {
+                throw new FachlicheException(person.name() + " ist dem Projekt bereits zugeordnet.");
+            }
+        }
+
+        LocalDateTime jetzt = LocalDateTime.now(clock);
+        List<Projektzuordnung> neueZuordnungen = gewaehlt.stream()
+                .map(neueId -> new Projektzuordnung(neueId, projektId, jetzt))
+                .toList();
+        zuordnungRepository.saveAll(neueZuordnungen);
+    }
+
+    /**
+     * Entfernt die Zuordnung eines Mitarbeiters zum Projekt. Nur die verantwortliche Projektleitung
+     * darf das, und nur bei einem aktiven Projekt. Gibt es die Zuordnung nicht, kommt eine Meldung.
+     * <p>
+     * Bereits gebuchte Zeiten bleiben bestehen: Gelöscht wird nur die Zeile in "projektzuordnung",
+     * die Buchungen gehören zu Modul M2 und werden hier nicht angefasst.
+     */
+    @Transactional
+    public void entfernen(long mitarbeiterId, Rolle rolle, long projektId, long mitarbeiterIdZuEntfernen) {
+        ladeProjektFuerZuordnung(mitarbeiterId, rolle, projektId);
+        Projektzuordnung.Schluessel schluessel = new Projektzuordnung.Schluessel(mitarbeiterIdZuEntfernen, projektId);
+        Projektzuordnung zuordnung = zuordnungRepository.findById(schluessel)
+                .orElseThrow(() -> new FachlicheException("Der Mitarbeiter ist dem Projekt nicht zugeordnet."));
+
+        zuordnungRepository.delete(zuordnung);
+    }
+
+    /**
+     * Gemeinsame Prüfung für alles rund um die Zuordnung: angemeldet, Projekt vorhanden, die Person
+     * ist die verantwortliche Projektleitung dieses Projekts, und das Projekt ist aktiv.
+     */
+    private Projekt ladeProjektFuerZuordnung(long mitarbeiterId, Rolle rolle, long projektId) {
+        berechtigung.pruefeAngemeldet(rolle);
+        Projekt projekt = ladeProjekt(projektId);
+        berechtigung.pruefeVerantwortlicheProjektleitung(mitarbeiterId, rolle, projekt);
+        if (projekt.getStatus() != ProjektStatus.AKTIV) {
+            throw new FachlicheException("Das Projekt ist archiviert. Zuordnungen können nur bei aktiven Projekten geändert werden.");
+        }
+        return projekt;
+    }
+
+    /** Die IDs aller Mitarbeiter, die dem Projekt schon zugeordnet sind. */
+    private Set<Long> zugeordneteIds(long projektId) {
+        return zuordnungRepository.findByProjektId(projektId).stream()
+                .map(Projektzuordnung::getMitarbeiterId)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Prüft eine gewählte Person bei M1: Es gibt sie, sie ist aktiv und hat die Rolle MITARBEITER
+     * (Projektleitungen und Admins können nicht zugeordnet werden). Gibt die Person zurück,
+     * damit die Fehlermeldung ihren Namen nennen kann.
+     */
+    private MitarbeiterInfo pruefeZuordenbar(long neueId) {
+        MitarbeiterInfo person = mitarbeiterAuskunft.finde(neueId)
+                .orElseThrow(() -> new FachlicheException("Die gewählte Person wurde nicht gefunden."));
+        if (person.rolle() != Rolle.MITARBEITER) {
+            throw new FachlicheException(person.name() + " hat nicht die Rolle Mitarbeiter und kann nicht zugeordnet werden.");
+        }
+        if (!person.aktiv()) {
+            throw new FachlicheException(person.name() + " ist nicht mehr aktiv und kann nicht zugeordnet werden.");
+        }
+        return person;
     }
 
     /** Holt das Projekt aus der Datenbank. Gibt es die ID nicht, kommt eine verständliche Meldung. */
