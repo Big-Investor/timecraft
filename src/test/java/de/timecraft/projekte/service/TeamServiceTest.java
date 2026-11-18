@@ -164,6 +164,26 @@ class TeamServiceTest {
         assertThat(team).extracting(TeamEintrag::mitarbeiterId).contains(BERND);
     }
 
+    @Test
+    void eineZugeordnetePersonDieM1NichtKenntGibtEineVerstaendlicheMeldung() {
+        when(mitarbeiterAuskunft.finde(BERND)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, new TeamFilter()))
+                .isInstanceOf(FachlicheException.class)
+                .hasMessageContaining("nicht gefunden");
+    }
+
+    @Test
+    void eineLaufendeBuchungEinerPersonAusserhalbDesTeamsTauchtNichtAuf() {
+        when(buchungsAuskunft.laufendeBuchungenAufProjekt(websiteId)).thenReturn(List.of(
+                buchung(DIRK, Standort.UNTERWEGS, ANNA_BEGINN)));
+
+        List<TeamEintrag> team = service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, new TeamFilter());
+
+        assertThat(team).extracting(TeamEintrag::mitarbeiterId).containsExactly(ANNA, BERND, CLARA);
+        assertThat(team).extracting(TeamEintrag::eingestempelt).containsOnly(false);
+    }
+
     // ---------- Filter der Projektleitung (FA-M3-09, UC-M3-08) ----------
 
     @Test

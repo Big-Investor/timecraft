@@ -79,6 +79,9 @@ public class TeamService {
     public List<TeamEintrag> teamAnsehen(long mitarbeiterId, Rolle rolle, long projektId, TeamFilter filter) {
         berechtigung.pruefeAngemeldet(rolle);
         Projekt projekt = ladeProjekt(projektId);
+        // Hier sind zwei Personengruppen erlaubt (Projektleitung und zugeordneter Mitarbeiter, mit
+        // unterschiedlicher Sicht). Deshalb prüft diese Methode selbst und nutzt nicht
+        // ProjektBerechtigung.pruefeVerantwortlicheProjektleitung, das nur eine Gruppe zulässt.
         boolean istProjektleitung = rolle == Rolle.PROJEKTLEITUNG && projekt.getProjektleitungId() == mitarbeiterId;
         boolean istZugeordnet = rolle == Rolle.MITARBEITER
                 && zuordnungRepository.existsByMitarbeiterIdAndProjektId(mitarbeiterId, projektId);
