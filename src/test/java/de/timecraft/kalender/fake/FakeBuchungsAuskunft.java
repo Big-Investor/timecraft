@@ -32,6 +32,11 @@ public class FakeBuchungsAuskunft implements BuchungsAuskunft {
         buchungen.add(buchung);
     }
 
+    /** Ersetzt die Buchung mit derselben ID, z. B. wenn jemand anderes sie inzwischen geaendert hat. */
+    public void ersetzen(BuchungInfo buchung) {
+        buchungen.replaceAll(b -> b.zeiteintragId() == buchung.zeiteintragId() ? buchung : b);
+    }
+
     public void historieHinzufuegen(long zeiteintragId, AenderungInfo aenderung) {
         historien.computeIfAbsent(zeiteintragId, id -> new ArrayList<>()).add(aenderung);
     }

@@ -1,5 +1,7 @@
 package de.timecraft.kalender.service;
 
+import static de.timecraft.kalender.service.Testzeit.BERLIN;
+import static de.timecraft.kalender.service.Testzeit.instant;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import de.timecraft.benutzer.api.Rolle;
@@ -17,14 +19,11 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 
 /** Filter nach Projekt und Standort, auch fuer die Summen (FA-M6-06, US-M6-02). */
 class KalenderServiceFilterTest {
 
-    private static final ZoneId BERLIN = ZoneId.of("Europe/Berlin");
     private static final long JONAS = 1;
     private static final long KUECHE = 1024;
     private static final long TREPPE = 1031;
@@ -130,9 +129,5 @@ class KalenderServiceFilterTest {
 
     private void buchung(long id, long projektId, Standort standort, String beginn, String ende) {
         buchungen.hinzufuegen(new BuchungInfo(id, JONAS, projektId, standort, instant(beginn), instant(ende), 0, 0, false));
-    }
-
-    private static Instant instant(String ortszeit) {
-        return LocalDateTime.parse(ortszeit).atZone(BERLIN).toInstant();
     }
 }

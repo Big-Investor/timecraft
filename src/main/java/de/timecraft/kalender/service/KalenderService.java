@@ -4,7 +4,6 @@ import de.timecraft.benutzer.api.MitarbeiterAuskunft;
 import de.timecraft.benutzer.api.MitarbeiterInfo;
 import de.timecraft.benutzer.api.Rolle;
 import de.timecraft.geruest.common.FachlicheException;
-import de.timecraft.geruest.common.NichtAngemeldetException;
 import de.timecraft.geruest.common.NichtGefundenException;
 import de.timecraft.geruest.common.ZugriffVerweigertException;
 import de.timecraft.kalender.model.KalenderEintrag;
@@ -29,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +51,7 @@ public class KalenderService {
     private final ProjektAuskunft projektAuskunft;
     private final MitarbeiterAuskunft mitarbeiterAuskunft;
     private final Clock clock;
+    private final KalenderRechte rechte;
 
     /**
      * "@Lazy": Spring holt BuchungsAuskunft (M2), ProjektAuskunft (M3) und MitarbeiterAuskunft (M1)
@@ -65,6 +64,7 @@ public class KalenderService {
         this.projektAuskunft = projektAuskunft;
         this.mitarbeiterAuskunft = mitarbeiterAuskunft;
         this.clock = clock;
+        this.rechte = new KalenderRechte(projektAuskunft, mitarbeiterAuskunft);
     }
 
     /** Heutiges Datum in der Zeitzone der Clock (Europe/Berlin). */
@@ -115,7 +115,7 @@ public class KalenderService {
      */
     public KalenderInhalt eigenerKalender(long mitarbeiterId, Rolle rolle, Kalenderansicht ansicht,
             LocalDate bezugstag, KalenderFilter filter) {
-        pruefeAngemeldet(rolle);
+        KalenderRechte.pruefeAngemeldet(rolle);
         return kalender(mitarbeiterId, ansicht, bezugstag, filter, null);
     }
 
@@ -126,10 +126,10 @@ public class KalenderService {
      * Eine leere Liste heisst: den Projekten ist niemand zugeordnet (UC-M6-04 2a).
      */
     public List<WaehlbarePerson> waehlbarePersonen(long mitarbeiterId, Rolle rolle) {
-        pruefeAngemeldet(rolle);
+        KalenderRechte.pruefeAngemeldet(rolle);
         List<MitarbeiterInfo> personen = switch (rolle) {
             case MITARBEITER -> throw new ZugriffVerweigertException(NUR_EIGENER_KALENDER);
-            case PROJEKTLEITUNG -> teamDerProjektleitung(mitarbeiterId);
+            case PROJEKTLEITUNG -> rechte.teamDerProjektleitung(mitarbeiterId);
             case ADMIN -> mitarbeiterAuskunft.alle();
         };
         return personen.stream()
@@ -147,7 +147,7 @@ public class KalenderService {
      */
     public KalenderInhalt fremderKalender(long mitarbeiterId, Rolle rolle, long personId, Kalenderansicht ansicht,
             LocalDate bezugstag, KalenderFilter filter) {
-        pruefeAngemeldet(rolle);
+        KalenderRechte.pruefeAngemeldet(rolle);
         if (rolle == Rolle.MITARBEITER) {
             throw new ZugriffVerweigertException(NUR_EIGENER_KALENDER);
         }
@@ -167,40 +167,17 @@ public class KalenderService {
         };
     }
 
-    /** Aktive Mitarbeiter, die mindestens einem aktiven verantworteten Projekt zugeordnet sind. */
-    private List<MitarbeiterInfo> teamDerProjektleitung(long projektleitungId) {
-        Set<Long> ids = new HashSet<>();
-        for (ProjektInfo projekt : aktiveVerantworteteProjekte(projektleitungId)) {
-            ids.addAll(projektAuskunft.zugeordneteMitarbeiter(projekt.projektId()));
-        }
-        List<MitarbeiterInfo> team = new ArrayList<>();
-        for (long id : ids) {
-            mitarbeiterAuskunft.finde(id).filter(MitarbeiterInfo::aktiv).ifPresent(team::add);
-        }
-        return team;
-    }
-
     /**
-     * Projekte, deren Buchungen die Projektleitung im Kalender der Person sieht: ihre aktiven Projekte,
-     * denen die Person noch zugeordnet ist. Ist die Person nicht (mehr) waehlbar, wird der Zugriff verweigert.
+     * Projekte, deren Buchungen die Projektleitung im Kalender der Person sieht.
+     * Ist die Person nicht (mehr) waehlbar, wird der Zugriff verweigert.
      */
     private Set<Long> sichtbareProjekteFuerProjektleitung(long projektleitungId, long personId) {
-        boolean personAktiv = mitarbeiterAuskunft.finde(personId).map(MitarbeiterInfo::aktiv).orElse(false);
-        Set<Long> projekte = new HashSet<>();
-        for (ProjektInfo projekt : aktiveVerantworteteProjekte(projektleitungId)) {
-            if (projektAuskunft.istZugeordnet(personId, projekt.projektId())) {
-                projekte.add(projekt.projektId());
-            }
-        }
-        if (!personAktiv || projekte.isEmpty()) {
+        Set<Long> projekte = rechte.sichtbareProjekteFuerProjektleitung(projektleitungId, personId);
+        if (projekte.isEmpty()) {
             throw new ZugriffVerweigertException(
                     "Sie dürfen nur Kalender von Mitarbeitern Ihrer aktiven Projekte öffnen.");
         }
         return projekte;
-    }
-
-    private List<ProjektInfo> aktiveVerantworteteProjekte(long projektleitungId) {
-        return projektAuskunft.verantworteteProjekte(projektleitungId).stream().filter(ProjektInfo::aktiv).toList();
     }
 
     /**
@@ -224,12 +201,6 @@ public class KalenderService {
         boolean projektPasst = filter.projektId() == null || filter.projektId().equals(eintrag.projektId());
         boolean standortPasst = filter.standort() == null || filter.standort() == eintrag.standort();
         return projektPasst && standortPasst;
-    }
-
-    private void pruefeAngemeldet(Rolle rolle) {
-        if (rolle == null) {
-            throw new NichtAngemeldetException("Bitte melden Sie sich an.");
-        }
     }
 
     /**

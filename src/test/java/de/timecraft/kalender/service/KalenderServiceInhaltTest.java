@@ -1,5 +1,7 @@
 package de.timecraft.kalender.service;
 
+import static de.timecraft.kalender.service.Testzeit.BERLIN;
+import static de.timecraft.kalender.service.Testzeit.instant;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -20,13 +22,11 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 
 /** Eigener Kalender: Eintraege, Summen, Mitternacht, laufende Buchung, Zeitumstellung (FA-M6-01, 03, 04, 11; QA-M6-01). */
 class KalenderServiceInhaltTest {
 
-    private static final ZoneId BERLIN = ZoneId.of("Europe/Berlin");
     private static final long JONAS = 1;
     private static final long LENA = 2;
     private static final long KUECHE = 1024;
@@ -321,10 +321,6 @@ class KalenderServiceInhaltTest {
     private void buchungLaufend(long id, long mitarbeiterId, String beginnOrtszeit) {
         buchungen.hinzufuegen(new BuchungInfo(id, mitarbeiterId, KUECHE, Standort.UNTERWEGS,
                 instant(beginnOrtszeit), null, 0, 0, false));
-    }
-
-    private static Instant instant(String ortszeit) {
-        return LocalDateTime.parse(ortszeit).atZone(BERLIN).toInstant();
     }
 
     private static ProjektInfo projekt(long id, String name) {

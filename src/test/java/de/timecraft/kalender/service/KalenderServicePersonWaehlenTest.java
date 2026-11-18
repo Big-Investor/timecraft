@@ -1,5 +1,7 @@
 package de.timecraft.kalender.service;
 
+import static de.timecraft.kalender.service.Testzeit.BERLIN;
+import static de.timecraft.kalender.service.Testzeit.instant;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -23,8 +25,6 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -32,7 +32,6 @@ import org.junit.jupiter.api.Test;
  */
 class KalenderServicePersonWaehlenTest {
 
-    private static final ZoneId BERLIN = ZoneId.of("Europe/Berlin");
     private static final LocalDate MONTAG = LocalDate.of(2026, 10, 19);
 
     // Personen
@@ -307,9 +306,5 @@ class KalenderServicePersonWaehlenTest {
 
     private void buchung(long id, long person, long projektId, Standort standort, String beginn, String ende) {
         buchungen.hinzufuegen(new BuchungInfo(id, person, projektId, standort, instant(beginn), instant(ende), 0, 0, false));
-    }
-
-    private static Instant instant(String ortszeit) {
-        return LocalDateTime.parse(ortszeit).atZone(BERLIN).toInstant();
     }
 }
