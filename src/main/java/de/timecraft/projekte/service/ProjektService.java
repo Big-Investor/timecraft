@@ -7,14 +7,20 @@ import de.timecraft.geruest.common.FachlicheException;
 import de.timecraft.geruest.common.NichtGefundenException;
 import de.timecraft.projekte.model.Projekt;
 import de.timecraft.projekte.model.ProjektDaten;
+import de.timecraft.projekte.model.ProjektFilter;
 import de.timecraft.projekte.model.ProjektStatus;
+import de.timecraft.projekte.model.Projektzuordnung;
 import de.timecraft.projekte.repository.ProjektRepository;
+import de.timecraft.projekte.repository.ProjektzuordnungRepository;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Die Fachlogik für Projekte: anlegen, ändern, archivieren und reaktivieren.
+ * Die Fachlogik für Projekte: anlegen, ändern, archivieren, reaktivieren und die Projektliste.
  * <p>
  * Hier liegen alle Regeln und Rechteprüfungen. Die Oberfläche ruft nur diesen Service auf.
  * Die angemeldete Person kommt als Parameter (Mitarbeiter-ID und Rolle), damit der Service auch
@@ -30,6 +36,7 @@ public class ProjektService {
     public static final int MAX_NAME_LAENGE = 100;
 
     private final ProjektRepository repository;
+    private final ProjektzuordnungRepository zuordnungRepository;
     private final ProjektBerechtigung berechtigung;
     private final MitarbeiterAuskunft mitarbeiterAuskunft;
 
@@ -38,9 +45,10 @@ public class ProjektService {
      * sie zum ersten Mal gebraucht wird. Solange M1 in diesem Branch noch fehlt, kann die
      * Anwendung so trotzdem starten.
      */
-    public ProjektService(ProjektRepository repository, ProjektBerechtigung berechtigung,
-            @Lazy MitarbeiterAuskunft mitarbeiterAuskunft) {
+    public ProjektService(ProjektRepository repository, ProjektzuordnungRepository zuordnungRepository,
+            ProjektBerechtigung berechtigung, @Lazy MitarbeiterAuskunft mitarbeiterAuskunft) {
         this.repository = repository;
+        this.zuordnungRepository = zuordnungRepository;
         this.berechtigung = berechtigung;
         this.mitarbeiterAuskunft = mitarbeiterAuskunft;
     }
@@ -136,6 +144,36 @@ public class ProjektService {
 
         projekt.setStatus(ProjektStatus.AKTIV);
         return repository.save(projekt);
+    }
+
+    /**
+     * Die Projektliste für die angemeldete Person, sortiert nach Projekt-ID. Zuerst gilt der Filter
+     * (alle gesetzten Filter wirken gemeinsam), danach bleibt nur stehen, was die Rolle sehen darf:
+     * <ul>
+     *   <li>Admin: alle Projekte, auch archivierte.</li>
+     *   <li>Projektleitung: alle aktiven Projekte, nicht nur die eigenen.</li>
+     *   <li>Mitarbeiter: nur die Projekte, denen er zugeordnet ist.</li>
+     * </ul>
+     * Die Sichtbarkeit gilt immer zusätzlich zum Filter. Der Filter kann also nie mehr zeigen, als die
+     * Rolle sehen darf: Fragt ein Mitarbeiter über den Mitarbeiterfilter nach einer anderen Person,
+     * sieht er davon nur die Projekte, die ihm ohnehin zugeordnet sind (ohne Fehlermeldung).
+     * Ein Filter null oder ein leerer Filter bedeutet: nichts filtern.
+     */
+    @Transactional(readOnly = true)
+    public List<Projekt> projekteSehen(long mitarbeiterId, Rolle rolle, ProjektFilter filter) {
+        berechtigung.pruefeAngemeldet(rolle);
+        List<Projekt> treffer = repository.filtern(filter == null ? new ProjektFilter() : filter);
+
+        if (rolle == Rolle.ADMIN) {
+            return treffer;
+        }
+        if (rolle == Rolle.PROJEKTLEITUNG) {
+            return treffer.stream().filter(projekt -> projekt.getStatus() == ProjektStatus.AKTIV).toList();
+        }
+        Set<Long> eigeneProjekte = zuordnungRepository.findByMitarbeiterId(mitarbeiterId).stream()
+                .map(Projektzuordnung::getProjektId)
+                .collect(Collectors.toSet());
+        return treffer.stream().filter(projekt -> eigeneProjekte.contains(projekt.getProjektId())).toList();
     }
 
     /** Holt das Projekt aus der Datenbank. Gibt es die ID nicht, kommt eine verständliche Meldung. */

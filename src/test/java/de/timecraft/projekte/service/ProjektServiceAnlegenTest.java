@@ -20,6 +20,7 @@ import de.timecraft.projekte.model.Projekt;
 import de.timecraft.projekte.model.ProjektDaten;
 import de.timecraft.projekte.model.ProjektStatus;
 import de.timecraft.projekte.repository.ProjektRepository;
+import de.timecraft.projekte.repository.ProjektzuordnungRepository;
 import java.time.LocalDate;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +42,8 @@ class ProjektServiceAnlegenTest {
 
     private final ProjektRepository repository = mock(ProjektRepository.class);
     private final MitarbeiterAuskunft mitarbeiterAuskunft = mock(MitarbeiterAuskunft.class);
-    private final ProjektService service = new ProjektService(repository, new ProjektBerechtigung(), mitarbeiterAuskunft);
+    private final ProjektService service = new ProjektService(repository, mock(ProjektzuordnungRepository.class),
+            new ProjektBerechtigung(), mitarbeiterAuskunft);
 
     @BeforeEach
     void bereiteMocksVor() {
