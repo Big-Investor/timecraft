@@ -3,6 +3,7 @@ package de.timecraft.kalender.service;
 import de.timecraft.benutzer.api.Rolle;
 import de.timecraft.geruest.common.NichtAngemeldetException;
 import de.timecraft.kalender.model.KalenderEintrag;
+import de.timecraft.kalender.model.KalenderFilter;
 import de.timecraft.kalender.model.KalenderInhalt;
 import de.timecraft.kalender.model.Kalenderansicht;
 import de.timecraft.projekte.api.ProjektAuskunft;
@@ -96,16 +97,27 @@ public class KalenderService {
     }
 
     /**
-     * Kalender der angemeldeten Person mit ihren eigenen Buchungen (FA-M6-01, 03, 04, 11).
-     * Jede angemeldete Rolle darf ihren eigenen Kalender sehen.
+     * Kalender der angemeldeten Person mit ihren eigenen Buchungen (FA-M6-01, 03, 04, 06, 11).
+     * Jede angemeldete Rolle darf ihren eigenen Kalender sehen. Der Filter gilt auch fuer die Summen;
+     * null wirkt wie KalenderFilter.KEINER.
      */
     public KalenderInhalt eigenerKalender(long mitarbeiterId, Rolle rolle, Kalenderansicht ansicht,
-            LocalDate bezugstag) {
+            LocalDate bezugstag, KalenderFilter filter) {
         pruefeAngemeldet(rolle);
+        KalenderFilter wirksamerFilter = filter == null ? KalenderFilter.KEINER : filter;
         LocalDate ersterTag = ersterTag(ansicht, bezugstag);
         LocalDate letzterTag = letzterTag(ansicht, bezugstag);
-        List<KalenderEintrag> eintraege = eintraegeLaden(mitarbeiterId, ersterTag, letzterTag);
+        List<KalenderEintrag> eintraege = eintraegeLaden(mitarbeiterId, ersterTag, letzterTag).stream()
+                .filter(eintrag -> erfuelltFilter(eintrag, wirksamerFilter))
+                .toList();
         return mitSummen(ersterTag, letzterTag, eintraege);
+    }
+
+    /** Ein Eintrag passt, wenn er jeden gesetzten Filter erfuellt. */
+    private boolean erfuelltFilter(KalenderEintrag eintrag, KalenderFilter filter) {
+        boolean projektPasst = filter.projektId() == null || filter.projektId().equals(eintrag.projektId());
+        boolean standortPasst = filter.standort() == null || filter.standort() == eintrag.standort();
+        return projektPasst && standortPasst;
     }
 
     private void pruefeAngemeldet(Rolle rolle) {

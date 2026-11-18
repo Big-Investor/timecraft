@@ -8,6 +8,7 @@ import de.timecraft.geruest.common.NichtAngemeldetException;
 import de.timecraft.kalender.fake.FakeBuchungsAuskunft;
 import de.timecraft.kalender.fake.FakeProjektAuskunft;
 import de.timecraft.kalender.model.KalenderEintrag;
+import de.timecraft.kalender.model.KalenderFilter;
 import de.timecraft.kalender.model.KalenderInhalt;
 import de.timecraft.kalender.model.Kalenderansicht;
 import de.timecraft.projekte.api.ProjektInfo;
@@ -41,7 +42,7 @@ class KalenderServiceInhaltTest {
 
     @Test
     void ohneAnmeldungWirdNichtsGezeigt() {
-        assertThatThrownBy(() -> service("2026-10-22T10:00").eigenerKalender(JONAS, null, Kalenderansicht.WOCHE, DONNERSTAG))
+        assertThatThrownBy(() -> service("2026-10-22T10:00").eigenerKalender(JONAS, null, Kalenderansicht.WOCHE, DONNERSTAG, KalenderFilter.KEINER))
                 .isInstanceOf(NichtAngemeldetException.class);
     }
 
@@ -51,7 +52,7 @@ class KalenderServiceInhaltTest {
         buchung(2, LENA, KUECHE, Standort.BUERO, "2026-10-19T08:00", "2026-10-19T12:00", 0);
 
         for (Rolle rolle : Rolle.values()) {
-            KalenderInhalt jonas = service("2026-10-22T10:00").eigenerKalender(JONAS, rolle, Kalenderansicht.WOCHE, DONNERSTAG);
+            KalenderInhalt jonas = service("2026-10-22T10:00").eigenerKalender(JONAS, rolle, Kalenderansicht.WOCHE, DONNERSTAG, KalenderFilter.KEINER);
             assertThat(jonas.eintraege()).extracting(KalenderEintrag::zeiteintragId).containsExactly(1L);
         }
     }
@@ -146,8 +147,8 @@ class KalenderServiceInhaltTest {
         buchung(1, JONAS, KUECHE, Standort.BUERO, "2026-10-31T22:00", "2026-11-01T02:00", 0);
 
         KalenderService service = service("2026-11-05T10:00");
-        KalenderInhalt oktober = service.eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.MONAT, LocalDate.of(2026, 10, 10));
-        KalenderInhalt november = service.eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.MONAT, LocalDate.of(2026, 11, 10));
+        KalenderInhalt oktober = service.eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.MONAT, LocalDate.of(2026, 10, 10), KalenderFilter.KEINER);
+        KalenderInhalt november = service.eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.MONAT, LocalDate.of(2026, 11, 10), KalenderFilter.KEINER);
 
         assertThat(oktober.tagessummen()).hasSize(31);
         assertThat(oktober.tagessummen().get(LocalDate.of(2026, 10, 31))).isEqualTo(120);
@@ -163,7 +164,7 @@ class KalenderServiceInhaltTest {
         buchung(2, JONAS, KUECHE, Standort.BUERO, "2026-11-01T08:00", "2026-11-01T09:00", 0);
 
         KalenderInhalt inhalt = service("2026-11-05T10:00")
-                .eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.WOCHE, LocalDate.of(2026, 10, 28));
+                .eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.WOCHE, LocalDate.of(2026, 10, 28), KalenderFilter.KEINER);
 
         assertThat(inhalt.gesamtMinuten()).isEqualTo(300);
     }
@@ -188,7 +189,7 @@ class KalenderServiceInhaltTest {
         buchungInstant(1, JONAS, "2026-03-28T23:00:00Z", "2026-03-29T04:00:00Z", 0);
 
         KalenderInhalt inhalt = service("2026-03-30T10:00")
-                .eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.TAG, LocalDate.of(2026, 3, 29));
+                .eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.TAG, LocalDate.of(2026, 3, 29), KalenderFilter.KEINER);
 
         assertThat(inhalt.gesamtMinuten()).isEqualTo(300);
     }
@@ -249,7 +250,7 @@ class KalenderServiceInhaltTest {
         buchungLaufend(1, JONAS, "2026-10-22T07:00");
 
         KalenderInhalt naechsteWoche = service("2026-10-22T10:00")
-                .eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.WOCHE, LocalDate.of(2026, 10, 29));
+                .eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.WOCHE, LocalDate.of(2026, 10, 29), KalenderFilter.KEINER);
 
         assertThat(naechsteWoche.keineTreffer()).isTrue();
         assertThat(naechsteWoche.gesamtMinuten()).isZero();
@@ -281,7 +282,7 @@ class KalenderServiceInhaltTest {
         buchung(2, JONAS, KUECHE, Standort.BUERO, "2026-10-22T08:00", "2026-10-22T09:00", 0);
 
         KalenderInhalt inhalt = service("2026-10-22T10:00")
-                .eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.TAG, DONNERSTAG);
+                .eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.TAG, DONNERSTAG, KalenderFilter.KEINER);
 
         assertThat(inhalt.tagessummen()).containsOnlyKeys(DONNERSTAG);
         assertThat(inhalt.eintraege()).extracting(KalenderEintrag::zeiteintragId).containsExactly(2L);
@@ -297,12 +298,12 @@ class KalenderServiceInhaltTest {
 
     private KalenderInhalt woche(String jetztOrtszeit) {
         KalenderService service = service(jetztOrtszeit);
-        return service.eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.WOCHE, service.heute());
+        return service.eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.WOCHE, service.heute(), KalenderFilter.KEINER);
     }
 
     /** Woche um den Bezugstag, angesehen am 05.11.2026 (alle Buchungen der Tests liegen davor). */
     private KalenderInhalt wocheMit(LocalDate bezugstag) {
-        return service("2026-11-05T10:00").eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.WOCHE, bezugstag);
+        return service("2026-11-05T10:00").eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.WOCHE, bezugstag, KalenderFilter.KEINER);
     }
 
     private void buchung(long id, long mitarbeiterId, long projektId, Standort standort,
