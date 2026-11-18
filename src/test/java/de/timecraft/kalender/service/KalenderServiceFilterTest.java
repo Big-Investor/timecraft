@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import de.timecraft.benutzer.api.Rolle;
 import de.timecraft.kalender.fake.FakeBuchungsAuskunft;
+import de.timecraft.kalender.fake.FakeMitarbeiterAuskunft;
 import de.timecraft.kalender.fake.FakeProjektAuskunft;
 import de.timecraft.kalender.model.KalenderEintrag;
 import de.timecraft.kalender.model.KalenderFilter;
@@ -31,7 +32,7 @@ class KalenderServiceFilterTest {
 
     private final FakeBuchungsAuskunft buchungen = new FakeBuchungsAuskunft();
     private final FakeProjektAuskunft projekte = new FakeProjektAuskunft();
-    private final KalenderService service = new KalenderService(buchungen, projekte,
+    private final KalenderService service = new KalenderService(buchungen, projekte, new FakeMitarbeiterAuskunft(),
             Clock.fixed(Instant.parse("2026-10-22T08:28:00Z"), BERLIN));
 
     KalenderServiceFilterTest() {

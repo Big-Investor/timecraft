@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import de.timecraft.benutzer.api.Rolle;
 import de.timecraft.geruest.common.NichtAngemeldetException;
 import de.timecraft.kalender.fake.FakeBuchungsAuskunft;
+import de.timecraft.kalender.fake.FakeMitarbeiterAuskunft;
 import de.timecraft.kalender.fake.FakeProjektAuskunft;
 import de.timecraft.kalender.model.KalenderEintrag;
 import de.timecraft.kalender.model.KalenderFilter;
@@ -293,7 +294,7 @@ class KalenderServiceInhaltTest {
 
     private KalenderService service(String jetztOrtszeit) {
         Clock uhr = Clock.fixed(instant(jetztOrtszeit), BERLIN);
-        return new KalenderService(buchungen, projekte, uhr);
+        return new KalenderService(buchungen, projekte, new FakeMitarbeiterAuskunft(), uhr);
     }
 
     private KalenderInhalt woche(String jetztOrtszeit) {

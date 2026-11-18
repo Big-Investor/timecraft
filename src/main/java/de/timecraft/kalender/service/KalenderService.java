@@ -1,11 +1,17 @@
 package de.timecraft.kalender.service;
 
+import de.timecraft.benutzer.api.MitarbeiterAuskunft;
+import de.timecraft.benutzer.api.MitarbeiterInfo;
 import de.timecraft.benutzer.api.Rolle;
+import de.timecraft.geruest.common.FachlicheException;
 import de.timecraft.geruest.common.NichtAngemeldetException;
+import de.timecraft.geruest.common.NichtGefundenException;
+import de.timecraft.geruest.common.ZugriffVerweigertException;
 import de.timecraft.kalender.model.KalenderEintrag;
 import de.timecraft.kalender.model.KalenderFilter;
 import de.timecraft.kalender.model.KalenderInhalt;
 import de.timecraft.kalender.model.Kalenderansicht;
+import de.timecraft.kalender.model.WaehlbarePerson;
 import de.timecraft.projekte.api.ProjektAuskunft;
 import de.timecraft.projekte.api.ProjektInfo;
 import de.timecraft.zeiterfassung.api.BuchungInfo;
@@ -23,35 +29,41 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 /**
- * Liest den Kalender einer Person ueber die api von M2 (Buchungen) und M3 (Projektnamen).
- * Aendert nichts. Die Zeitzone kommt aus der Clock des Geruests (Europe/Berlin).
+ * Liest den Kalender einer Person ueber die api von M2 (Buchungen), M3 (Projekte, Zuordnungen)
+ * und M1 (Personen). Aendert nichts. Prueft, wer welchen Kalender sehen darf (FA-M6-07, 11).
+ * Die Zeitzone kommt aus der Clock des Geruests (Europe/Berlin).
  */
 @Service
 public class KalenderService {
 
     static final String OHNE_PROJEKT = "Ohne Projekt";
     static final String UNBEKANNTES_PROJEKT = "Unbekanntes Projekt";
+    private static final String NUR_EIGENER_KALENDER = "Sie dürfen nur Ihren eigenen Kalender sehen.";
 
     private final BuchungsAuskunft buchungsAuskunft;
     private final ProjektAuskunft projektAuskunft;
+    private final MitarbeiterAuskunft mitarbeiterAuskunft;
     private final Clock clock;
 
     /**
-     * "@Lazy": Spring holt BuchungsAuskunft (M2) und ProjektAuskunft (M3) erst beim ersten Aufruf.
-     * So startet die Anwendung auch in diesem Branch, in dem es M2 und M3 noch nicht gibt
-     * (gleiche Loesung wie in M3).
+     * "@Lazy": Spring holt BuchungsAuskunft (M2), ProjektAuskunft (M3) und MitarbeiterAuskunft (M1)
+     * erst beim ersten Aufruf. So startet die Anwendung auch in diesem Branch, in dem es M1, M2 und M3
+     * noch nicht gibt (gleiche Loesung wie in M3).
      */
     public KalenderService(@Lazy BuchungsAuskunft buchungsAuskunft, @Lazy ProjektAuskunft projektAuskunft,
-            Clock clock) {
+            @Lazy MitarbeiterAuskunft mitarbeiterAuskunft, Clock clock) {
         this.buchungsAuskunft = buchungsAuskunft;
         this.projektAuskunft = projektAuskunft;
+        this.mitarbeiterAuskunft = mitarbeiterAuskunft;
         this.clock = clock;
     }
 
@@ -104,10 +116,101 @@ public class KalenderService {
     public KalenderInhalt eigenerKalender(long mitarbeiterId, Rolle rolle, Kalenderansicht ansicht,
             LocalDate bezugstag, KalenderFilter filter) {
         pruefeAngemeldet(rolle);
+        return kalender(mitarbeiterId, ansicht, bezugstag, filter, null);
+    }
+
+    /**
+     * Personen fuer „Person wählen“ (FA-M6-07, UC-M6-04), sortiert nach Nachname und Vorname.
+     * Projektleitung: aktive Mitarbeiter, die einem ihrer aktiven verantworteten Projekte zugeordnet sind.
+     * Admin: alle Benutzer, auch ehemalige. Die angemeldete Person selbst fehlt („Mein Kalender“).
+     * Eine leere Liste heisst: den Projekten ist niemand zugeordnet (UC-M6-04 2a).
+     */
+    public List<WaehlbarePerson> waehlbarePersonen(long mitarbeiterId, Rolle rolle) {
+        pruefeAngemeldet(rolle);
+        List<MitarbeiterInfo> personen = switch (rolle) {
+            case MITARBEITER -> throw new ZugriffVerweigertException(NUR_EIGENER_KALENDER);
+            case PROJEKTLEITUNG -> teamDerProjektleitung(mitarbeiterId);
+            case ADMIN -> mitarbeiterAuskunft.alle();
+        };
+        return personen.stream()
+                .filter(person -> person.mitarbeiterId() != mitarbeiterId)
+                .sorted(Comparator.comparing(MitarbeiterInfo::nachname).thenComparing(MitarbeiterInfo::vorname))
+                .map(person -> new WaehlbarePerson(person.mitarbeiterId(), person.name()))
+                .toList();
+    }
+
+    /**
+     * Kalender einer anderen Person (FA-M6-07, 11, QA-M6-04). Die Rechte gelten auch bei direktem Aufruf:
+     * Ein Mitarbeiter darf keinen fremden Kalender sehen. Die Projektleitung nur von Personen aus
+     * „Person wählen“ und nur deren Buchungen auf ihre aktiven Projekte, denen die Person zugeordnet ist.
+     * Der Admin sieht alle Buchungen jeder vorhandenen Person.
+     */
+    public KalenderInhalt fremderKalender(long mitarbeiterId, Rolle rolle, long personId, Kalenderansicht ansicht,
+            LocalDate bezugstag, KalenderFilter filter) {
+        pruefeAngemeldet(rolle);
+        if (personId == mitarbeiterId) {
+            throw new FachlicheException("Ihren eigenen Kalender öffnen Sie über „Mein Kalender“.");
+        }
+        return switch (rolle) {
+            case MITARBEITER -> throw new ZugriffVerweigertException(NUR_EIGENER_KALENDER);
+            case PROJEKTLEITUNG -> kalender(personId, ansicht, bezugstag, filter,
+                    sichtbareProjekteFuerProjektleitung(mitarbeiterId, personId));
+            case ADMIN -> {
+                if (mitarbeiterAuskunft.finde(personId).isEmpty()) {
+                    throw new NichtGefundenException("Diese Person gibt es nicht.");
+                }
+                yield kalender(personId, ansicht, bezugstag, filter, null);
+            }
+        };
+    }
+
+    /** Aktive Mitarbeiter, die mindestens einem aktiven verantworteten Projekt zugeordnet sind. */
+    private List<MitarbeiterInfo> teamDerProjektleitung(long projektleitungId) {
+        Set<Long> ids = new HashSet<>();
+        for (ProjektInfo projekt : aktiveVerantworteteProjekte(projektleitungId)) {
+            ids.addAll(projektAuskunft.zugeordneteMitarbeiter(projekt.projektId()));
+        }
+        List<MitarbeiterInfo> team = new ArrayList<>();
+        for (long id : ids) {
+            mitarbeiterAuskunft.finde(id).filter(MitarbeiterInfo::aktiv).ifPresent(team::add);
+        }
+        return team;
+    }
+
+    /**
+     * Projekte, deren Buchungen die Projektleitung im Kalender der Person sieht: ihre aktiven Projekte,
+     * denen die Person noch zugeordnet ist. Ist die Person nicht (mehr) waehlbar, wird der Zugriff verweigert.
+     */
+    private Set<Long> sichtbareProjekteFuerProjektleitung(long projektleitungId, long personId) {
+        boolean personAktiv = mitarbeiterAuskunft.finde(personId).map(MitarbeiterInfo::aktiv).orElse(false);
+        Set<Long> projekte = new HashSet<>();
+        for (ProjektInfo projekt : aktiveVerantworteteProjekte(projektleitungId)) {
+            if (projektAuskunft.istZugeordnet(personId, projekt.projektId())) {
+                projekte.add(projekt.projektId());
+            }
+        }
+        if (!personAktiv || projekte.isEmpty()) {
+            throw new ZugriffVerweigertException(
+                    "Sie dürfen nur Kalender von Mitarbeitern Ihrer aktiven Projekte öffnen.");
+        }
+        return projekte;
+    }
+
+    private List<ProjektInfo> aktiveVerantworteteProjekte(long projektleitungId) {
+        return projektAuskunft.verantworteteProjekte(projektleitungId).stream().filter(ProjektInfo::aktiv).toList();
+    }
+
+    /**
+     * Eintraege und Summen eines Zeitraums. erlaubteProjekte == null heisst: alle Buchungen;
+     * sonst nur Buchungen auf diese Projekte. Der Filter gilt zusaetzlich, auch fuer die Summen.
+     */
+    private KalenderInhalt kalender(long personId, Kalenderansicht ansicht, LocalDate bezugstag,
+            KalenderFilter filter, Set<Long> erlaubteProjekte) {
         KalenderFilter wirksamerFilter = filter == null ? KalenderFilter.KEINER : filter;
         LocalDate ersterTag = ersterTag(ansicht, bezugstag);
         LocalDate letzterTag = letzterTag(ansicht, bezugstag);
-        List<KalenderEintrag> eintraege = eintraegeLaden(mitarbeiterId, ersterTag, letzterTag).stream()
+        List<KalenderEintrag> eintraege = eintraegeLaden(personId, ersterTag, letzterTag).stream()
+                .filter(eintrag -> erlaubteProjekte == null || erlaubteProjekte.contains(eintrag.projektId()))
                 .filter(eintrag -> erfuelltFilter(eintrag, wirksamerFilter))
                 .toList();
         return mitSummen(ersterTag, letzterTag, eintraege);

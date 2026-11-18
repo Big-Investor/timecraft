@@ -3,6 +3,7 @@ package de.timecraft.kalender.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import de.timecraft.kalender.fake.FakeBuchungsAuskunft;
+import de.timecraft.kalender.fake.FakeMitarbeiterAuskunft;
 import de.timecraft.kalender.fake.FakeProjektAuskunft;
 import de.timecraft.kalender.model.Kalenderansicht;
 import java.time.Clock;
@@ -17,8 +18,7 @@ class KalenderServiceZeitraumTest {
     // Donnerstag, 22.10.2026, 23:30 in Berlin (21:30 UTC): in UTC ist es auch noch der 22.
     private static final Clock DONNERSTAG = Clock.fixed(Instant.parse("2026-10-22T21:30:00Z"), ZoneId.of("Europe/Berlin"));
 
-    private final KalenderService service =
-            new KalenderService(new FakeBuchungsAuskunft(), new FakeProjektAuskunft(), DONNERSTAG);
+    private final KalenderService service = serviceMit(DONNERSTAG);
 
     @Test
     void heuteIstDerTagInBerlin() {
@@ -29,7 +29,7 @@ class KalenderServiceZeitraumTest {
     void heuteRichtetSichNachBerlinNichtNachUtc() {
         // 23:30 UTC am 22.10. ist in Berlin schon der 23.10.
         Clock spaet = Clock.fixed(Instant.parse("2026-10-22T23:30:00Z"), ZoneId.of("Europe/Berlin"));
-        KalenderService spaeterService = new KalenderService(new FakeBuchungsAuskunft(), new FakeProjektAuskunft(), spaet);
+        KalenderService spaeterService = serviceMit(spaet);
 
         assertThat(spaeterService.heute()).isEqualTo(LocalDate.of(2026, 10, 23));
     }
@@ -87,5 +87,10 @@ class KalenderServiceZeitraumTest {
         LocalDate einunddreissigster = LocalDate.of(2026, 1, 31);
 
         assertThat(service.vor(Kalenderansicht.MONAT, einunddreissigster)).isEqualTo(LocalDate.of(2026, 2, 28));
+    }
+
+    private static KalenderService serviceMit(Clock uhr) {
+        return new KalenderService(new FakeBuchungsAuskunft(), new FakeProjektAuskunft(), new FakeMitarbeiterAuskunft(),
+                uhr);
     }
 }
