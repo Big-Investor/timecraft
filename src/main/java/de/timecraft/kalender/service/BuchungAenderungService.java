@@ -18,6 +18,7 @@ import de.timecraft.zeiterfassung.api.BuchungsAuskunft;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -61,6 +62,15 @@ public class BuchungAenderungService {
         return aenderbareBuchung(mitarbeiterId, rolle, zeiteintragId);
     }
 
+    /**
+     * Startwerte des Aenderungsformulars aus einem Stand: Beginn und Ende als Ortszeit (Zeitzone der Clock),
+     * Standort und Projekt wie gebucht, Begruendung leer.
+     */
+    public BuchungAenderungEingabe formularwerte(BuchungInfo stand) {
+        return new BuchungAenderungEingabe(ortszeit(stand.beginn()), stand.ende() == null ? null : ortszeit(stand.ende()),
+                stand.standort(), stand.projektId(), "");
+    }
+
     /** Ob „Bearbeiten“ angeboten wird: dieselben Regeln wie buchungZumAendern (UC-M6-05 1a, 1b). */
     public boolean darfAendern(long mitarbeiterId, Rolle rolle, long zeiteintragId) {
         try {
@@ -75,11 +85,19 @@ public class BuchungAenderungService {
     /**
      * Projekte, auf die umgebucht werden darf, sortiert nach Name: aktive Projekte, denen die Person
      * der Buchung zugeordnet ist; fuer die Projektleitung nur ihre eigenen (UC-M6-05 Schritt 2).
+     * Das bisherige Projekt der Buchung ist immer dabei, damit es beibehalten werden kann
+     * (auch wenn es inzwischen archiviert ist oder die Person nicht mehr zugeordnet ist).
      */
     public List<ProjektAuswahl> waehlbareZielprojekte(long mitarbeiterId, Rolle rolle, long zeiteintragId) {
         BuchungInfo buchung = aenderbareBuchung(mitarbeiterId, rolle, zeiteintragId);
-        return projektAuskunft.aktiveProjekteVon(buchung.mitarbeiterId()).stream()
+        List<ProjektInfo> projekte = new ArrayList<>(projektAuskunft.aktiveProjekteVon(buchung.mitarbeiterId()).stream()
                 .filter(projekt -> rolle == Rolle.ADMIN || projekt.projektleitungId() == mitarbeiterId)
+                .toList());
+        if (buchung.projektId() != null
+                && projekte.stream().noneMatch(projekt -> projekt.projektId() == buchung.projektId())) {
+            projektAuskunft.finde(buchung.projektId()).ifPresent(projekte::add);
+        }
+        return projekte.stream()
                 .sorted(Comparator.comparing(ProjektInfo::name))
                 .map(projekt -> new ProjektAuswahl(projekt.projektId(), projekt.name()))
                 .toList();
@@ -156,14 +174,16 @@ public class BuchungAenderungService {
     }
 
     /**
-     * Zielprojekt (FA-M6-08, 09): vorhanden, bei der Projektleitung eines ihrer Projekte, aktiv und die
-     * Person ist ihm zugeordnet. Ohne Projekt nur, wenn die Buchung schon ohne Projekt war.
+     * Zielprojekt (FA-M6-08, 09) beim Umbuchen: vorhanden, bei der Projektleitung eines ihrer Projekte,
+     * aktiv und die Person ist ihm zugeordnet. Bleibt das Projekt gleich, wird es nicht erneut geprueft
+     * (z. B. Admin korrigiert nur die Zeit einer Buchung auf ein archiviertes Projekt).
+     * Ohne Projekt nur, wenn die Buchung schon ohne Projekt war.
      */
     private void pruefeZielprojekt(long mitarbeiterId, Rolle rolle, BuchungInfo buchung, Long projektId) {
+        if (Objects.equals(projektId, buchung.projektId())) {
+            return;
+        }
         if (projektId == null) {
-            if (buchung.projektId() == null) {
-                return;
-            }
             throw new UngueltigeAenderungException(Feld.PROJEKT, "Bitte wählen Sie ein Projekt.");
         }
         ProjektInfo projekt = projektAuskunft.finde(projektId).orElseThrow(() ->
@@ -179,6 +199,10 @@ public class BuchungAenderungService {
             throw new UngueltigeAenderungException(Feld.PROJEKT,
                     "Die Person ist dem Projekt „" + projekt.name() + "“ nicht zugeordnet.");
         }
+    }
+
+    private LocalDateTime ortszeit(Instant zeitpunkt) {
+        return LocalDateTime.ofInstant(zeitpunkt, clock.getZone());
     }
 
     /** Ortszeit (Europe/Berlin aus der Clock) als Zeitpunkt; in der Herbst-Umstellungsnacht gilt die Sommerzeit. */

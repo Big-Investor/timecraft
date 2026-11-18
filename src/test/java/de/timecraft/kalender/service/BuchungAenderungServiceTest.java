@@ -56,6 +56,7 @@ class BuchungAenderungServiceTest {
     private static final long JONAS_ARCHIV = 105;
     private static final long JONAS_OHNE_PROJEKT = 106;
     private static final long KARL_KUECHE = 107;
+    private static final long JONAS_TREPPE_ENTFERNT = 108;
     private static final long ADMIN_EIGENE = 109;
 
     private static final String BEGRUENDUNG = "Ausstempeln vergessen";
@@ -90,6 +91,8 @@ class BuchungAenderungServiceTest {
         buchung(JONAS_OHNE_PROJEKT, JONAS, null, "2026-10-19T13:00", "2026-10-19T14:00");
         buchung(KARL_KUECHE, KARL_EHEMALIG, KUECHE, "2026-10-19T08:00", "2026-10-19T12:00");
         buchung(ADMIN_EIGENE, ADMIN, null, "2026-10-19T08:00", "2026-10-19T12:00");
+        // Jonas hat frueher auf TREPPE gebucht und ist dort nicht mehr zugeordnet
+        buchung(JONAS_TREPPE_ENTFERNT, JONAS, TREPPE, "2026-10-16T08:00", "2026-10-16T12:00");
     }
 
     // --- Normalfall ---
@@ -381,6 +384,50 @@ class BuchungAenderungServiceTest {
     }
 
     @Test
+    void adminBehaeltArchiviertesProjektUndKorrigiertNurDieZeit() {
+        BuchungInfo stand = service.buchungZumAendern(ADMIN, Rolle.ADMIN, JONAS_ARCHIV);
+
+        service.aendern(ADMIN, Rolle.ADMIN, stand, eingabe("2026-10-19T08:00", "2026-10-19T11:30",
+                Standort.BUERO, ARCHIV, BEGRUENDUNG));
+
+        assertThat(aenderung.aufrufe()).singleElement().satisfies(aufruf -> assertThat(aufruf.projektId()).isEqualTo(ARCHIV));
+    }
+
+    @Test
+    void adminBehaeltProjektAusDemDiePersonEntferntWurde() {
+        BuchungInfo stand = service.buchungZumAendern(ADMIN, Rolle.ADMIN, JONAS_TREPPE_ENTFERNT);
+
+        service.aendern(ADMIN, Rolle.ADMIN, stand, eingabe("2026-10-16T08:00", "2026-10-16T12:30",
+                Standort.HOMEOFFICE, TREPPE, BEGRUENDUNG));
+
+        assertThat(aenderung.aufrufe()).hasSize(1);
+    }
+
+    @Test
+    void umbuchenAufArchiviertesProjektBleibtVerbotenAuchVonEinemArchiviertenProjekt() {
+        BuchungInfo stand = service.buchungZumAendern(ADMIN, Rolle.ADMIN, JONAS_TREPPE_ENTFERNT);
+
+        assertThatThrownBy(() -> service.aendern(ADMIN, Rolle.ADMIN, stand, eingabe("2026-10-16T08:00",
+                "2026-10-16T12:00", Standort.BUERO, ARCHIV, BEGRUENDUNG)))
+                .isInstanceOf(UngueltigeAenderungException.class)
+                .hasMessage("Das Projekt „Altbau Sanierung“ ist nicht aktiv.");
+        assertThat(aenderung.aufrufe()).isEmpty();
+    }
+
+    @Test
+    void bisherigesProjektStehtImmerInDerZielauswahl() {
+        assertThat(service.waehlbareZielprojekte(ADMIN, Rolle.ADMIN, JONAS_ARCHIV)).containsExactly(
+                new ProjektAuswahl(ARCHIV, "Altbau Sanierung"), new ProjektAuswahl(FREMD, "Dachstuhl Meier"),
+                new ProjektAuswahl(KUECHE, "Einbauküche Wagner"));
+    }
+
+    @Test
+    void buchungOhneProjektHatKeinBisherigesProjektInDerZielauswahl() {
+        assertThat(service.waehlbareZielprojekte(ADMIN, Rolle.ADMIN, JONAS_OHNE_PROJEKT)).containsExactly(
+                new ProjektAuswahl(FREMD, "Dachstuhl Meier"), new ProjektAuswahl(KUECHE, "Einbauküche Wagner"));
+    }
+
+    @Test
     void projektleitungSiehtNurIhreAktivenProjekteDerPersonAlsZiel() {
         assertThat(service.waehlbareZielprojekte(PETRA_PL, Rolle.PROJEKTLEITUNG, JONAS_KUECHE))
                 .containsExactly(new ProjektAuswahl(KUECHE, "Einbauküche Wagner"));
@@ -390,6 +437,27 @@ class BuchungAenderungServiceTest {
     void adminSiehtAlleAktivenProjekteDerPersonAlsZielSortiertNachName() {
         assertThat(service.waehlbareZielprojekte(ADMIN, Rolle.ADMIN, JONAS_KUECHE)).containsExactly(
                 new ProjektAuswahl(FREMD, "Dachstuhl Meier"), new ProjektAuswahl(KUECHE, "Einbauküche Wagner"));
+    }
+
+    // --- Formularwerte ---
+
+    @Test
+    void formularwerteZeigenDieBuchungInOrtszeitMitLeererBegruendung() {
+        BuchungInfo stand = service.buchungZumAendern(PETRA_PL, Rolle.PROJEKTLEITUNG, JONAS_KUECHE);
+
+        assertThat(service.formularwerte(stand)).isEqualTo(new BuchungAenderungEingabe(
+                LocalDateTime.parse("2026-10-20T07:00"), LocalDateTime.parse("2026-10-20T15:30"), Standort.BUERO,
+                KUECHE, ""));
+    }
+
+    @Test
+    void formularwerteInDerWinterzeitUndOhneProjekt() {
+        buchungen.hinzufuegen(new BuchungInfo(110, JONAS, null, Standort.UNTERWEGS,
+                Instant.parse("2026-10-26T06:00:00Z"), Instant.parse("2026-10-26T14:00:00Z"), 0, 480, false));
+
+        assertThat(service.formularwerte(buchungen.buchung(110).orElseThrow())).isEqualTo(new BuchungAenderungEingabe(
+                LocalDateTime.parse("2026-10-26T07:00"), LocalDateTime.parse("2026-10-26T15:00"), Standort.UNTERWEGS,
+                null, ""));
     }
 
     // --- Fehler von M2 (UC-M6-05 4b) ---

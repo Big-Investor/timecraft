@@ -12,6 +12,7 @@ import de.timecraft.kalender.model.KalenderEintrag;
 import de.timecraft.kalender.model.KalenderFilter;
 import de.timecraft.kalender.model.KalenderInhalt;
 import de.timecraft.kalender.model.Kalenderansicht;
+import de.timecraft.kalender.model.ProjektAuswahl;
 import de.timecraft.projekte.api.ProjektInfo;
 import de.timecraft.zeiterfassung.api.BuchungInfo;
 import de.timecraft.zeiterfassung.api.Standort;
@@ -19,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /** Filter nach Projekt und Standort, auch fuer die Summen (FA-M6-06, US-M6-02). */
@@ -121,6 +123,26 @@ class KalenderServiceFilterTest {
                 .extracting(KalenderEintrag::zeiteintragId).doesNotContain(5L);
         assertThat(woche(new KalenderFilter(null, Standort.BUERO)).eintraege())
                 .extracting(KalenderEintrag::zeiteintragId).contains(5L);
+    }
+
+    @Test
+    void projektauswahlFuerDenFilterEnthaeltDieProjekteDesZeitraumsAuchMitAktivemFilter() {
+        buchungen.hinzufuegen(new BuchungInfo(5, JONAS, null, Standort.BUERO,
+                instant("2026-10-23T08:00"), instant("2026-10-23T09:00"), 0, 60, false));
+        List<ProjektAuswahl> erwartet = List.of(new ProjektAuswahl(KUECHE, "Einbauküche Wagner"),
+                new ProjektAuswahl(TREPPE, "Treppe Lindenstraße"));
+
+        assertThat(woche(KalenderFilter.KEINER).projekte()).isEqualTo(erwartet);
+        assertThat(woche(new KalenderFilter(TREPPE, Standort.HOMEOFFICE)).projekte()).isEqualTo(erwartet);
+    }
+
+    @Test
+    void projektauswahlIstLeerWennImZeitraumNichtsGebuchtIst() {
+        KalenderInhalt vorwoche = service.eigenerKalender(JONAS, Rolle.MITARBEITER, Kalenderansicht.WOCHE,
+                MONTAG.minusWeeks(1), KalenderFilter.KEINER);
+
+        assertThat(vorwoche.projekte()).isEmpty();
+        assertThat(vorwoche.keineTreffer()).isTrue();
     }
 
     private KalenderInhalt woche(KalenderFilter filter) {

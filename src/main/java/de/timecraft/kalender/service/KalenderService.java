@@ -6,13 +6,17 @@ import de.timecraft.benutzer.api.Rolle;
 import de.timecraft.geruest.common.FachlicheException;
 import de.timecraft.geruest.common.NichtGefundenException;
 import de.timecraft.geruest.common.ZugriffVerweigertException;
+import de.timecraft.kalender.model.BuchungDetails;
+import de.timecraft.kalender.model.HistorienEintrag;
 import de.timecraft.kalender.model.KalenderEintrag;
 import de.timecraft.kalender.model.KalenderFilter;
 import de.timecraft.kalender.model.KalenderInhalt;
 import de.timecraft.kalender.model.Kalenderansicht;
+import de.timecraft.kalender.model.ProjektAuswahl;
 import de.timecraft.kalender.model.WaehlbarePerson;
 import de.timecraft.projekte.api.ProjektAuskunft;
 import de.timecraft.projekte.api.ProjektInfo;
+import de.timecraft.zeiterfassung.api.AenderungInfo;
 import de.timecraft.zeiterfassung.api.BuchungInfo;
 import de.timecraft.zeiterfassung.api.BuchungsAuskunft;
 import de.timecraft.zeiterfassung.api.ZeitSegment;
@@ -31,6 +35,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -45,6 +50,8 @@ public class KalenderService {
 
     static final String OHNE_PROJEKT = "Ohne Projekt";
     static final String UNBEKANNTES_PROJEKT = "Unbekanntes Projekt";
+    static final String KEINE_ANGABE = "–";
+    static final String UNBEKANNTE_PERSON = "Unbekannte Person";
     private static final String NUR_EIGENER_KALENDER = "Sie dürfen nur Ihren eigenen Kalender sehen.";
 
     private final BuchungsAuskunft buchungsAuskunft;
@@ -168,6 +175,58 @@ public class KalenderService {
     }
 
     /**
+     * Detailfenster einer Buchung mit Projektleitung, Dauer und Aenderungshistorie (FA-M6-05, 10).
+     * Sichtbar fuer jede Person die eigenen Buchungen, fuer die Projektleitung die Buchungen, die sie
+     * im fremden Kalender sieht, fuer den Admin alle (FA-M6-07, 11, QA-M6-04), auch bei direktem Aufruf.
+     */
+    public BuchungDetails details(long mitarbeiterId, Rolle rolle, long zeiteintragId) {
+        KalenderRechte.pruefeAngemeldet(rolle);
+        Optional<BuchungInfo> gefunden = buchungsAuskunft.buchung(zeiteintragId);
+        if (gefunden.isEmpty() && rolle == Rolle.ADMIN) {
+            throw new NichtGefundenException("Diese Buchung gibt es nicht.");
+        }
+        BuchungInfo buchung = gefunden.filter(b -> darfSehen(mitarbeiterId, rolle, b))
+                .orElseThrow(() -> new ZugriffVerweigertException("Diese Buchung dürfen Sie nicht sehen."));
+
+        Optional<ProjektInfo> projekt = buchung.projektId() == null
+                ? Optional.empty() : projektAuskunft.finde(buchung.projektId());
+        String projektName = buchung.projektId() == null
+                ? OHNE_PROJEKT : projekt.map(ProjektInfo::name).orElse(UNBEKANNTES_PROJEKT);
+        String projektleitung = projekt.map(p -> personName(p.projektleitungId())).orElse(KEINE_ANGABE);
+        int dauer = buchung.laeuft()
+                ? (int) Duration.between(buchung.beginn(), clock.instant()).toMinutes()
+                : buchung.nettoMinuten();
+        return new BuchungDetails(buchung.zeiteintragId(), buchung.projektId(), projektName, projektleitung,
+                buchung.standort(), ortszeit(buchung.beginn()), buchung.laeuft() ? null : ortszeit(buchung.ende()),
+                dauer, buchung.laeuft(), buchung.geaendert(), historie(buchung.zeiteintragId()));
+    }
+
+    private boolean darfSehen(long mitarbeiterId, Rolle rolle, BuchungInfo buchung) {
+        if (buchung.mitarbeiterId() == mitarbeiterId) {
+            return true;
+        }
+        return switch (rolle) {
+            case MITARBEITER -> false;
+            case PROJEKTLEITUNG -> rechte.sichtbareProjekteFuerProjektleitung(mitarbeiterId, buchung.mitarbeiterId())
+                    .contains(buchung.projektId());
+            case ADMIN -> true;
+        };
+    }
+
+    /** Aenderungshistorie von M2, aelteste Aenderung zuerst, mit dem Namen der aendernden Person. */
+    private List<HistorienEintrag> historie(long zeiteintragId) {
+        return buchungsAuskunft.historie(zeiteintragId).stream()
+                .sorted(Comparator.comparing(AenderungInfo::zeitpunkt))
+                .map(a -> new HistorienEintrag(ortszeit(a.zeitpunkt()), personName(a.geaendertVonMitarbeiterId()),
+                        a.feld(), a.alterWert(), a.neuerWert(), a.begruendung()))
+                .toList();
+    }
+
+    private String personName(long mitarbeiterId) {
+        return mitarbeiterAuskunft.finde(mitarbeiterId).map(MitarbeiterInfo::name).orElse(UNBEKANNTE_PERSON);
+    }
+
+    /**
      * Projekte, deren Buchungen die Projektleitung im Kalender der Person sieht.
      * Ist die Person nicht (mehr) waehlbar, wird der Zugriff verweigert.
      */
@@ -189,11 +248,27 @@ public class KalenderService {
         KalenderFilter wirksamerFilter = filter == null ? KalenderFilter.KEINER : filter;
         LocalDate ersterTag = ersterTag(ansicht, bezugstag);
         LocalDate letzterTag = letzterTag(ansicht, bezugstag);
-        List<KalenderEintrag> eintraege = eintraegeLaden(personId, ersterTag, letzterTag).stream()
+        List<KalenderEintrag> sichtbar = eintraegeLaden(personId, ersterTag, letzterTag).stream()
                 .filter(eintrag -> erlaubteProjekte == null || erlaubteProjekte.contains(eintrag.projektId()))
+                .toList();
+        List<KalenderEintrag> eintraege = sichtbar.stream()
                 .filter(eintrag -> erfuelltFilter(eintrag, wirksamerFilter))
                 .toList();
-        return mitSummen(ersterTag, letzterTag, eintraege);
+        return mitSummen(ersterTag, letzterTag, eintraege, projekteFuerFilter(sichtbar));
+    }
+
+    /** Projekte der sichtbaren Eintraege (ohne „Ohne Projekt“), je Projekt einmal, sortiert nach Name. */
+    private List<ProjektAuswahl> projekteFuerFilter(List<KalenderEintrag> eintraege) {
+        Map<Long, String> projekte = new HashMap<>();
+        for (KalenderEintrag eintrag : eintraege) {
+            if (eintrag.projektId() != null) {
+                projekte.put(eintrag.projektId(), eintrag.projektName());
+            }
+        }
+        return projekte.entrySet().stream()
+                .map(projekt -> new ProjektAuswahl(projekt.getKey(), projekt.getValue()))
+                .sorted(Comparator.comparing(ProjektAuswahl::name))
+                .toList();
     }
 
     /** Ein Eintrag passt, wenn er jeden gesetzten Filter erfuellt. */
@@ -283,7 +358,8 @@ public class KalenderService {
     }
 
     /** Summe je Tag (jeder Tag des Zeitraums, auch 0) und Summe des Zeitraums, aus genau diesen Eintraegen. */
-    private KalenderInhalt mitSummen(LocalDate ersterTag, LocalDate letzterTag, List<KalenderEintrag> eintraege) {
+    private KalenderInhalt mitSummen(LocalDate ersterTag, LocalDate letzterTag, List<KalenderEintrag> eintraege,
+            List<ProjektAuswahl> projekte) {
         Map<LocalDate, Integer> tagessummen = new LinkedHashMap<>();
         for (LocalDate tag = ersterTag; !tag.isAfter(letzterTag); tag = tag.plusDays(1)) {
             tagessummen.put(tag, 0);
@@ -294,6 +370,6 @@ public class KalenderService {
             gesamt += eintrag.minuten();
         }
         return new KalenderInhalt(ersterTag, letzterTag, List.copyOf(eintraege),
-                Collections.unmodifiableMap(tagessummen), gesamt);
+                Collections.unmodifiableMap(tagessummen), gesamt, projekte);
     }
 }

@@ -17,6 +17,7 @@ import de.timecraft.kalender.model.KalenderEintrag;
 import de.timecraft.kalender.model.KalenderFilter;
 import de.timecraft.kalender.model.KalenderInhalt;
 import de.timecraft.kalender.model.Kalenderansicht;
+import de.timecraft.kalender.model.ProjektAuswahl;
 import de.timecraft.kalender.model.WaehlbarePerson;
 import de.timecraft.projekte.api.ProjektInfo;
 import de.timecraft.zeiterfassung.api.BuchungInfo;
@@ -294,6 +295,12 @@ class KalenderServicePersonWaehlenTest {
     void ohneAnmeldungKeinFremderKalender() {
         assertThatThrownBy(() -> woche(ADMIN, null, JONAS, KalenderFilter.KEINER))
                 .isInstanceOf(NichtAngemeldetException.class);
+    }
+
+    @Test
+    void projektauswahlImFremdenKalenderDerProjektleitungEnthaeltNurIhreSichtbarenProjekte() {
+        assertThat(woche(PETRA_PL, Rolle.PROJEKTLEITUNG, JONAS, KalenderFilter.KEINER).projekte())
+                .containsExactly(new ProjektAuswahl(KUECHE, "Einbauküche Wagner"));
     }
 
     private KalenderInhalt woche(long angemeldet, Rolle rolle, long person, KalenderFilter filter) {
