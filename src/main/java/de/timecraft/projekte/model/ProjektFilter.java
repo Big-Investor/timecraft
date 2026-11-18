@@ -85,7 +85,8 @@ public class ProjektFilter {
         return name;
     }
 
+    /** Ein leeres Textfeld (nichts oder nur Leerzeichen) bedeutet "nicht filtern" und wird zu null. */
     public void setName(String name) {
-        this.name = name;
+        this.name = (name == null || name.isBlank()) ? null : name;
     }
 }
