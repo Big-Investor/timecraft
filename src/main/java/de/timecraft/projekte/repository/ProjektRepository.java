@@ -17,6 +17,9 @@ import org.springframework.data.repository.query.Param;
  */
 public interface ProjektRepository extends JpaRepository<Projekt, Long> {
 
+    /** Alle Projekte (aktiv und archiviert), die diese Projektleitung verantwortet. */
+    List<Projekt> findByProjektleitungId(long projektleitungId);
+
     /**
      * Die Projektliste mit allen gesetzten Filtern, sortiert nach Projekt-ID.
      * Das ist die Kurzform für die Oberfläche und den Service: Sie reicht den Filter nur an
