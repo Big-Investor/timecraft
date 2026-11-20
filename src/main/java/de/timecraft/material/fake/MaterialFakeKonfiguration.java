@@ -118,8 +118,7 @@ public class MaterialFakeKonfiguration {
             Materialposition leimholzPosition = planen(vorkalkulation, TREPPE, leimholz, "10");
 
             Materialanpassungsantrag genehmigt = antraege.einreichen(JONAS, Rolle.MITARBEITER,
-                    multiplexPosition.getId(), new BigDecimal("2.5"), Mehrbedarfsgrund.VERSCHNITT,
-                    "Verschnitt bei Hochschrankseiten");
+                    multiplexPosition.getId(), new BigDecimal("2.5"), null, "Verschnitt bei Hochschrankseiten");
             antraege.freigeben(LENA_PL, Rolle.PROJEKTLEITUNG, genehmigt.getId());
             Materialanpassungsantrag abgelehnt = antraege.einreichen(JONAS, Rolle.MITARBEITER,
                     leimholzPosition.getId(), new BigDecimal("3"), Mehrbedarfsgrund.KUNDENAENDERUNG,

@@ -85,7 +85,7 @@ public class MaterialbedarfView extends Div implements BeforeEnterObserver {
             add(pfad(projekt));
             List<AntragZurPruefung> offene = antragService.offeneAntraege(id(), sitzung.rolle(), projektId);
             if (!offene.isEmpty()) {
-                add(banner(offene, projekt.darfPlanen()));
+                add(banner(offene, projekt.verantwortlich()));
             }
             Div rechts = new Div(auftragskosten(projekt), historie());
             rechts.getStyle().set("display", "flex").set("flex-direction", "column").set("gap", "1rem")
@@ -299,16 +299,23 @@ public class MaterialbedarfView extends Div implements BeforeEnterObserver {
         for (HistorienEintrag eintrag : eintraege) {
             Span tag = new Span(Formate.tagMonat(eintrag.zeitpunkt()) + " ");
             tag.getStyle().set("font-weight", "700");
-            String text = eintrag.art() == HistorienEintrag.Art.GENEHMIGT
-                    ? eintrag.bezeichnung() + " +" + Formate.menge(eintrag.menge(), eintrag.einheit())
-                            + " genehmigt · „" + eintrag.begruendung() + "“ · " + eintrag.person()
-                    : eintrag.bezeichnung() + " " + Formate.menge(eintrag.menge(), eintrag.einheit())
-                            + " eingeplant · " + eintrag.person();
-            Paragraph absatz = new Paragraph(tag, new Span(text));
+            Paragraph absatz = new Paragraph(tag, new Span(historientext(eintrag)));
             absatz.getStyle().set("font-size", "var(--lumo-font-size-s)").set("margin", "0.5rem 0");
             karte.add(absatz);
         }
         return karte;
+    }
+
+    /** Text wie im Mockup, z. B. "Materialplanung angelegt (5 Positionen) · Lena Schröder". */
+    private static String historientext(HistorienEintrag eintrag) {
+        String positionen = eintrag.anzahl() + (eintrag.anzahl() == 1 ? " Position" : " Positionen");
+        String einzeln = eintrag.bezeichnung() + " " + Formate.menge(eintrag.menge(), eintrag.einheit());
+        return switch (eintrag.art()) {
+            case ANGELEGT -> "Materialplanung angelegt (" + positionen + ") · " + eintrag.person();
+            case EINGEPLANT -> (eintrag.anzahl() == 1 ? einzeln : positionen) + " eingeplant · " + eintrag.person();
+            case GENEHMIGT -> eintrag.bezeichnung() + " +" + Formate.menge(eintrag.menge(), eintrag.einheit())
+                    + " genehmigt · „" + eintrag.begruendung() + "“ · " + eintrag.person();
+        };
     }
 
     private static Div zeile(String bezeichnung, String wert) {
@@ -319,21 +326,18 @@ public class MaterialbedarfView extends Div implements BeforeEnterObserver {
     }
 
     private boolean freigeben(long antragId) {
-        try {
-            antragService.freigeben(id(), sitzung.rolle(), antragId);
-            Meldungen.erfolg("Mehrbedarf freigegeben.");
-            laden();
-            return true;
-        } catch (RuntimeException fehler) {
-            Meldungen.fehler(fehler);
-            return false;
-        }
+        return entscheiden(() -> antragService.freigeben(id(), sitzung.rolle(), antragId), "Mehrbedarf freigegeben.");
     }
 
     private boolean ablehnen(long antragId, String kommentar) {
+        return entscheiden(() -> antragService.ablehnen(id(), sitzung.rolle(), antragId, kommentar),
+                "Mehrbedarf abgelehnt.");
+    }
+
+    private boolean entscheiden(Runnable entscheidung, String erfolg) {
         try {
-            antragService.ablehnen(id(), sitzung.rolle(), antragId, kommentar);
-            Meldungen.erfolg("Mehrbedarf abgelehnt.");
+            entscheidung.run();
+            Meldungen.erfolg(erfolg);
             laden();
             return true;
         } catch (RuntimeException fehler) {

@@ -445,9 +445,15 @@ class AnpassungsantragServiceTest {
     }
 
     @Test
-    void projekthistorieZeigtEingeplantesUndGenehmigtesNeuesteZuerst() {
+    void projekthistorieFasstEingeplantesJeTagZusammenUndZeigtGenehmigtesNeuesteZuerst() {
+        Materialposition zweite = positionRepository.save(new Materialposition(KUECHE, multiplex.getMaterial(),
+                BigDecimal.ONE));
         protokollRepository.save(new Materialprotokoll(multiplex, LENA_PL, LocalDateTime.of(2026, 10, 5, 8, 0),
                 Protokollaktion.GEBUCHT, null, new BigDecimal("16.00")));
+        protokollRepository.save(new Materialprotokoll(zweite, LENA_PL, LocalDateTime.of(2026, 10, 5, 8, 5),
+                Protokollaktion.GEBUCHT, null, BigDecimal.ONE));
+        protokollRepository.save(new Materialprotokoll(zweite, LENA_PL, LocalDateTime.of(2026, 10, 6, 7, 0),
+                Protokollaktion.GEBUCHT, null, new BigDecimal("3.60")));
         Materialanpassungsantrag antrag = antragVonJonas();
         service.freigeben(LENA_PL, Rolle.PROJEKTLEITUNG, antrag.getId());
         Materialanpassungsantrag abgelehnt = antragVonJonas();
@@ -455,16 +461,19 @@ class AnpassungsantragServiceTest {
 
         List<HistorienEintrag> historie = service.projekthistorie(LENA_PL, Rolle.PROJEKTLEITUNG, KUECHE);
 
-        assertThat(historie).extracting(HistorienEintrag::art)
-                .containsExactly(HistorienEintrag.Art.GENEHMIGT, HistorienEintrag.Art.EINGEPLANT);
+        assertThat(historie).extracting(HistorienEintrag::art).containsExactly(HistorienEintrag.Art.GENEHMIGT,
+                HistorienEintrag.Art.EINGEPLANT, HistorienEintrag.Art.ANGELEGT);
         HistorienEintrag genehmigt = historie.get(0);
         assertThat(genehmigt.zeitpunkt()).isEqualTo(LocalDateTime.of(2026, 10, 8, 9, 30));
         assertThat(genehmigt.bezeichnung()).isEqualTo("Multiplex Birke 18 mm");
         assertThat(genehmigt.menge()).isEqualByComparingTo("2.50");
         assertThat(genehmigt.begruendung()).isEqualTo("Verschnitt: Verschnitt bei Hochschrankseiten");
         assertThat(genehmigt.person()).isEqualTo("Lena Schröder");
-        assertThat(historie.get(1).menge()).isEqualByComparingTo("16.00");
-        assertThat(service.projekthistorie(ADMIN, Rolle.ADMIN, KUECHE)).hasSize(2);
+        assertThat(historie.get(1).anzahl()).isEqualTo(1);
+        assertThat(historie.get(1).menge()).isEqualByComparingTo("3.60");
+        assertThat(historie.get(2).anzahl()).isEqualTo(2);
+        assertThat(historie.get(2).zeitpunkt()).isEqualTo(LocalDateTime.of(2026, 10, 5, 8, 0));
+        assertThat(service.projekthistorie(ADMIN, Rolle.ADMIN, KUECHE)).hasSize(3);
         assertThatThrownBy(() -> service.projekthistorie(JONAS, Rolle.MITARBEITER, KUECHE))
                 .isInstanceOf(ZugriffVerweigertException.class);
     }

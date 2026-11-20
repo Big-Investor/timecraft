@@ -85,15 +85,17 @@ public class AnpassungsantragView extends Div {
         material.addValueChangeListener(ereignis -> mengeAnzeigen());
 
         menge.setValue(BigDecimal.ONE);
-        menge.setWidth("7rem");
+        menge.setWidth("6rem");
         menge.addValueChangeListener(ereignis -> mengeAnzeigen());
         Button minus = new Button("−", ereignis -> mengeAendern(SCHRITT.negate()));
         Button plus = new Button("+", ereignis -> mengeAendern(SCHRITT));
         HorizontalLayout mengenzeile = new HorizontalLayout(minus, menge, plus, einheit, neueMenge);
         mengenzeile.setAlignItems(FlexComponent.Alignment.CENTER);
+        mengenzeile.getStyle().set("flex-wrap", "wrap");
         neueMenge.getStyle().set("color", "var(--tc-text-gedaempft)").set("font-size", "var(--lumo-font-size-s)");
 
         HorizontalLayout knoepfe = new HorizontalLayout();
+        knoepfe.getStyle().set("flex-wrap", "wrap");
         for (Mehrbedarfsgrund g : Mehrbedarfsgrund.values()) {
             Button knopf = new Button(g.text(), ereignis -> grundWaehlen(g));
             gruende.put(g, knopf);
@@ -176,6 +178,11 @@ public class AnpassungsantragView extends Div {
         });
     }
 
+    private void grundZuruecksetzen() {
+        grund = null;
+        gruende.values().forEach(knopf -> knopf.removeThemeVariants(ButtonVariant.LUMO_PRIMARY));
+    }
+
     private void absenden() {
         PlanungOhnePreis gewaehlt = material.getValue();
         if (gewaehlt == null) {
@@ -189,7 +196,7 @@ public class AnpassungsantragView extends Div {
                     ? "Menge erhöht. Als Projektleitung ist Ihr Antrag sofort genehmigt."
                     : "Mehrbedarf angefordert. Die Projektleitung wird ihn prüfen.");
             begruendung.clear();
-            grundWaehlen(grund);
+            grundZuruecksetzen();
             menge.setValue(BigDecimal.ONE);
             materialLaden();
             meineAktualisieren();

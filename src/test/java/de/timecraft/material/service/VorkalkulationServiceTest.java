@@ -278,9 +278,9 @@ class VorkalkulationServiceTest {
     @Test
     void projektlisteUndKopfZeigenObGeplantWerdenDarf() {
         assertThat(service.projekte(LENA_PL, Rolle.PROJEKTLEITUNG)).containsExactly(
-                new Projektkopf(KUECHE, "Projekt 1024", true, true),
-                new Projektkopf(ARCHIV, "Projekt 1001", false, false));
-        assertThat(service.projekte(ADMIN, Rolle.ADMIN)).extracting(Projektkopf::darfPlanen)
+                new Projektkopf(KUECHE, "Projekt 1024", true, true, true),
+                new Projektkopf(ARCHIV, "Projekt 1001", false, true, false));
+        assertThat(service.projekte(ADMIN, Rolle.ADMIN)).extracting(Projektkopf::verantwortlich)
                 .containsExactly(false, false);
         assertThat(service.projekte(OTTO_PL, Rolle.PROJEKTLEITUNG)).isEmpty();
         assertThat(service.projektkopf(ADMIN, Rolle.ADMIN, KUECHE).darfPlanen()).isFalse();

@@ -19,7 +19,9 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -126,24 +128,40 @@ public class AnpassungsantragService {
     @Transactional(readOnly = true)
     public List<HistorienEintrag> projekthistorie(long mitarbeiterId, Rolle rolle, long projektId) {
         projektZugriff.pruefeKostensicht(mitarbeiterId, rolle, projektId);
-        List<HistorienEintrag> eintraege = new ArrayList<>();
-        for (Materialprotokoll protokoll : protokollRepository.findByMaterialpositionProjektIdOrderByZeitpunktAscIdAsc(projektId)) {
-            if (protokoll.getAktion() == Protokollaktion.GEBUCHT) {
-                Materialposition position = protokoll.getMaterialposition();
-                eintraege.add(new HistorienEintrag(protokoll.getZeitpunkt(), HistorienEintrag.Art.EINGEPLANT,
-                        position.getMaterial().getBezeichnung(), position.getMaterial().getEinheit(),
-                        protokoll.getNeuerWert(), null, personennamen.name(protokoll.getGeaendertVonId())));
-            }
-        }
+        List<HistorienEintrag> eintraege = new ArrayList<>(eingeplant(projektId));
         for (Materialanpassungsantrag antrag : antragRepository
                 .findByMaterialpositionProjektIdAndStatusOrderByEingereichtAmAsc(projektId, Antragsstatus.GENEHMIGT)) {
             Materialposition position = antrag.getMaterialposition();
             eintraege.add(new HistorienEintrag(LocalDateTime.ofInstant(antrag.getEntschiedenAm(), clock.getZone()),
-                    HistorienEintrag.Art.GENEHMIGT, position.getMaterial().getBezeichnung(),
+                    HistorienEintrag.Art.GENEHMIGT, 1, position.getMaterial().getBezeichnung(),
                     position.getMaterial().getEinheit(), antrag.getZusatzmenge(), antrag.getBegruendung(),
                     personennamen.name(antrag.getEntscheiderId())));
         }
         eintraege.sort(Comparator.comparing(HistorienEintrag::zeitpunkt).reversed());
+        return eintraege;
+    }
+
+    /**
+     * Eingeplante Positionen wie im Mockup zusammengefasst: je Tag und Person ein Eintrag. Der erste Eintrag
+     * des Projekts heisst ANGELEGT ("Materialplanung angelegt (5 Positionen)"), spaetere EINGEPLANT.
+     */
+    private List<HistorienEintrag> eingeplant(long projektId) {
+        Map<String, List<Materialprotokoll>> gruppen = new LinkedHashMap<>();
+        for (Materialprotokoll protokoll : protokollRepository.findByMaterialpositionProjektIdOrderByZeitpunktAscIdAsc(projektId)) {
+            if (protokoll.getAktion() == Protokollaktion.GEBUCHT) {
+                gruppen.computeIfAbsent(protokoll.getZeitpunkt().toLocalDate() + "/" + protokoll.getGeaendertVonId(),
+                        schluessel -> new ArrayList<>()).add(protokoll);
+            }
+        }
+        List<HistorienEintrag> eintraege = new ArrayList<>();
+        for (List<Materialprotokoll> gruppe : gruppen.values()) {
+            Materialprotokoll erster = gruppe.get(0);
+            Materialposition position = erster.getMaterialposition();
+            HistorienEintrag.Art art = eintraege.isEmpty() ? HistorienEintrag.Art.ANGELEGT : HistorienEintrag.Art.EINGEPLANT;
+            eintraege.add(new HistorienEintrag(erster.getZeitpunkt(), art, gruppe.size(),
+                    position.getMaterial().getBezeichnung(), position.getMaterial().getEinheit(), erster.getNeuerWert(),
+                    null, personennamen.name(erster.getGeaendertVonId())));
+        }
         return eintraege;
     }
 
