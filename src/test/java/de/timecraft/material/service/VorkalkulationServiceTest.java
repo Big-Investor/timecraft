@@ -274,4 +274,19 @@ class VorkalkulationServiceTest {
         assertThatThrownBy(() -> service.vorkalkulation(LENA_PL, null, KUECHE))
                 .isInstanceOf(NichtAngemeldetException.class);
     }
+
+    @Test
+    void projektlisteUndKopfZeigenObGeplantWerdenDarf() {
+        assertThat(service.projekte(LENA_PL, Rolle.PROJEKTLEITUNG)).containsExactly(
+                new Projektkopf(KUECHE, "Projekt 1024", true, true),
+                new Projektkopf(ARCHIV, "Projekt 1001", false, false));
+        assertThat(service.projekte(ADMIN, Rolle.ADMIN)).extracting(Projektkopf::darfPlanen)
+                .containsExactly(false, false);
+        assertThat(service.projekte(OTTO_PL, Rolle.PROJEKTLEITUNG)).isEmpty();
+        assertThat(service.projektkopf(ADMIN, Rolle.ADMIN, KUECHE).darfPlanen()).isFalse();
+        assertThatThrownBy(() -> service.projekte(MITARBEITER, Rolle.MITARBEITER))
+                .isInstanceOf(ZugriffVerweigertException.class);
+        assertThatThrownBy(() -> service.projektkopf(OTTO_PL, Rolle.PROJEKTLEITUNG, KUECHE))
+                .isInstanceOf(ZugriffVerweigertException.class);
+    }
 }

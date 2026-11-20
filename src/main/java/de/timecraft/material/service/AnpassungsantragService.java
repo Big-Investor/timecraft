@@ -17,6 +17,8 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,15 +40,17 @@ public class AnpassungsantragService {
     private final MaterialpositionRepository positionRepository;
     private final MaterialprotokollRepository protokollRepository;
     private final ProjektZugriff projektZugriff;
+    private final Personennamen personennamen;
     private final Clock clock;
 
     public AnpassungsantragService(AnpassungsantragRepository antragRepository,
             MaterialpositionRepository positionRepository, MaterialprotokollRepository protokollRepository,
-            ProjektZugriff projektZugriff, Clock clock) {
+            ProjektZugriff projektZugriff, Personennamen personennamen, Clock clock) {
         this.antragRepository = antragRepository;
         this.positionRepository = positionRepository;
         this.protokollRepository = protokollRepository;
         this.projektZugriff = projektZugriff;
+        this.personennamen = personennamen;
         this.clock = clock;
     }
 
@@ -97,7 +101,8 @@ public class AnpassungsantragService {
     public List<AntragZurPruefung> offeneAntraege(long mitarbeiterId, Rolle rolle, long projektId) {
         projektZugriff.pruefeKostensicht(mitarbeiterId, rolle, projektId);
         return antragRepository.findByMaterialpositionProjektIdAndStatusOrderByEingereichtAmAsc(projektId,
-                Antragsstatus.OFFEN).stream().map(AntragZurPruefung::aus).toList();
+                Antragsstatus.OFFEN).stream()
+                .map(a -> AntragZurPruefung.aus(a, personennamen.name(a.getAntragstellerId()))).toList();
     }
 
     /** Eigene Antraege, neueste zuerst. */
@@ -105,7 +110,41 @@ public class AnpassungsantragService {
     public List<MeinMehrbedarf> meineAntraege(long mitarbeiterId, Rolle rolle) {
         Rechte.pruefeAngemeldet(rolle);
         return antragRepository.findByAntragstellerIdOrderByEingereichtAmDescIdDesc(mitarbeiterId).stream()
-                .map(MeinMehrbedarf::aus).toList();
+                .map(a -> MeinMehrbedarf.aus(a, projektZugriff.projektname(a.getMaterialposition().getProjektId()),
+                        personennamen.name(a.getEntscheiderId())))
+                .toList();
+    }
+
+    /** Aktive Projekte zur Auswahl beim Mehrbedarf, ohne Preise. */
+    @Transactional(readOnly = true)
+    public List<Projektauswahl> projekteFuerMehrbedarf(long mitarbeiterId, Rolle rolle) {
+        return projektZugriff.projekteFuerMehrbedarf(mitarbeiterId, rolle).stream()
+                .map(p -> new Projektauswahl(p.projektId(), p.name())).toList();
+    }
+
+    /** Projekthistorie Material (FA-M4-06): eingeplante Positionen und genehmigte Mehrbedarfe, neueste zuerst. */
+    @Transactional(readOnly = true)
+    public List<HistorienEintrag> projekthistorie(long mitarbeiterId, Rolle rolle, long projektId) {
+        projektZugriff.pruefeKostensicht(mitarbeiterId, rolle, projektId);
+        List<HistorienEintrag> eintraege = new ArrayList<>();
+        for (Materialprotokoll protokoll : protokollRepository.findByMaterialpositionProjektIdOrderByZeitpunktAscIdAsc(projektId)) {
+            if (protokoll.getAktion() == Protokollaktion.GEBUCHT) {
+                Materialposition position = protokoll.getMaterialposition();
+                eintraege.add(new HistorienEintrag(protokoll.getZeitpunkt(), HistorienEintrag.Art.EINGEPLANT,
+                        position.getMaterial().getBezeichnung(), position.getMaterial().getEinheit(),
+                        protokoll.getNeuerWert(), null, personennamen.name(protokoll.getGeaendertVonId())));
+            }
+        }
+        for (Materialanpassungsantrag antrag : antragRepository
+                .findByMaterialpositionProjektIdAndStatusOrderByEingereichtAmAsc(projektId, Antragsstatus.GENEHMIGT)) {
+            Materialposition position = antrag.getMaterialposition();
+            eintraege.add(new HistorienEintrag(LocalDateTime.ofInstant(antrag.getEntschiedenAm(), clock.getZone()),
+                    HistorienEintrag.Art.GENEHMIGT, position.getMaterial().getBezeichnung(),
+                    position.getMaterial().getEinheit(), antrag.getZusatzmenge(), antrag.getBegruendung(),
+                    personennamen.name(antrag.getEntscheiderId())));
+        }
+        eintraege.sort(Comparator.comparing(HistorienEintrag::zeitpunkt).reversed());
+        return eintraege;
     }
 
     /** Freigabe: Soll-Menge erhoehen, Antrag GENEHMIGT, Protokoll GENEHMIGT, alles in einer Transaktion. */

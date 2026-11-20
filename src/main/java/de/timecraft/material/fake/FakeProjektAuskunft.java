@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/** Test-Fake fuer die ProjektAuskunft von M3: Projekte und Zuordnungen im Speicher. */
+/** Fake fuer die ProjektAuskunft von M3 (Tests und Profil "fake"): Projekte und Zuordnungen im Speicher. */
 public class FakeProjektAuskunft implements ProjektAuskunft {
 
     private final Map<Long, ProjektInfo> projekte = new LinkedHashMap<>();

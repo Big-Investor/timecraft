@@ -37,7 +37,8 @@ import org.springframework.transaction.annotation.Transactional;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
-@Import({AnpassungsantragService.class, ProjektZugriff.class, AnpassungsantragServiceTest.Testumgebung.class})
+@Import({AnpassungsantragService.class, ProjektZugriff.class, Personennamen.class,
+        AnpassungsantragServiceTest.Testumgebung.class})
 class AnpassungsantragRollbackTest {
 
     @Autowired

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** Test-Fake fuer die MitarbeiterAuskunft von M1: Personen und Stundensaetze im Speicher. */
+/** Fake (Tests und Profil "fake") fuer die MitarbeiterAuskunft von M1: Personen und Stundensaetze im Speicher. */
 public class FakeMitarbeiterAuskunft implements MitarbeiterAuskunft {
 
     private final Map<Long, MitarbeiterInfo> personen = new LinkedHashMap<>();

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Test-Fake fuer die BuchungsAuskunft von M2. M4 braucht nur {@code segmenteProjekt};
+ * Fake (Tests und Profil "fake") fuer die BuchungsAuskunft von M2. M4 braucht nur {@code segmenteProjekt};
  * die uebrigen Methoden liefern leere Ergebnisse wie bei einem Mitarbeiter ohne Buchungen.
  */
 public class FakeBuchungsAuskunft implements BuchungsAuskunft {

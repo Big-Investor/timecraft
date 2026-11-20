@@ -6,6 +6,9 @@ import de.timecraft.geruest.common.NichtGefundenException;
 import de.timecraft.geruest.common.ZugriffVerweigertException;
 import de.timecraft.projekte.api.ProjektAuskunft;
 import de.timecraft.projekte.api.ProjektInfo;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +23,11 @@ class ProjektZugriff {
 
     ProjektZugriff(@Lazy ProjektAuskunft projektAuskunft) {
         this.projektAuskunft = projektAuskunft;
+    }
+
+    /** Name fuer die Anzeige; ein inzwischen unbekanntes Projekt wird mit seiner ID genannt. */
+    String projektname(long projektId) {
+        return projektAuskunft.finde(projektId).map(ProjektInfo::name).orElse("Projekt " + projektId);
     }
 
     private ProjektInfo projekt(long projektId) {
@@ -41,7 +49,7 @@ class ProjektZugriff {
     ProjektInfo pruefeKostensicht(long mitarbeiterId, Rolle rolle, long projektId) {
         Rechte.pruefePreissicht(rolle);
         ProjektInfo projekt = projekt(projektId);
-        if (rolle == Rolle.PROJEKTLEITUNG && projekt.projektleitungId() != mitarbeiterId) {
+        if (rolle == Rolle.PROJEKTLEITUNG && !istVerantwortlich(mitarbeiterId, rolle, projekt)) {
             throw new ZugriffVerweigertException("Sie sind nicht die verantwortliche Projektleitung dieses Projekts.");
         }
         return projekt;
@@ -59,6 +67,27 @@ class ProjektZugriff {
             throw new ZugriffVerweigertException("Sie sind diesem Projekt nicht zugeordnet.");
         }
         return projekt;
+    }
+
+    /** Projekte mit Kostensicht: die verantworteten der Projektleitung, beim Admin alle. */
+    List<ProjektInfo> projekteMitKostensicht(long mitarbeiterId, Rolle rolle) {
+        Rechte.pruefePreissicht(rolle);
+        return rolle == Rolle.ADMIN ? projektAuskunft.alle() : projektAuskunft.verantworteteProjekte(mitarbeiterId);
+    }
+
+    /** Aktive Projekte, fuer die die Person Mehrbedarf beantragen darf (zugeordnet oder verantwortlich). */
+    List<ProjektInfo> projekteFuerMehrbedarf(long mitarbeiterId, Rolle rolle) {
+        Rechte.pruefeAngemeldet(rolle);
+        if (rolle == Rolle.ADMIN) {
+            throw new ZugriffVerweigertException("Administratoren stellen keinen Mehrbedarf.");
+        }
+        Map<Long, ProjektInfo> projekte = new LinkedHashMap<>();
+        projektAuskunft.aktiveProjekteVon(mitarbeiterId).forEach(p -> projekte.put(p.projektId(), p));
+        if (rolle == Rolle.PROJEKTLEITUNG) {
+            projektAuskunft.verantworteteProjekte(mitarbeiterId).stream().filter(ProjektInfo::aktiv)
+                    .forEach(p -> projekte.putIfAbsent(p.projektId(), p));
+        }
+        return List.copyOf(projekte.values());
     }
 
     static boolean istVerantwortlich(long mitarbeiterId, Rolle rolle, ProjektInfo projekt) {

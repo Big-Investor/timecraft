@@ -73,7 +73,7 @@ public class KostenService {
         // Summanden haben schon 2 Stellen; runden sorgt nur fuer "0.00" ohne Buchungen
         personal = Betraege.runden(personal);
         int minuten = minutenJePerson.values().stream().mapToInt(Integer::intValue).sum();
-        return uebersicht(material, personal, minuten, projekt.angebotspreis(), ohneStundensatz);
+        return uebersicht(material, personal, minuten, projekt.angebotspreis(), List.copyOf(ohneStundensatz));
     }
 
     /** Angebotspreis setzen: nur die verantwortliche Projektleitung eines aktiven Projekts. */

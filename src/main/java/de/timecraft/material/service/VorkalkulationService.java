@@ -13,6 +13,7 @@ import de.timecraft.material.repository.MaterialprotokollRepository;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,5 +65,19 @@ public class VorkalkulationService {
     public Vorkalkulation vorkalkulation(long mitarbeiterId, Rolle rolle, long projektId) {
         projektZugriff.pruefeKostensicht(mitarbeiterId, rolle, projektId);
         return Vorkalkulation.berechne(positionRepository.findByProjektIdOrderByIdAsc(projektId));
+    }
+
+    /** Projekte fuer die Materialuebersicht: verantwortete (Projektleitung) bzw. alle (Admin). */
+    @Transactional(readOnly = true)
+    public List<Projektkopf> projekte(long mitarbeiterId, Rolle rolle) {
+        return projektZugriff.projekteMitKostensicht(mitarbeiterId, rolle).stream()
+                .map(p -> Projektkopf.aus(p, mitarbeiterId, rolle)).toList();
+    }
+
+    /** Kopf der Materialplanung eines Projekts: verantwortliche Projektleitung und Admin. */
+    @Transactional(readOnly = true)
+    public Projektkopf projektkopf(long mitarbeiterId, Rolle rolle, long projektId) {
+        return Projektkopf.aus(projektZugriff.pruefeKostensicht(mitarbeiterId, rolle, projektId), mitarbeiterId,
+                rolle);
     }
 }

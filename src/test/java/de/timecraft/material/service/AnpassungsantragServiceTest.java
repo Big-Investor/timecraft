@@ -9,6 +9,7 @@ import de.timecraft.geruest.common.FachlicheException;
 import de.timecraft.geruest.common.NichtAngemeldetException;
 import de.timecraft.geruest.common.NichtGefundenException;
 import de.timecraft.geruest.common.ZugriffVerweigertException;
+import de.timecraft.material.fake.FakeMitarbeiterAuskunft;
 import de.timecraft.material.fake.FakeProjektAuskunft;
 import de.timecraft.material.model.Einheit;
 import de.timecraft.material.model.Material;
@@ -42,7 +43,8 @@ import org.springframework.test.context.ActiveProfiles;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
-@Import({AnpassungsantragService.class, ProjektZugriff.class, AnpassungsantragServiceTest.Testumgebung.class})
+@Import({AnpassungsantragService.class, ProjektZugriff.class, Personennamen.class,
+        AnpassungsantragServiceTest.Testumgebung.class})
 class AnpassungsantragServiceTest {
 
     static final long JONAS = 1;
@@ -71,8 +73,17 @@ class AnpassungsantragServiceTest {
             return projekte;
         }
 
+        @Bean
+        FakeMitarbeiterAuskunft mitarbeiterAuskunft() {
+            FakeMitarbeiterAuskunft personen = new FakeMitarbeiterAuskunft();
+            personen.hinzufuegen(JONAS, "Jonas", "Becker", Rolle.MITARBEITER, null);
+            personen.hinzufuegen(LENA_PL, "Lena", "Schröder", Rolle.PROJEKTLEITUNG, null);
+            return personen;
+        }
+
         private static ProjektInfo projekt(long id, boolean aktiv) {
-            return new ProjektInfo(id, "Projekt " + id, LocalDate.of(2026, 9, 1), null, LENA_PL, aktiv, null);
+            return new ProjektInfo(id, "Projekt " + id, LocalDate.of(2026, 9, 1), null, LENA_PL, aktiv,
+                    new BigDecimal("9800.00"));
         }
     }
 
@@ -374,7 +385,7 @@ class AnpassungsantragServiceTest {
 
         assertThat(offene).hasSize(1);
         AntragZurPruefung pruefung = offene.get(0);
-        assertThat(pruefung.antragstellerId()).isEqualTo(JONAS);
+        assertThat(pruefung.antragsteller()).isEqualTo("Jonas Becker");
         assertThat(pruefung.alteMenge()).isEqualByComparingTo("16.00");
         assertThat(pruefung.neueMenge()).isEqualByComparingTo("18.50");
         assertThat(pruefung.kostendifferenz()).isEqualByComparingTo("105.00");
@@ -402,6 +413,8 @@ class AnpassungsantragServiceTest {
         assertThat(abgelehnt.einheit()).isEqualTo(Einheit.QUADRATMETER);
         assertThat(abgelehnt.status()).isEqualTo(Antragsstatus.ABGELEHNT);
         assertThat(abgelehnt.entscheidungshinweis()).isEqualTo("Reststueck verwenden.");
+        assertThat(abgelehnt.projekt()).isEqualTo("Projekt 1024");
+        assertThat(abgelehnt.entscheider()).isEqualTo("Lena Schröder");
         assertThatThrownBy(() -> service.meineAntraege(JONAS, null)).isInstanceOf(NichtAngemeldetException.class);
     }
 
@@ -415,6 +428,44 @@ class AnpassungsantragServiceTest {
         assertThatThrownBy(() -> service.geplanteMaterialien(FREMD, Rolle.MITARBEITER, KUECHE))
                 .isInstanceOf(ZugriffVerweigertException.class);
         assertThatThrownBy(() -> service.geplanteMaterialien(ADMIN, Rolle.ADMIN, KUECHE))
+                .isInstanceOf(ZugriffVerweigertException.class);
+    }
+
+    @Test
+    void projekteFuerMehrbedarfNurAktiveOhnePreiseVerantwortlicheZusaetzlich() {
+        assertThat(service.projekteFuerMehrbedarf(JONAS, Rolle.MITARBEITER))
+                .containsExactly(new Projektauswahl(KUECHE, "Projekt 1024"));
+        assertThat(service.projekteFuerMehrbedarf(LENA_PL, Rolle.PROJEKTLEITUNG))
+                .containsExactly(new Projektauswahl(KUECHE, "Projekt 1024"));
+        assertThat(service.projekteFuerMehrbedarf(FREMD, Rolle.MITARBEITER)).isEmpty();
+        assertThatThrownBy(() -> service.projekteFuerMehrbedarf(ADMIN, Rolle.ADMIN))
+                .isInstanceOf(ZugriffVerweigertException.class);
+        assertThatThrownBy(() -> service.projekteFuerMehrbedarf(JONAS, null))
+                .isInstanceOf(NichtAngemeldetException.class);
+    }
+
+    @Test
+    void projekthistorieZeigtEingeplantesUndGenehmigtesNeuesteZuerst() {
+        protokollRepository.save(new Materialprotokoll(multiplex, LENA_PL, LocalDateTime.of(2026, 10, 5, 8, 0),
+                Protokollaktion.GEBUCHT, null, new BigDecimal("16.00")));
+        Materialanpassungsantrag antrag = antragVonJonas();
+        service.freigeben(LENA_PL, Rolle.PROJEKTLEITUNG, antrag.getId());
+        Materialanpassungsantrag abgelehnt = antragVonJonas();
+        service.ablehnen(LENA_PL, Rolle.PROJEKTLEITUNG, abgelehnt.getId(), "nein");
+
+        List<HistorienEintrag> historie = service.projekthistorie(LENA_PL, Rolle.PROJEKTLEITUNG, KUECHE);
+
+        assertThat(historie).extracting(HistorienEintrag::art)
+                .containsExactly(HistorienEintrag.Art.GENEHMIGT, HistorienEintrag.Art.EINGEPLANT);
+        HistorienEintrag genehmigt = historie.get(0);
+        assertThat(genehmigt.zeitpunkt()).isEqualTo(LocalDateTime.of(2026, 10, 8, 9, 30));
+        assertThat(genehmigt.bezeichnung()).isEqualTo("Multiplex Birke 18 mm");
+        assertThat(genehmigt.menge()).isEqualByComparingTo("2.50");
+        assertThat(genehmigt.begruendung()).isEqualTo("Verschnitt: Verschnitt bei Hochschrankseiten");
+        assertThat(genehmigt.person()).isEqualTo("Lena Schröder");
+        assertThat(historie.get(1).menge()).isEqualByComparingTo("16.00");
+        assertThat(service.projekthistorie(ADMIN, Rolle.ADMIN, KUECHE)).hasSize(2);
+        assertThatThrownBy(() -> service.projekthistorie(JONAS, Rolle.MITARBEITER, KUECHE))
                 .isInstanceOf(ZugriffVerweigertException.class);
     }
 }
