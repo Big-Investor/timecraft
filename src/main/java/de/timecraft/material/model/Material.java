@@ -73,6 +73,10 @@ public class Material {
         this.aktiv = false;
     }
 
+    public void aktivieren() {
+        this.aktiv = true;
+    }
+
     public Long getId() {
         return id;
     }

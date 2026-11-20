@@ -187,6 +187,16 @@ class MaterialServiceTest {
                 .containsExactly("ART-1");
     }
 
+    @Test
+    void adminAktiviertDeaktiviertesMaterialWieder() {
+        Material material = service.anlegen(Rolle.ADMIN, eiche());
+        service.deaktivieren(Rolle.ADMIN, material.getId());
+
+        service.aktivieren(Rolle.ADMIN, material.getId());
+
+        assertThat(service.aktive(Rolle.ADMIN)).extracting(Material::getId).containsExactly(material.getId());
+    }
+
     @ParameterizedTest
     @EnumSource(value = Rolle.class, names = {"MITARBEITER", "PROJEKTLEITUNG"})
     void nurAdminPflegtDenStamm(Rolle rolle) {
@@ -197,6 +207,8 @@ class MaterialServiceTest {
         assertThatThrownBy(() -> service.bearbeiten(rolle, material.getId(), mitPreisen("1", "2")))
                 .isInstanceOf(ZugriffVerweigertException.class);
         assertThatThrownBy(() -> service.deaktivieren(rolle, material.getId()))
+                .isInstanceOf(ZugriffVerweigertException.class);
+        assertThatThrownBy(() -> service.aktivieren(rolle, material.getId()))
                 .isInstanceOf(ZugriffVerweigertException.class);
         assertThat(repository.findById(material.getId()).orElseThrow().isAktiv()).isTrue();
         assertThat(repository.count()).isEqualTo(1);

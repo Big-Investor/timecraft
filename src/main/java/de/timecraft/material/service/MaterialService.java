@@ -55,6 +55,12 @@ public class MaterialService implements MaterialAuskunft {
         finde(materialId).deaktivieren();
     }
 
+    @Transactional
+    public void aktivieren(Rolle rolle, long materialId) {
+        Rechte.pruefeStammpflege(rolle);
+        finde(materialId).aktivieren();
+    }
+
     /** Ganzer Stamm mit Preisen, auch deaktivierte Materialien. */
     @Transactional(readOnly = true)
     public List<Material> alle(Rolle rolle) {

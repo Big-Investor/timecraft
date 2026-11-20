@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface MaterialpositionRepository extends JpaRepository<Materialposition, Long> {
 
     List<Materialposition> findByProjektIdOrderByIdAsc(long projektId);
+
+    boolean existsByProjektIdAndMaterialId(long projektId, long materialId);
 }
