@@ -40,6 +40,11 @@ public class Materialposition {
         this.sollMenge = sollMenge;
     }
 
+    /** Erhoeht die Soll-Menge nach einem genehmigten Mehrbedarf; die Pruefung macht der Service. */
+    public void erhoeheSollMenge(BigDecimal zusatzmenge) {
+        this.sollMenge = this.sollMenge.add(zusatzmenge);
+    }
+
     public Long getId() {
         return id;
     }

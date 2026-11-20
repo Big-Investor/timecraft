@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -76,6 +77,12 @@ class MaterialprotokollRepositoryTest {
                 String.class, eintrag.getId());
 
         assertThat(aktion).isEqualTo("GEBUCHT");
+    }
+
+    @Test
+    void protokollBietetWederAendernNochLoeschenAn() {
+        // Unveraenderlich (QA-M4-01): kein CrudRepository (kein delete), Entity ohne Setter, Spalten updatable=false
+        assertThat(CrudRepository.class.isAssignableFrom(MaterialprotokollRepository.class)).isFalse();
     }
 
     private Materialposition position(long projektId) {

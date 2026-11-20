@@ -31,8 +31,8 @@ class ProjektZugriff {
     ProjektInfo pruefeVerantwortlich(long mitarbeiterId, Rolle rolle, long projektId) {
         Rechte.pruefeAngemeldet(rolle);
         ProjektInfo projekt = projekt(projektId);
-        if (rolle != Rolle.PROJEKTLEITUNG || projekt.projektleitungId() != mitarbeiterId) {
-            throw new ZugriffVerweigertException("Nur die verantwortliche Projektleitung darf das Material dieses Projekts planen.");
+        if (!istVerantwortlich(mitarbeiterId, rolle, projekt)) {
+            throw new ZugriffVerweigertException("Das darf nur die verantwortliche Projektleitung dieses Projekts.");
         }
         return projekt;
     }
@@ -45,6 +45,24 @@ class ProjektZugriff {
             throw new ZugriffVerweigertException("Sie sind nicht die verantwortliche Projektleitung dieses Projekts.");
         }
         return projekt;
+    }
+
+    /**
+     * Mehrbedarf beantragen und die geplanten Materialien (ohne Preise) sehen duerfen alle Personen,
+     * die dem Projekt zugeordnet sind, und die verantwortliche Projektleitung. Der Admin nicht.
+     */
+    ProjektInfo pruefeTeilnahme(long mitarbeiterId, Rolle rolle, long projektId) {
+        Rechte.pruefeAngemeldet(rolle);
+        ProjektInfo projekt = projekt(projektId);
+        if (rolle == Rolle.ADMIN || !(istVerantwortlich(mitarbeiterId, rolle, projekt)
+                || projektAuskunft.istZugeordnet(mitarbeiterId, projektId))) {
+            throw new ZugriffVerweigertException("Sie sind diesem Projekt nicht zugeordnet.");
+        }
+        return projekt;
+    }
+
+    static boolean istVerantwortlich(long mitarbeiterId, Rolle rolle, ProjektInfo projekt) {
+        return rolle == Rolle.PROJEKTLEITUNG && projekt.projektleitungId() == mitarbeiterId;
     }
 
     static void pruefeAktiv(ProjektInfo projekt) {
