@@ -212,7 +212,7 @@ class AnpassungsantragServiceTest {
         assertThatThrownBy(() -> service.einreichen(JONAS, Rolle.MITARBEITER, imArchiv.getId(), BigDecimal.ONE,
                 null, "Text"))
                 .isInstanceOf(FachlicheException.class)
-                .hasMessage("Das Projekt ist abgeschlossen. Das Material kann nicht mehr geändert werden.");
+                .hasMessage("Das Projekt ist abgeschlossen und kann nicht mehr geändert werden.");
         assertThat(antragRepository.count()).isZero();
     }
 
@@ -397,11 +397,11 @@ class AnpassungsantragServiceTest {
         List<MeinMehrbedarf> meine = service.meineAntraege(JONAS, Rolle.MITARBEITER);
 
         assertThat(meine).extracting(MeinMehrbedarf::antragId).containsExactly(zweiter.getId(), erster.getId());
-        meine = meine.subList(1, 2);
-        assertThat(meine.get(0).bezeichnung()).isEqualTo("Multiplex Birke 18 mm");
-        assertThat(meine.get(0).einheit()).isEqualTo(Einheit.QUADRATMETER);
-        assertThat(meine.get(0).status()).isEqualTo(Antragsstatus.ABGELEHNT);
-        assertThat(meine.get(0).entscheidungshinweis()).isEqualTo("Reststueck verwenden.");
+        MeinMehrbedarf abgelehnt = meine.get(1);
+        assertThat(abgelehnt.bezeichnung()).isEqualTo("Multiplex Birke 18 mm");
+        assertThat(abgelehnt.einheit()).isEqualTo(Einheit.QUADRATMETER);
+        assertThat(abgelehnt.status()).isEqualTo(Antragsstatus.ABGELEHNT);
+        assertThat(abgelehnt.entscheidungshinweis()).isEqualTo("Reststueck verwenden.");
         assertThatThrownBy(() -> service.meineAntraege(JONAS, null)).isInstanceOf(NichtAngemeldetException.class);
     }
 

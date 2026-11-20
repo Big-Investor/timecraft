@@ -37,7 +37,7 @@ import org.springframework.test.context.ActiveProfiles;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
-@Import({KostenService.class, ProjektZugriff.class, KostenServiceTest.Testumgebung.class})
+@Import({KostenService.class, ProjektZugriff.class, Personennamen.class, KostenServiceTest.Testumgebung.class})
 class KostenServiceTest {
 
     static final long JONAS = 1;
@@ -46,9 +46,13 @@ class KostenServiceTest {
     static final long MEHMET = 4;
     static final long NEU_OHNE_SATZ = 5;
     static final long OTTO_PL = 7;
+    static final long ANNA = 8;
+    static final long BEN = 9;
     static final long KUECHE = 1024;
     static final long OHNE_PREIS = 1031;
     static final long ARCHIV = 1001;
+    static final long RUNDUNG = 1050;
+    static final long OHNE_START = 1060;
 
     @TestConfiguration
     static class Testumgebung {
@@ -65,6 +69,8 @@ class KostenServiceTest {
             projekte.hinzufuegen(projekt(KUECHE, true, new BigDecimal("9800.00")), JONAS, MEHMET);
             projekte.hinzufuegen(projekt(OHNE_PREIS, true, null), JONAS);
             projekte.hinzufuegen(projekt(ARCHIV, false, new BigDecimal("100.00")), JONAS);
+            projekte.hinzufuegen(projekt(RUNDUNG, true, null), ANNA, BEN);
+            projekte.hinzufuegen(new ProjektInfo(OHNE_START, "Ohne Start", null, null, LENA_PL, true, null), JONAS);
             return projekte;
         }
 
@@ -79,6 +85,8 @@ class KostenServiceTest {
             personen.hinzufuegen(JONAS, "Jonas", "Becker", Rolle.MITARBEITER, new BigDecimal("28.00"));
             personen.hinzufuegen(MEHMET, "Mehmet", "Yilmaz", Rolle.MITARBEITER, new BigDecimal("28.00"));
             personen.hinzufuegen(NEU_OHNE_SATZ, "Mia", "Fischer", Rolle.MITARBEITER, null);
+            personen.hinzufuegen(ANNA, "Anna", "Klein", Rolle.MITARBEITER, new BigDecimal("0.30"));
+            personen.hinzufuegen(BEN, "Ben", "Wolf", Rolle.MITARBEITER, new BigDecimal("0.30"));
             return personen;
         }
 
@@ -90,6 +98,12 @@ class KostenServiceTest {
             buchungen.segment(MEHMET, KUECHE, LocalDate.of(2026, 10, 7), 3835);
             buchungen.segment(JONAS, OHNE_PREIS, LocalDate.of(2026, 10, 7), 600);
             buchungen.segment(NEU_OHNE_SATZ, OHNE_PREIS, LocalDate.of(2026, 10, 8), 480);
+            // je 1 min x 0,30 €/h = 0,005 € (genau auf der Rundungsgrenze)
+            buchungen.segment(ANNA, RUNDUNG, LocalDate.of(2026, 10, 1), 1);
+            buchungen.segment(BEN, RUNDUNG, LocalDate.of(2026, 10, 1), 1);
+            // Projekt ohne Startdatum: nur der aktuelle Monat zaehlt
+            buchungen.segment(JONAS, OHNE_START, LocalDate.of(2026, 11, 2), 60);
+            buchungen.segment(JONAS, OHNE_START, LocalDate.of(2026, 10, 30), 60);
             // vor dem Projektstart und nach heute: zaehlen nicht
             buchungen.segment(JONAS, KUECHE, LocalDate.of(2026, 8, 31), 999);
             buchungen.segment(JONAS, KUECHE, LocalDate.of(2026, 12, 1), 999);
@@ -120,6 +134,7 @@ class KostenServiceTest {
         projekte.ersetzen(Testumgebung.projekt(KUECHE, true, new BigDecimal("9800.00")));
         projekte.ersetzen(Testumgebung.projekt(OHNE_PREIS, true, null));
         projekte.ersetzen(Testumgebung.projekt(ARCHIV, false, new BigDecimal("100.00")));
+        projekte.ersetzen(Testumgebung.projekt(RUNDUNG, true, null));
         Material eiche = materialRepository.save(new Material("ART-1102", "Eiche Massivholzplatte 26 mm", "Holz",
                 Einheit.QUADRATMETER, new BigDecimal("89.50"), new BigDecimal("129.00")));
         positionRepository.save(new Materialposition(KUECHE, eiche, new BigDecimal("12.00")));
@@ -186,8 +201,14 @@ class KostenServiceTest {
 
     @Test
     void personalkostenWerdenJePersonKaufmaennischGerundet() {
-        // 3.835 min x 28 €/h = 1.789,666… -> 1.789,67 (HALF_UP), siehe erster Test
-        assertThat(service.kosten(ADMIN, Rolle.ADMIN, KUECHE).personalkosten()).isEqualTo(new BigDecimal("4123.00"));
+        // je Person 0,005 € -> 0,01 € (HALF_UP, nicht HALF_EVEN); Summe 0,02 € (Summe erst runden ergaebe 0,01 €)
+        assertThat(service.kosten(LENA_PL, Rolle.PROJEKTLEITUNG, RUNDUNG).personalkosten())
+                .isEqualTo(new BigDecimal("0.02"));
+    }
+
+    @Test
+    void ohneStartdatumZaehltNurDerAktuelleMonat() {
+        assertThat(service.kosten(LENA_PL, Rolle.PROJEKTLEITUNG, OHNE_START).personalMinuten()).isEqualTo(60);
     }
 
     @Test
@@ -217,7 +238,10 @@ class KostenServiceTest {
         assertThatThrownBy(() -> service.setzeAngebotspreis(JONAS, Rolle.MITARBEITER, KUECHE, BigDecimal.ONE))
                 .isInstanceOf(ZugriffVerweigertException.class);
         assertThatThrownBy(() -> service.setzeAngebotspreis(LENA_PL, Rolle.PROJEKTLEITUNG, ARCHIV, BigDecimal.ONE))
-                .isInstanceOf(FachlicheException.class);
+                .isInstanceOf(FachlicheException.class)
+                .hasMessage("Das Projekt ist abgeschlossen und kann nicht mehr geändert werden.");
+        assertThatThrownBy(() -> service.setzeAngebotspreis(LENA_PL, null, KUECHE, BigDecimal.ONE))
+                .isInstanceOf(NichtAngemeldetException.class);
         assertThat(projekte.finde(KUECHE).orElseThrow().angebotspreis()).isEqualByComparingTo("9800.00");
         assertThat(projekte.finde(ARCHIV).orElseThrow().angebotspreis()).isEqualByComparingTo("100.00");
     }

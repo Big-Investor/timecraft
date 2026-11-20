@@ -67,7 +67,7 @@ class ProjektZugriff {
 
     static void pruefeAktiv(ProjektInfo projekt) {
         if (!projekt.aktiv()) {
-            throw new FachlicheException("Das Projekt ist abgeschlossen. Das Material kann nicht mehr geändert werden.");
+            throw new FachlicheException("Das Projekt ist abgeschlossen und kann nicht mehr geändert werden.");
         }
     }
 }

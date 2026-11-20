@@ -8,6 +8,7 @@ import de.timecraft.zeiterfassung.api.ZeitSegment;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +24,7 @@ public class FakeBuchungsAuskunft implements BuchungsAuskunft {
 
     /** Abgeschlossene Buchung an einem Tag mit anrechenbaren Minuten (Pause schon abgezogen). */
     public void segment(long mitarbeiterId, long projektId, LocalDate tag, int anrechenbareMinuten) {
-        Instant beginn = tag.atStartOfDay(java.time.ZoneId.of("Europe/Berlin")).toInstant();
+        Instant beginn = tag.atStartOfDay(ZoneId.of("Europe/Berlin")).toInstant();
         segmente.add(new ZeitSegment(naechsteId++, mitarbeiterId, projektId, Standort.UNTERWEGS, tag, beginn,
                 beginn.plusSeconds(anrechenbareMinuten * 60L), anrechenbareMinuten));
     }

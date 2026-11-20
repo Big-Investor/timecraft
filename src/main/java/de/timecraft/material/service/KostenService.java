@@ -1,7 +1,6 @@
 package de.timecraft.material.service;
 
 import de.timecraft.benutzer.api.MitarbeiterAuskunft;
-import de.timecraft.benutzer.api.MitarbeiterInfo;
 import de.timecraft.benutzer.api.Rolle;
 import de.timecraft.geruest.common.FachlicheException;
 import de.timecraft.material.model.Kostendeckung;
@@ -38,16 +37,18 @@ public class KostenService {
     private final BuchungsAuskunft buchungsAuskunft;
     private final MitarbeiterAuskunft mitarbeiterAuskunft;
     private final AngebotspreisPflege angebotspreisPflege;
+    private final Personennamen personennamen;
     private final Clock clock;
 
     public KostenService(MaterialpositionRepository positionRepository, ProjektZugriff projektZugriff,
             @Lazy BuchungsAuskunft buchungsAuskunft, @Lazy MitarbeiterAuskunft mitarbeiterAuskunft,
-            @Lazy AngebotspreisPflege angebotspreisPflege, Clock clock) {
+            @Lazy AngebotspreisPflege angebotspreisPflege, Personennamen personennamen, Clock clock) {
         this.positionRepository = positionRepository;
         this.projektZugriff = projektZugriff;
         this.buchungsAuskunft = buchungsAuskunft;
         this.mitarbeiterAuskunft = mitarbeiterAuskunft;
         this.angebotspreisPflege = angebotspreisPflege;
+        this.personennamen = personennamen;
         this.clock = clock;
     }
 
@@ -63,12 +64,13 @@ public class KostenService {
         for (Map.Entry<Long, Integer> eintrag : minutenJePerson.entrySet()) {
             BigDecimal stundensatz = mitarbeiterAuskunft.stundensatz(eintrag.getKey()).orElse(null);
             if (stundensatz == null) {
-                ohneStundensatz.add(name(eintrag.getKey()));
+                ohneStundensatz.add(personennamen.name(eintrag.getKey()));
             } else {
                 personal = personal.add(BigDecimal.valueOf(eintrag.getValue()).multiply(stundensatz)
                         .divide(MINUTEN_JE_STUNDE, 2, RoundingMode.HALF_UP));
             }
         }
+        // Summanden haben schon 2 Stellen; runden sorgt nur fuer "0.00" ohne Buchungen
         personal = Betraege.runden(personal);
         int minuten = minutenJePerson.values().stream().mapToInt(Integer::intValue).sum();
         return uebersicht(material, personal, minuten, projekt.angebotspreis(), ohneStundensatz);
@@ -115,10 +117,5 @@ public class KostenService {
             }
         }
         return minuten;
-    }
-
-    private String name(long mitarbeiterId) {
-        return mitarbeiterAuskunft.finde(mitarbeiterId).map(MitarbeiterInfo::name)
-                .orElse("Mitarbeiter " + mitarbeiterId);
     }
 }
