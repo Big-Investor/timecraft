@@ -57,6 +57,22 @@ public class Material {
         this.aktiv = true;
     }
 
+    /** Uebernimmt geaenderte Stammdaten; die Pruefung macht der Service. */
+    public void aendern(String artikelnummer, String bezeichnung, String kategorie, Einheit einheit,
+            BigDecimal einkaufspreis, BigDecimal verkaufspreis) {
+        this.artikelnummer = artikelnummer;
+        this.bezeichnung = bezeichnung;
+        this.kategorie = kategorie;
+        this.einheit = einheit;
+        this.einkaufspreis = einkaufspreis;
+        this.verkaufspreis = verkaufspreis;
+    }
+
+    /** Material kann nicht mehr neu eingeplant werden, bestehende Positionen bleiben. */
+    public void deaktivieren() {
+        this.aktiv = false;
+    }
+
     public Long getId() {
         return id;
     }
