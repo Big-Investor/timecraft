@@ -12,7 +12,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface AnpassungsantragRepository extends JpaRepository<Materialanpassungsantrag, Long> {
 
-    List<Materialanpassungsantrag> findByAntragstellerIdOrderByEingereichtAmDesc(long antragstellerId);
+    List<Materialanpassungsantrag> findByAntragstellerIdOrderByEingereichtAmDescIdDesc(long antragstellerId);
 
     List<Materialanpassungsantrag> findByMaterialpositionProjektIdAndStatusOrderByEingereichtAmAsc(long projektId,
             Antragsstatus status);

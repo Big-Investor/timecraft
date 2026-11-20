@@ -201,7 +201,7 @@ class VorkalkulationServiceTest {
         assertThatThrownBy(() -> service.positionHinzufuegen(LENA_PL, Rolle.PROJEKTLEITUNG, ARCHIV, eiche.getId(),
                 BigDecimal.ONE))
                 .isInstanceOf(FachlicheException.class)
-                .hasMessage("Das Projekt ist abgeschlossen. Es können keine Materialpositionen mehr geändert werden.");
+                .hasMessage("Das Projekt ist abgeschlossen. Das Material kann nicht mehr geändert werden.");
         assertThat(positionRepository.count()).isZero();
     }
 

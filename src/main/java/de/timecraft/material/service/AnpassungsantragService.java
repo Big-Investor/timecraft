@@ -104,7 +104,7 @@ public class AnpassungsantragService {
     @Transactional(readOnly = true)
     public List<MeinMehrbedarf> meineAntraege(long mitarbeiterId, Rolle rolle) {
         Rechte.pruefeAngemeldet(rolle);
-        return antragRepository.findByAntragstellerIdOrderByEingereichtAmDesc(mitarbeiterId).stream()
+        return antragRepository.findByAntragstellerIdOrderByEingereichtAmDescIdDesc(mitarbeiterId).stream()
                 .map(MeinMehrbedarf::aus).toList();
     }
 

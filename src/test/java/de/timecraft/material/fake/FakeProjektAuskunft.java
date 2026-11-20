@@ -20,6 +20,11 @@ public class FakeProjektAuskunft implements ProjektAuskunft {
         zuordnungen.put(projekt.projektId(), new LinkedHashSet<>(List.of(mitarbeiterIds)));
     }
 
+    /** Ersetzt die Projektdaten (fuer FakeAngebotspreisPflege); Zuordnungen bleiben. */
+    public void ersetzen(ProjektInfo projekt) {
+        projekte.put(projekt.projektId(), projekt);
+    }
+
     @Override
     public Optional<ProjektInfo> finde(long projektId) {
         return Optional.ofNullable(projekte.get(projektId));
