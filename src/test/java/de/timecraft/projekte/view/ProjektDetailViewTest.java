@@ -6,12 +6,16 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.textfield.TextArea;
@@ -234,7 +238,7 @@ class ProjektDetailViewTest {
                 .findFirst().orElseThrow().click();
 
         verify(projektService).reaktivieren(3, Rolle.ADMIN, PROJEKT_ID);
-        verify(projektService, org.mockito.Mockito.times(2)).projektSehen(3, Rolle.ADMIN, PROJEKT_ID);
+        verify(projektService, times(2)).projektSehen(3, Rolle.ADMIN, PROJEKT_ID);
     }
 
     @Test
@@ -248,6 +252,77 @@ class ProjektDetailViewTest {
 
         verify(projektService).laufendeBuchungenAnzahl(3, Rolle.ADMIN, PROJEKT_ID);
         verify(projektService, never()).archivieren(anyLong(), any(), anyLong());
+    }
+
+    @Test
+    void ohneLaufendeBuchungenStehtKeinAchtungImArchivHinweis() {
+        anmelden(3, Rolle.ADMIN);
+        sicht(false, false, false, true, true);
+        when(projektService.laufendeBuchungenAnzahl(3, Rolle.ADMIN, PROJEKT_ID)).thenReturn(0);
+
+        ConfirmDialog dialog = oeffnen().archivierenDialog();
+
+        assertThat(dialog.getElement().getProperty("header")).isEqualTo("Projekt archivieren?");
+        assertThat(dialog.getElement().getProperty("message")).doesNotContain("Achtung")
+                .contains("Zuordnungen und bisherige Buchungen bleiben erhalten");
+    }
+
+    @Test
+    void eineLaufendeBuchungWirdImSingularGemeldet() {
+        anmelden(3, Rolle.ADMIN);
+        sicht(false, false, false, true, true);
+        when(projektService.laufendeBuchungenAnzahl(3, Rolle.ADMIN, PROJEKT_ID)).thenReturn(1);
+
+        assertThat(oeffnen().archivierenDialog().getElement().getProperty("message"))
+                .startsWith("Achtung: Auf dieses Projekt läuft gerade 1 Buchung.");
+    }
+
+    @Test
+    void mehrereLaufendeBuchungenWerdenImPluralGemeldet() {
+        anmelden(3, Rolle.ADMIN);
+        sicht(false, false, false, true, true);
+        when(projektService.laufendeBuchungenAnzahl(3, Rolle.ADMIN, PROJEKT_ID)).thenReturn(2);
+
+        assertThat(oeffnen().archivierenDialog().getElement().getProperty("message"))
+                .startsWith("Achtung: Auf dieses Projekt laufen gerade 2 Buchungen.");
+    }
+
+    @Test
+    void archiviertWirdErstNachDerBestaetigung() {
+        anmelden(3, Rolle.ADMIN);
+        sicht(false, false, false, true, true);
+        ConfirmDialog dialog = oeffnen().archivierenDialog();
+        verify(projektService, never()).archivieren(anyLong(), any(), anyLong());
+
+        ComponentUtil.fireEvent(dialog, new ConfirmDialog.ConfirmEvent(dialog, false));
+
+        verify(projektService).archivieren(3, Rolle.ADMIN, PROJEKT_ID);
+    }
+
+    @Test
+    void zugeordneterMitarbeiterBekommtImReiterTeamNurDieNamen() {
+        anmelden(1, Rolle.MITARBEITER);
+        sicht(true, false, false, false, false);
+        ProjektDetailView view = oeffnen();
+
+        Komponenten.alle(view, Tabs.class).get(0).setSelectedTab(Komponenten.alle(view, Tab.class).get(1));
+
+        TeamTab team = Komponenten.alle(view, TeamTab.class).get(0);
+        assertThat(Komponenten.alle(team, Select.class)).isEmpty();
+        assertThat(Komponenten.alle(team, Button.class)).isEmpty();
+    }
+
+    @Test
+    void derReiterMaterialplanungNavigiertZurSeiteVonM4() {
+        anmelden(2, Rolle.PROJEKTLEITUNG);
+        sicht(true, true, true, false, true);
+        UI browserUi = mock(UI.class);
+        UI.setCurrent(browserUi);
+        ProjektDetailView view = oeffnen();
+
+        Komponenten.alle(view, Tabs.class).get(0).setSelectedTab(Komponenten.alle(view, Tab.class).get(2));
+
+        verify(browserUi).navigate("projekt/10/material");
     }
 
     // ---- Kein Zugriff und ungültige Adresse ----

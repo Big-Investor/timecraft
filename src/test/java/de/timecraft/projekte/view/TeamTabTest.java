@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -143,7 +144,7 @@ class TeamTabTest {
 
         knopf(tab, "Aktualisieren").click();
 
-        verify(teamService, org.mockito.Mockito.times(2)).teamAnsehen(anyLong(), any(), anyLong(), any());
+        verify(teamService, times(2)).teamAnsehen(anyLong(), any(), anyLong(), any());
     }
 
     @Test
@@ -209,7 +210,7 @@ class TeamTabTest {
         ComponentUtil.fireEvent(dialog, new ConfirmDialog.ConfirmEvent(dialog, false));
 
         verify(projektService).entfernen(2, Rolle.PROJEKTLEITUNG, PROJEKT_ID, 6);
-        verify(teamService, org.mockito.Mockito.times(2)).teamAnsehen(anyLong(), any(), anyLong(), any());
+        verify(teamService, times(2)).teamAnsehen(anyLong(), any(), anyLong(), any());
     }
 
     @Test
@@ -246,6 +247,7 @@ class TeamTabTest {
 
         TeamTab tab = tab(true);
 
-        assertThat(tab).isNotNull();
+        // Es stürzt nichts ab, und es steht kein falscher Hinweis "leeres Team" in der Anzeige.
+        assertThat(tab.getElement().getTextRecursively()).doesNotContain("Dem Projekt sind noch keine Mitarbeiter");
     }
 }

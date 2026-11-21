@@ -224,38 +224,41 @@ public class ProjektDetailView extends Div implements BeforeEnterObserver {
         bearbeiten.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         Button statusWechsel = projekt.getStatus() == ProjektStatus.AKTIV
                 ? new Button("Projekt archivieren", ereignis -> archivierenBestaetigen())
-                : new Button("Projekt reaktivieren", ereignis -> reaktivieren());
+                : new Button("Projekt reaktivieren", ereignis -> statusWechseln(false));
         HorizontalLayout knoepfe = new HorizontalLayout(bearbeiten, statusWechsel);
         knoepfe.getStyle().set("margin-top", "var(--lumo-space-m)");
         return knoepfe;
     }
 
-    /** Fragt vor dem Archivieren nach und weist auf laufende Buchungen hin (US-M3-04). */
     private void archivierenBestaetigen() {
         try {
-            int laufend = projektService.laufendeBuchungenAnzahl(sitzung.mitarbeiterId(), sitzung.rolle(), projektId);
-            String text = "Auf ein archiviertes Projekt kann nicht mehr eingestempelt werden. "
-                    + "Zuordnungen und bisherige Buchungen bleiben erhalten.";
-            if (laufend == 1) {
-                text = "Achtung: Auf dieses Projekt läuft gerade 1 Buchung. " + text;
-            } else if (laufend > 1) {
-                text = "Achtung: Auf dieses Projekt laufen gerade " + laufend + " Buchungen. " + text;
-            }
-            ConfirmDialog dialog = new ConfirmDialog();
-            dialog.setHeader("Projekt archivieren?");
-            dialog.setText(text);
-            dialog.setCancelable(true);
-            dialog.setCancelText("Abbrechen");
-            dialog.setConfirmText("Archivieren");
-            dialog.addConfirmListener(ereignis -> statusWechseln(true));
-            dialog.open();
+            archivierenDialog().open();
         } catch (RuntimeException fehler) {
             Meldungen.fehler(fehler);
         }
     }
 
-    private void reaktivieren() {
-        statusWechseln(false);
+    /**
+     * Baut die Rückfrage vor dem Archivieren. Laufen gerade Buchungen auf das Projekt, steht ein Hinweis
+     * dabei (US-M3-04). Erst "Archivieren" im Dialog archiviert wirklich.
+     */
+    ConfirmDialog archivierenDialog() {
+        int laufend = projektService.laufendeBuchungenAnzahl(sitzung.mitarbeiterId(), sitzung.rolle(), projektId);
+        String text = "Auf ein archiviertes Projekt kann nicht mehr eingestempelt werden. "
+                + "Zuordnungen und bisherige Buchungen bleiben erhalten.";
+        if (laufend == 1) {
+            text = "Achtung: Auf dieses Projekt läuft gerade 1 Buchung. " + text;
+        } else if (laufend > 1) {
+            text = "Achtung: Auf dieses Projekt laufen gerade " + laufend + " Buchungen. " + text;
+        }
+        ConfirmDialog dialog = new ConfirmDialog();
+        dialog.setHeader("Projekt archivieren?");
+        dialog.setText(text);
+        dialog.setCancelable(true);
+        dialog.setCancelText("Abbrechen");
+        dialog.setConfirmText("Archivieren");
+        dialog.addConfirmListener(ereignis -> statusWechseln(true));
+        return dialog;
     }
 
     private void statusWechseln(boolean archivieren) {
