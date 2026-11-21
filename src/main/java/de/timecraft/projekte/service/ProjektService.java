@@ -13,11 +13,14 @@ import de.timecraft.projekte.model.ProjektStatus;
 import de.timecraft.projekte.model.Projektzuordnung;
 import de.timecraft.projekte.repository.ProjektRepository;
 import de.timecraft.projekte.repository.ProjektzuordnungRepository;
+import de.timecraft.zeiterfassung.api.BuchungsAuskunft;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.context.annotation.Lazy;
@@ -45,20 +48,23 @@ public class ProjektService {
     private final ProjektzuordnungRepository zuordnungRepository;
     private final ProjektBerechtigung berechtigung;
     private final MitarbeiterAuskunft mitarbeiterAuskunft;
+    private final BuchungsAuskunft buchungsAuskunft;
     private final Clock clock;
 
     /**
-     * "@Lazy" heißt: Spring besorgt sich die MitarbeiterAuskunft (gehört zu Modul M1) erst, wenn
-     * sie zum ersten Mal gebraucht wird. Solange M1 in diesem Branch noch fehlt, kann die
-     * Anwendung so trotzdem starten.
+     * "@Lazy" heißt: Spring besorgt sich die MitarbeiterAuskunft (Modul M1) und die BuchungsAuskunft
+     * (Modul M2) erst, wenn sie zum ersten Mal gebraucht werden. Solange diese Module in diesem Branch
+     * noch fehlen, kann die Anwendung so trotzdem starten.
      * Die Uhr (Europe/Berlin) kommt aus dem Gerüst, damit Tests die Zeit festlegen können.
      */
     public ProjektService(ProjektRepository repository, ProjektzuordnungRepository zuordnungRepository,
-            ProjektBerechtigung berechtigung, @Lazy MitarbeiterAuskunft mitarbeiterAuskunft, Clock clock) {
+            ProjektBerechtigung berechtigung, @Lazy MitarbeiterAuskunft mitarbeiterAuskunft,
+            @Lazy BuchungsAuskunft buchungsAuskunft, Clock clock) {
         this.repository = repository;
         this.zuordnungRepository = zuordnungRepository;
         this.berechtigung = berechtigung;
         this.mitarbeiterAuskunft = mitarbeiterAuskunft;
+        this.buchungsAuskunft = buchungsAuskunft;
         this.clock = clock;
     }
 
@@ -183,6 +189,44 @@ public class ProjektService {
                 .map(Projektzuordnung::getProjektId)
                 .collect(Collectors.toSet());
         return treffer.stream().filter(projekt -> eigeneProjekte.contains(projekt.getProjektId())).toList();
+    }
+
+    /**
+     * Die Namen der Personen zu den IDs, z. B. für die Spalte "Projektleitung" in der Projektliste.
+     * Das Ergebnis enthält auch ehemalige Mitarbeiter. IDs, die es nicht gibt, fehlen im Ergebnis.
+     * Jede angemeldete Person darf das, weil die Projektleitung ohnehin in der Liste steht.
+     */
+    @Transactional(readOnly = true)
+    public Map<Long, String> namenDerPersonen(long mitarbeiterId, Rolle rolle, Collection<Long> ids) {
+        berechtigung.pruefeAngemeldet(rolle);
+        return mitarbeiterAuskunft.alle().stream()
+                .filter(person -> ids.contains(person.mitarbeiterId()))
+                .collect(Collectors.toMap(MitarbeiterInfo::mitarbeiterId, MitarbeiterInfo::name));
+    }
+
+    /**
+     * Die Projektleitungen, die der Admin im Formular auswählen kann: aktive Personen mit der Rolle
+     * PROJEKTLEITUNG, sortiert nach Nachname und Vorname. Nur der Admin darf das.
+     */
+    @Transactional(readOnly = true)
+    public List<MitarbeiterInfo> projektleitungenZurAuswahl(long mitarbeiterId, Rolle rolle) {
+        berechtigung.pruefeAdmin(rolle);
+        return mitarbeiterAuskunft.aktive().stream()
+                .filter(person -> person.rolle() == Rolle.PROJEKTLEITUNG)
+                .sorted(Comparator.comparing(MitarbeiterInfo::nachname).thenComparing(MitarbeiterInfo::vorname))
+                .toList();
+    }
+
+    /**
+     * Wie viele Buchungen auf dieses Projekt gerade laufen. Die Oberfläche zeigt dem Admin damit vor dem
+     * Archivieren einen Hinweis (US-M3-04). Es wird nur die Anzahl weitergegeben, keine Namen oder Zeiten.
+     * Nur der Admin darf das.
+     */
+    @Transactional(readOnly = true)
+    public int laufendeBuchungenAnzahl(long mitarbeiterId, Rolle rolle, long projektId) {
+        berechtigung.pruefeAdmin(rolle);
+        ladeProjekt(projektId);
+        return buchungsAuskunft.laufendeBuchungenAufProjekt(projektId).size();
     }
 
     /**

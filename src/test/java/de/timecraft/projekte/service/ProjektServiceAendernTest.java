@@ -22,6 +22,7 @@ import de.timecraft.projekte.model.ProjektDaten;
 import de.timecraft.projekte.model.ProjektStatus;
 import de.timecraft.projekte.repository.ProjektRepository;
 import de.timecraft.projekte.repository.ProjektzuordnungRepository;
+import de.timecraft.zeiterfassung.api.BuchungsAuskunft;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
@@ -48,7 +49,7 @@ class ProjektServiceAendernTest {
     private final ProjektRepository repository = mock(ProjektRepository.class);
     private final MitarbeiterAuskunft mitarbeiterAuskunft = mock(MitarbeiterAuskunft.class);
     private final ProjektService service = new ProjektService(repository, mock(ProjektzuordnungRepository.class),
-            new ProjektBerechtigung(), mitarbeiterAuskunft, FesteUhr.UHR);
+            new ProjektBerechtigung(), mitarbeiterAuskunft, mock(BuchungsAuskunft.class), FesteUhr.UHR);
 
     private Projekt projekt;
 
