@@ -1,10 +1,10 @@
 package de.timecraft.projekte.view;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -14,6 +14,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import de.timecraft.benutzer.api.Rolle;
 import de.timecraft.geruest.common.AktuelleSitzung;
 import de.timecraft.geruest.common.Meldungen;
 import de.timecraft.geruest.layout.HauptLayout;
@@ -82,7 +83,7 @@ public class ProjektListeView extends Div {
         Button zuruecksetzen = new Button("Filter zurücksetzen", ereignis -> zuruecksetzen());
         zuruecksetzen.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        HorizontalLayout felder = new HorizontalLayout(name, mitTitel("Status", status),
+        HorizontalLayout felder = new HorizontalLayout(name, ProjektAnzeige.feldMitTitel("Status", status),
                 zeitraum("Start von – bis", startVon, startBis, "Start"),
                 zeitraum("Ziel von – bis", zielVon, zielBis, "Ziel"));
         felder.setAlignItems(FlexComponent.Alignment.END);
@@ -104,18 +105,16 @@ public class ProjektListeView extends Div {
         von.setAriaLabel(ariaName + " von");
         bis.setPlaceholder("bis");
         bis.setAriaLabel(ariaName + " bis");
-        return mitTitel(ueberschrift, new HorizontalLayout(von, bis));
-    }
-
-    /** Fette Überschrift über einem Filterfeld, wie die Beschriftung des Feldes Projektname. */
-    private Div mitTitel(String ueberschrift, Component feld) {
-        Span beschriftung = new Span(ueberschrift);
-        beschriftung.getStyle().set("display", "block").set("font-size", "var(--lumo-font-size-s)").set("font-weight", "600");
-        return new Div(beschriftung, feld);
+        return ProjektAnzeige.feldMitTitel(ueberschrift, new HorizontalLayout(von, bis));
     }
 
     private HorizontalLayout kopfzeile() {
         HorizontalLayout zeile = new HorizontalLayout(anzahl);
+        if (sitzung.rolle() == Rolle.ADMIN) {
+            Button neu = new Button("+ Neues Projekt", ereignis -> neuesProjekt());
+            neu.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            zeile.add(neu);
+        }
         zeile.setWidthFull();
         zeile.setAlignItems(FlexComponent.Alignment.CENTER);
         zeile.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
@@ -124,16 +123,15 @@ public class ProjektListeView extends Div {
     }
 
     private Div tabellenKarte() {
-        liste.addComponentColumn(projekt -> text(ProjektAnzeige.id(projekt.getProjektId()), projekt, false))
+        liste.addComponentColumn(projekt -> text(ProjektAnzeige.id(projekt.getProjektId()), projekt))
                 .setHeader("Projekt-ID").setAutoWidth(true).setFlexGrow(0);
-        liste.addComponentColumn(projekt -> text(projekt.getName(), projekt, true))
-                .setHeader("Name").setFlexGrow(2);
-        liste.addComponentColumn(projekt -> text(ProjektAnzeige.datum(projekt.getStartdatum()), projekt, false))
+        liste.addComponentColumn(this::namenLink).setHeader("Name").setFlexGrow(2);
+        liste.addComponentColumn(projekt -> text(ProjektAnzeige.datum(projekt.getStartdatum()), projekt))
                 .setHeader("Start").setAutoWidth(true).setFlexGrow(0);
-        liste.addComponentColumn(projekt -> text(ProjektAnzeige.datum(projekt.getZieldatum()), projekt, false))
+        liste.addComponentColumn(projekt -> text(ProjektAnzeige.datum(projekt.getZieldatum()), projekt))
                 .setHeader("Ziel").setAutoWidth(true).setFlexGrow(0);
         liste.addComponentColumn(projekt -> text(
-                        projektleitungen.getOrDefault(projekt.getProjektleitungId(), ""), projekt, false))
+                        projektleitungen.getOrDefault(projekt.getProjektleitungId(), ""), projekt))
                 .setHeader("Projektleitung").setFlexGrow(1);
         liste.addComponentColumn(projekt -> ProjektAnzeige.statusMarke(projekt.getStatus()))
                 .setHeader("Status").setAutoWidth(true).setFlexGrow(0);
@@ -148,16 +146,28 @@ public class ProjektListeView extends Div {
         return karte;
     }
 
-    /** Ein Textfeld der Zeile. Archivierte Projekte erscheinen in Grau, der Name in Fett. */
-    private Span text(String inhalt, Projekt projekt, boolean fett) {
+    /** Ein Textfeld der Zeile. Archivierte Projekte erscheinen in Grau. */
+    private Span text(String inhalt, Projekt projekt) {
         Span zelle = new Span(inhalt);
-        if (fett) {
-            zelle.getStyle().set("font-weight", "700");
-        }
         if (projekt.getStatus() == ProjektStatus.ARCHIVIERT) {
             zelle.getStyle().set("color", GRAU);
         }
         return zelle;
+    }
+
+    /** Der Name führt zum Detailfenster des Projekts. Archivierte Projekte erscheinen auch hier in Grau. */
+    private Anchor namenLink(Projekt projekt) {
+        Anchor link = ProjektAnzeige.link(ProjektAnzeige.detailRoute(projekt.getProjektId()), projekt.getName());
+        link.getStyle().set("font-weight", "700");
+        if (projekt.getStatus() == ProjektStatus.ARCHIVIERT) {
+            link.getStyle().set("color", GRAU);
+        }
+        return link;
+    }
+
+    /** Der Admin legt ein Projekt im Formular an; danach erscheint es in der Liste. */
+    private void neuesProjekt() {
+        new ProjektFormular(service, sitzung, null, projekt -> aktualisieren()).open();
     }
 
     private void zuruecksetzen() {

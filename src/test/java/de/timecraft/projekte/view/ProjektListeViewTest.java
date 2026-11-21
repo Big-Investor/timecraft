@@ -10,6 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
@@ -39,6 +40,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
  */
 class ProjektListeViewTest {
 
+    // Vaadin merkt sich die aktuelle UI nur schwach: Ohne dieses Feld kann der Müllsammler sie im Test wegräumen.
+    private final UI ui = new UI();
+
     private final ProjektService service = mock(ProjektService.class);
 
     @BeforeEach
@@ -50,6 +54,7 @@ class ProjektListeViewTest {
     @AfterEach
     void sitzungLeeren() {
         SecurityContextHolder.clearContext();
+        UI.setCurrent(null);
     }
 
     private void anmelden(long id, String name, Rolle rolle) {
@@ -184,5 +189,30 @@ class ProjektListeViewTest {
         assertThat(filter.getName()).isNull();
         assertThat(filter.getStatus()).isNull();
         assertThat(filter.getStartVon()).isNull();
+    }
+
+    @Test
+    void nurDerAdminSiehtDenKnopfNeuesProjekt() {
+        assertThat(knoepfe(offnen(List.of()))).doesNotContain("+ Neues Projekt");
+
+        anmelden(3, "admin", Rolle.ADMIN);
+
+        assertThat(knoepfe(offnen(List.of()))).contains("+ Neues Projekt");
+    }
+
+    @Test
+    void neuesProjektOeffnetDasFormular() {
+        anmelden(3, "admin", Rolle.ADMIN);
+        UI.setCurrent(ui);
+        ProjektListeView view = offnen(List.of());
+
+        Komponenten.alle(view, Button.class).stream().filter(k -> "+ Neues Projekt".equals(k.getText()))
+                .findFirst().orElseThrow().click();
+
+        verify(service).projektleitungenZurAuswahl(3L, Rolle.ADMIN);
+    }
+
+    private List<String> knoepfe(ProjektListeView view) {
+        return Komponenten.alle(view, Button.class).stream().map(Button::getText).toList();
     }
 }

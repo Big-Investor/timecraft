@@ -2,6 +2,7 @@ package de.timecraft.projekte.view;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasLabel;
+import com.vaadin.flow.component.dialog.Dialog;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +17,14 @@ final class Komponenten {
         List<T> treffer = new ArrayList<>();
         sammle(wurzel, typ, treffer);
         return treffer;
+    }
+
+    /** Wie oben, für einen Dialog: durchsucht auch die Fußzeile mit den Schaltflächen. */
+    static <T extends Component> List<T> alle(Dialog dialog, Class<T> typ) {
+        List<T> treffer = new ArrayList<>(alle((Component) dialog, typ));
+        dialog.getFooter().getElement().getChildren()
+                .forEach(element -> element.getComponent().ifPresent(kind -> sammle(kind, typ, treffer)));
+        return treffer.stream().distinct().toList();
     }
 
     /** Die Komponente mit dieser Beschriftung (z. B. das Feld "Projektname"). */
