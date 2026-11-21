@@ -9,6 +9,7 @@ import de.timecraft.geruest.common.ZugriffVerweigertException;
 import de.timecraft.projekte.model.Projekt;
 import de.timecraft.projekte.model.ProjektDaten;
 import de.timecraft.projekte.model.ProjektFilter;
+import de.timecraft.projekte.model.ProjektSicht;
 import de.timecraft.projekte.model.ProjektStatus;
 import de.timecraft.projekte.model.Projektzuordnung;
 import de.timecraft.projekte.repository.ProjektRepository;
@@ -227,6 +228,39 @@ public class ProjektService {
         berechtigung.pruefeAdmin(rolle);
         ladeProjekt(projektId);
         return buchungsAuskunft.laufendeBuchungenAufProjekt(projektId).size();
+    }
+
+    /**
+     * Öffnet das Detailfenster eines Projekts: prüft, ob die Person das Projekt sehen darf, und sagt, was sie
+     * dort darf. Sehen dürfen: der Admin jedes Projekt, die Projektleitung jedes aktive Projekt und ein
+     * Mitarbeiter die Projekte, denen er zugeordnet ist (wie in der Projektliste). Sonst gibt es
+     * {@link ZugriffVerweigertException}, auch bei einem direkten Aufruf der Adresse.
+     * <p>
+     * Den Reiter "Team" bekommen nur die verantwortliche Projektleitung und zugeordnete Mitarbeiter, und nur
+     * bei einem aktiven Projekt; der Admin nie (Datensparsamkeit, QA-M3-03).
+     */
+    @Transactional(readOnly = true)
+    public ProjektSicht projektSehen(long mitarbeiterId, Rolle rolle, long projektId) {
+        berechtigung.pruefeAngemeldet(rolle);
+        Projekt projekt = ladeProjekt(projektId);
+        boolean aktiv = projekt.getStatus() == ProjektStatus.AKTIV;
+        boolean verantwortlich = rolle == Rolle.PROJEKTLEITUNG && projekt.getProjektleitungId() == mitarbeiterId;
+        boolean zugeordnet = rolle == Rolle.MITARBEITER
+                && zuordnungRepository.existsByMitarbeiterIdAndProjektId(mitarbeiterId, projektId);
+
+        boolean darfSehen = switch (rolle) {
+            case ADMIN -> true;
+            case PROJEKTLEITUNG -> aktiv;
+            case MITARBEITER -> zugeordnet;
+        };
+        if (!darfSehen) {
+            throw new ZugriffVerweigertException("Sie haben keinen Zugriff auf dieses Projekt.");
+        }
+
+        String projektleitungName = mitarbeiterAuskunft.finde(projekt.getProjektleitungId())
+                .map(MitarbeiterInfo::name).orElse("");
+        return new ProjektSicht(projekt, projektleitungName, aktiv && (verantwortlich || zugeordnet),
+                aktiv && verantwortlich, aktiv && verantwortlich, rolle == Rolle.ADMIN, rolle != Rolle.MITARBEITER);
     }
 
     /**
