@@ -1,5 +1,6 @@
 package de.timecraft.projekte.view;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -69,9 +70,11 @@ public class ProjektListeView extends Div {
         name.setWidth("18rem");
         name.addValueChangeListener(ereignis -> aktualisieren());
 
-        status.setLabel("Status");
         status.setItems(ProjektStatus.AKTIV, ProjektStatus.ARCHIVIERT);
-        status.setItemLabelGenerator(wert -> wert == ProjektStatus.AKTIV ? "Aktiv" : "Archiviert");
+        // Der Generator wird auch für den leeren Eintrag (null) gefragt: Dort steht "Alle".
+        status.setItemLabelGenerator(wert -> wert == null ? "Alle" : wert == ProjektStatus.AKTIV ? "Aktiv" : "Archiviert");
+        status.setAriaLabel("Status");
+        status.setWidth("8rem");
         status.setEmptySelectionAllowed(true);
         status.setEmptySelectionCaption("Alle");
         status.addValueChangeListener(ereignis -> aktualisieren());
@@ -79,7 +82,7 @@ public class ProjektListeView extends Div {
         Button zuruecksetzen = new Button("Filter zurücksetzen", ereignis -> zuruecksetzen());
         zuruecksetzen.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        HorizontalLayout felder = new HorizontalLayout(name, status,
+        HorizontalLayout felder = new HorizontalLayout(name, mitTitel("Status", status),
                 zeitraum("Start von – bis", startVon, startBis, "Start"),
                 zeitraum("Ziel von – bis", zielVon, zielBis, "Ziel"));
         felder.setAlignItems(FlexComponent.Alignment.END);
@@ -92,8 +95,6 @@ public class ProjektListeView extends Div {
 
     /** Ein Zeitraumfilter: Überschrift und darunter die beiden Datumsfelder "von" und "bis". */
     private Div zeitraum(String ueberschrift, DatePicker von, DatePicker bis, String ariaName) {
-        Span beschriftung = new Span(ueberschrift);
-        beschriftung.getStyle().set("font-size", "var(--lumo-font-size-s)").set("font-weight", "600");
         for (DatePicker feld : new DatePicker[] {von, bis}) {
             feld.setLocale(Locale.GERMANY);
             feld.setWidth("10rem");
@@ -103,7 +104,14 @@ public class ProjektListeView extends Div {
         von.setAriaLabel(ariaName + " von");
         bis.setPlaceholder("bis");
         bis.setAriaLabel(ariaName + " bis");
-        return new Div(beschriftung, new HorizontalLayout(von, bis));
+        return mitTitel(ueberschrift, new HorizontalLayout(von, bis));
+    }
+
+    /** Fette Überschrift über einem Filterfeld, wie die Beschriftung des Feldes Projektname. */
+    private Div mitTitel(String ueberschrift, Component feld) {
+        Span beschriftung = new Span(ueberschrift);
+        beschriftung.getStyle().set("display", "block").set("font-size", "var(--lumo-font-size-s)").set("font-weight", "600");
+        return new Div(beschriftung, feld);
     }
 
     private HorizontalLayout kopfzeile() {
@@ -130,6 +138,8 @@ public class ProjektListeView extends Div {
         liste.addComponentColumn(projekt -> ProjektAnzeige.statusMarke(projekt.getStatus()))
                 .setHeader("Status").setAutoWidth(true).setFlexGrow(0);
         liste.setAllRowsVisible(true);
+        // Das gemeinsame Theme setzt über Tabellen in einer Karte einen Abstand, hier liegt die Tabelle direkt in der Karte.
+        liste.getStyle().set("margin-top", "0");
 
         keineTreffer.getStyle().set("padding", "1.5rem").set("color", GRAU);
         Div karte = new Div(liste, keineTreffer);

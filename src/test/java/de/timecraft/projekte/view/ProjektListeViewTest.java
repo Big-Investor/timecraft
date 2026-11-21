@@ -137,7 +137,7 @@ class ProjektListeViewTest {
         ProjektListeView view = offnen(List.of());
 
         Komponenten.mitBeschriftung(view, TextField.class, "Projektname").setValue("küche");
-        Select<ProjektStatus> status = Komponenten.mitBeschriftung(view, Select.class, "Status");
+        Select<ProjektStatus> status = Komponenten.alle(view, Select.class).get(0);
         status.setValue(ProjektStatus.ARCHIVIERT);
         List<DatePicker> daten = Komponenten.alle(view, DatePicker.class);
         daten.get(0).setValue(LocalDate.of(2026, 1, 1));
@@ -155,10 +155,20 @@ class ProjektListeViewTest {
     }
 
     @Test
+    void statusFilterHeisstOhneAuswahlAlle() {
+        ProjektListeView view = offnen(List.of());
+        Select<ProjektStatus> status = Komponenten.alle(view, Select.class).get(0);
+
+        assertThat(status.getItemLabelGenerator().apply(null)).isEqualTo("Alle");
+        assertThat(status.getItemLabelGenerator().apply(ProjektStatus.AKTIV)).isEqualTo("Aktiv");
+        assertThat(status.getItemLabelGenerator().apply(ProjektStatus.ARCHIVIERT)).isEqualTo("Archiviert");
+    }
+
+    @Test
     void zuruecksetzenLeertAlleFelderUndLaedtOhneFilter() {
         ProjektListeView view = offnen(List.of());
         TextField name = Komponenten.mitBeschriftung(view, TextField.class, "Projektname");
-        Select<ProjektStatus> status = Komponenten.mitBeschriftung(view, Select.class, "Status");
+        Select<ProjektStatus> status = Komponenten.alle(view, Select.class).get(0);
         name.setValue("küche");
         status.setValue(ProjektStatus.AKTIV);
         Komponenten.alle(view, DatePicker.class).get(0).setValue(LocalDate.of(2026, 1, 1));

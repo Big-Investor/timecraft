@@ -8,28 +8,37 @@ import de.timecraft.projekte.model.ProjektStatus;
 import de.timecraft.projekte.repository.ProjektRepository;
 import de.timecraft.projekte.repository.ProjektzuordnungRepository;
 import java.time.LocalDate;
+import java.util.Comparator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
-/** Prüft die Demodaten für das Profil "fake" mit einer echten Datenbank (H2 im PostgreSQL-Modus). */
+/**
+ * Prüft die Demodaten für das Profil "fake" mit einer echten Datenbank (H2 im PostgreSQL-Modus).
+ * Die Klasse wird hier bewusst von Hand erzeugt und nicht als Bean geladen: Als Bean würde ihr
+ * CommandLineRunner beim Laden des Test-Kontexts laufen und Projekte in die gemeinsame Testdatenbank
+ * schreiben, die andere Tests stören würden. So entstehen die Daten nur in der Test-Transaktion.
+ */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@ActiveProfiles({"test", "fake"})
-@Import({FakeDemoDaten.class, FesteUhr.class})
+@ActiveProfiles("test")
 class FakeDemoDatenTest {
-
-    @Autowired
-    private FakeDemoDaten demoDaten;
 
     @Autowired
     private ProjektRepository repository;
 
     @Autowired
     private ProjektzuordnungRepository zuordnungRepository;
+
+    private FakeDemoDaten demoDaten;
+
+    @BeforeEach
+    void erzeugeDemoDaten() {
+        demoDaten = new FakeDemoDaten(repository, zuordnungRepository, FesteUhr.UHR);
+    }
 
     @Test
     void legtFuenfProjekteAnDavonEinesArchiviert() {
@@ -41,12 +50,13 @@ class FakeDemoDatenTest {
     }
 
     @Test
-    void dasErsteProjektTraegtDieIdDerFakeBuchungen() {
+    void dasErsteProjektDieKuecheHatDieKleinsteIdUndVierZugeordnete() {
         demoDaten.run();
 
-        Projekt erstes = repository.findAll().stream().filter(projekt -> projekt.getProjektId() == 1L).findFirst().orElseThrow();
+        // Auf einer leeren Datenbank ist das die ID 1, auf die die FakeBuchungsAuskunft ihre Buchungen legt.
+        Projekt erstes = repository.findAll().stream().min(Comparator.comparing(Projekt::getProjektId)).orElseThrow();
         assertThat(erstes.getName()).isEqualTo("Einbauküche Familie Wagner");
-        assertThat(zuordnungRepository.findByProjektId(1L)).extracting("mitarbeiterId")
+        assertThat(zuordnungRepository.findByProjektId(erstes.getProjektId())).extracting("mitarbeiterId")
                 .containsExactlyInAnyOrder(1L, 4L, 5L, 6L);
     }
 
