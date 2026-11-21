@@ -5,6 +5,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -87,7 +88,7 @@ public class TeamTab extends Div {
     }
 
     private Div tabellenKarte() {
-        liste.addColumn(TeamEintrag::name).setHeader("Name").setFlexGrow(2);
+        liste.addComponentColumn(this::namensZelle).setHeader("Name").setFlexGrow(2);
         if (vollansicht) {
             liste.addComponentColumn(eintrag -> ProjektAnzeige.eingestempeltMarke(Boolean.TRUE.equals(eintrag.eingestempelt())))
                     .setHeader("Status").setFlexGrow(2);
@@ -105,6 +106,13 @@ public class TeamTab extends Div {
         karte.addClassName("karte");
         karte.getStyle().set("margin", "0").set("padding", "0").set("overflow", "hidden");
         return karte;
+    }
+
+    /** Der Name steht in Fett, wie im Mockup. */
+    private Span namensZelle(TeamEintrag eintrag) {
+        Span name = new Span(eintrag.name());
+        name.getStyle().set("font-weight", "700");
+        return name;
     }
 
     private Button entfernenKnopf(TeamEintrag eintrag) {

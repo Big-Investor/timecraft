@@ -1,6 +1,5 @@
 package de.timecraft.projekte.view;
 
-
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -226,7 +225,9 @@ public class ProjektDetailView extends Div implements BeforeEnterObserver {
         Button statusWechsel = projekt.getStatus() == ProjektStatus.AKTIV
                 ? new Button("Projekt archivieren", ereignis -> archivierenBestaetigen())
                 : new Button("Projekt reaktivieren", ereignis -> reaktivieren());
-        return new HorizontalLayout(bearbeiten, statusWechsel);
+        HorizontalLayout knoepfe = new HorizontalLayout(bearbeiten, statusWechsel);
+        knoepfe.getStyle().set("margin-top", "var(--lumo-space-m)");
+        return knoepfe;
     }
 
     /** Fragt vor dem Archivieren nach und weist auf laufende Buchungen hin (US-M3-04). */
