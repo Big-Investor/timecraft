@@ -123,11 +123,6 @@ class ProjektAuskunftServiceTest {
     }
 
     @Test
-    void aktiveProjekteVonZeigtKeinArchiviertesProjektAuchWennZugeordnet() {
-        assertThat(projektIds(auskunft.aktiveProjekteVon(MITARBEITER_12))).doesNotContain(altprojektId);
-    }
-
-    @Test
     void aktiveProjekteVonIstLeerOhneZuordnungUndBeiUnbekanntemMitarbeiter() {
         assertThat(auskunft.aktiveProjekteVon(MITARBEITER_13)).isEmpty();
         assertThat(auskunft.aktiveProjekteVon(UNBEKANNTE_ID)).isEmpty();

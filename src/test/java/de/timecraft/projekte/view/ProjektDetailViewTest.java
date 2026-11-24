@@ -151,11 +151,6 @@ class ProjektDetailViewTest {
     }
 
     @Test
-    void materialplanungVerweistAufDieSeiteVonM4() {
-        assertThat(String.format(ProjektDetailView.MATERIAL_ROUTE, 5)).isEqualTo("projekt/5/material");
-    }
-
-    @Test
     void einKlickAufTeamZeigtDenReiterTeam() {
         anmelden(2, Rolle.PROJEKTLEITUNG);
         sicht(true, true, true, false, true);

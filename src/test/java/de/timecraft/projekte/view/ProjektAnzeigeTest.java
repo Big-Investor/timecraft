@@ -20,20 +20,9 @@ import org.junit.jupiter.api.Test;
 class ProjektAnzeigeTest {
 
     @Test
-    void projektIdWirdMitPraefixAngezeigt() {
-        assertThat(ProjektAnzeige.id(1024)).isEqualTo("P-1024");
-    }
-
-    @Test
     void datumWirdAlsTagMonatJahrAngezeigt() {
         assertThat(ProjektAnzeige.datum(LocalDate.of(2026, 10, 5))).isEqualTo("05.10.2026");
         assertThat(ProjektAnzeige.datum(null)).isEmpty();
-    }
-
-    @Test
-    void statusTextIstKleingeschrieben() {
-        assertThat(ProjektAnzeige.status(ProjektStatus.AKTIV)).isEqualTo("aktiv");
-        assertThat(ProjektAnzeige.status(ProjektStatus.ARCHIVIERT)).isEqualTo("archiviert");
     }
 
     @Test

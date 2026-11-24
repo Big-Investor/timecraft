@@ -79,15 +79,6 @@ class ProjektzuordnungRepositoryTest {
     }
 
     @Test
-    void mitarbeiterIstProProjektNurEinmalZugeordnet() {
-        repository.save(new Projektzuordnung(MITARBEITER_1, projektA, ZEIT));
-        repository.save(new Projektzuordnung(MITARBEITER_1, projektA, ZEIT.plusDays(1)));
-        repository.flush();
-
-        assertThat(repository.findByProjektId(projektA)).hasSize(1);
-    }
-
-    @Test
     void primaerschluesselVerhindertDoppelteZuordnungInDerDatenbank() {
         entityManager.persistAndFlush(new Projektzuordnung(MITARBEITER_1, projektA, ZEIT));
         entityManager.clear();

@@ -128,15 +128,8 @@ class ProjektServiceListeTest {
                 .isInstanceOf(NichtAngemeldetException.class);
     }
 
-    // ---------- Filter einzeln (innerhalb der erlaubten Projekte) ----------
-
-    @Test
-    void namensfilterIgnoriertGrossUndKleinschreibung() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setName("wEbSiTe");
-
-        assertThat(ids(admin(filter))).containsExactly(websiteId, altprojektId);
-    }
+    // ---------- Filter innerhalb der erlaubten Projekte ----------
+    // Die Filterlogik selbst (Name, Datum, Status, Kombinationen) prüft ProjektRepositoryFilterTest.
 
     @Test
     void namensfilterBleibtInnerhalbDerErlaubtenProjekte() {
@@ -146,14 +139,6 @@ class ProjektServiceListeTest {
         assertThat(ids(projektleitung(filter))).containsExactly(websiteId);
         assertThat(ids(mitarbeiter(MITARBEITER_11, filter))).containsExactly(websiteId);
         assertThat(ids(mitarbeiter(MITARBEITER_12, filter))).containsExactly(websiteId, altprojektId);
-    }
-
-    @Test
-    void statusfilterAktiv() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setStatus(ProjektStatus.AKTIV);
-
-        assertThat(ids(admin(filter))).containsExactly(websiteId, umbauId, rabattId);
     }
 
     @Test
@@ -179,24 +164,6 @@ class ProjektServiceListeTest {
 
         assertThat(ids(mitarbeiter(MITARBEITER_12, filter))).containsExactly(altprojektId);
         assertThat(mitarbeiter(MITARBEITER_11, filter)).isEmpty();
-    }
-
-    @Test
-    void startdatumVonUndBisNehmenDenGrenztagMit() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setStartVon(LocalDate.of(2026, 3, 1));
-        filter.setStartBis(LocalDate.of(2026, 7, 1));
-
-        assertThat(ids(admin(filter))).containsExactly(umbauId, rabattId);
-    }
-
-    @Test
-    void zieldatumVonUndBisNehmenDenGrenztagMit() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setZielVon(LocalDate.of(2026, 6, 30));
-        filter.setZielBis(LocalDate.of(2026, 9, 30));
-
-        assertThat(ids(admin(filter))).containsExactly(websiteId, rabattId);
     }
 
     @Test
@@ -241,50 +208,11 @@ class ProjektServiceListeTest {
         assertThat(mitarbeiter(MITARBEITER_13, filter)).isEmpty();
     }
 
-    // ---------- Filter kombiniert, Zurücksetzen, ohne Treffer ----------
-
-    @Test
-    void mehrereFilterWirkenGemeinsam() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setName("website");
-        filter.setStatus(ProjektStatus.AKTIV);
-        filter.setStartVon(LocalDate.of(2026, 1, 1));
-        filter.setMitarbeiterId(MITARBEITER_12);
-
-        assertThat(ids(admin(filter))).containsExactly(websiteId);
-    }
-
-    @Test
-    void kombinierteFilterOhneGemeinsamesProjektErgebenEineLeereListe() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setName("website");
-        filter.setStatus(ProjektStatus.AKTIV);
-        filter.setZielVon(LocalDate.of(2027, 1, 1));
-
-        assertThat(admin(filter)).isEmpty();
-    }
-
-    @Test
-    void einNeuerFilterSetztAllesZurueckUndZeigtWiederAlleErlaubtenProjekte() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setName("website");
-        filter.setStatus(ProjektStatus.ARCHIVIERT);
-        assertThat(ids(admin(filter))).containsExactly(altprojektId);
-
-        assertThat(ids(admin(new ProjektFilter()))).hasSize(4);
-    }
+    // ---------- ohne Filter, Sortierung ----------
 
     @Test
     void keinFilterNullFuehrtZurVollenListe() {
         assertThat(ids(service.projekteSehen(ADMIN_ID, Rolle.ADMIN, null))).hasSize(4);
-    }
-
-    @Test
-    void einLeererNamensfilterFiltertNichts() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setName("   ");
-
-        assertThat(ids(admin(filter))).hasSize(4);
     }
 
     @Test

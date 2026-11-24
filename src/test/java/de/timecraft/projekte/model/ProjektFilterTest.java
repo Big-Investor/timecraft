@@ -25,34 +25,15 @@ class ProjektFilterTest {
     }
 
     @Test
-    void einNamensTextWirdUnveraendertGespeichert() {
+    void einNamensTextBleibtUndLeereNamenWerdenZuNull() {
         ProjektFilter filter = new ProjektFilter();
+
         filter.setName("Website");
-
         assertThat(filter.getName()).isEqualTo("Website");
-    }
 
-    @Test
-    void einLeererNameWirdZuNull() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setName("");
-
-        assertThat(filter.getName()).isNull();
-    }
-
-    @Test
-    void einNameAusLeerzeichenWirdZuNull() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setName("   ");
-
-        assertThat(filter.getName()).isNull();
-    }
-
-    @Test
-    void einNameNullBleibtNull() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setName(null);
-
-        assertThat(filter.getName()).isNull();
+        for (String leer : new String[] {"", "   ", null}) {
+            filter.setName(leer);
+            assertThat(filter.getName()).isNull();
+        }
     }
 }
