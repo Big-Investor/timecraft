@@ -15,16 +15,28 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Materialstamm (FA-M4-01). Pflegen darf nur der Admin, Preise sehen Projektleitung und Admin.
  * Materialien werden nie geloescht, nur deaktiviert.
+ *
+ * @author Tharsan Arumuganathar
  */
 @Service
 public class MaterialService implements MaterialAuskunft {
 
     private final MaterialRepository repository;
 
+    /**
+     * @param repository Materialstamm
+     */
     public MaterialService(MaterialRepository repository) {
         this.repository = repository;
     }
 
+    /**
+     * Legt ein Material an (nur Admin).
+     *
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param daten Eingaben aus dem Formular
+     * @return gespeichertes, aktives Material
+     */
     @Transactional
     public Material anlegen(Rolle rolle, MaterialDaten daten) {
         Rechte.pruefeStammpflege(rolle);
@@ -36,6 +48,14 @@ public class MaterialService implements MaterialAuskunft {
                 geprueft.einheit(), geprueft.einkaufspreis(), geprueft.verkaufspreis()));
     }
 
+    /**
+     * Aendert ein Material (nur Admin).
+     *
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param materialId Material
+     * @param daten Eingaben aus dem Formular
+     * @return geaendertes Material
+     */
     @Transactional
     public Material bearbeiten(Rolle rolle, long materialId, MaterialDaten daten) {
         Rechte.pruefeStammpflege(rolle);
@@ -49,26 +69,48 @@ public class MaterialService implements MaterialAuskunft {
         return material;
     }
 
+    /**
+     * Deaktiviert ein Material (nur Admin); geloescht wird nie.
+     *
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param materialId Material
+     */
     @Transactional
     public void deaktivieren(Rolle rolle, long materialId) {
         Rechte.pruefeStammpflege(rolle);
         finde(materialId).deaktivieren();
     }
 
+    /**
+     * Aktiviert ein deaktiviertes Material wieder (nur Admin).
+     *
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param materialId Material
+     */
     @Transactional
     public void aktivieren(Rolle rolle, long materialId) {
         Rechte.pruefeStammpflege(rolle);
         finde(materialId).aktivieren();
     }
 
-    /** Ganzer Stamm mit Preisen, auch deaktivierte Materialien. */
+    /**
+     * Ganzer Stamm mit Preisen, auch deaktivierte Materialien.
+     *
+     * @param rolle Rolle der angemeldeten Person (Projektleitung oder Admin)
+     * @return ganzer Stamm mit Preisen, auch deaktivierte Materialien
+     */
     @Transactional(readOnly = true)
     public List<Material> alle(Rolle rolle) {
         Rechte.pruefePreissicht(rolle);
         return repository.findAllByOrderByArtikelnummerAsc();
     }
 
-    /** Katalog fuer die Materialplanung: nur aktive Materialien, mit Preisen. */
+    /**
+     * Katalog fuer die Materialplanung: nur aktive Materialien, mit Preisen.
+     *
+     * @param rolle Rolle der angemeldeten Person (Projektleitung oder Admin)
+     * @return aktive Materialien mit Preisen, als Katalog fuer die Planung
+     */
     @Transactional(readOnly = true)
     public List<Material> aktive(Rolle rolle) {
         Rechte.pruefePreissicht(rolle);

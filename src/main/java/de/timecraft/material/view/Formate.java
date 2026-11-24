@@ -10,7 +10,11 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-/** Deutsche Anzeige von Betraegen, Mengen, Daten und Stunden (nur Darstellung, keine Rechnung). */
+/**
+ * Deutsche Anzeige von Betraegen, Mengen, Daten und Stunden (nur Darstellung, keine Rechnung).
+ *
+ * @author Tharsan Arumuganathar
+ */
 final class Formate {
 
     private static final DecimalFormatSymbols DEUTSCH = DecimalFormatSymbols.getInstance(Locale.GERMANY);
@@ -21,36 +25,71 @@ final class Formate {
     private Formate() {
     }
 
-    /** z. B. "1.074,00 €" */
+    /**
+     * z. B. "1.074,00 €"
+     *
+     * @param betrag Betrag
+     * @return z. B. "1.074,00 €"
+     */
     static String euro(BigDecimal betrag) {
         return new DecimalFormat("#,##0.00", DEUTSCH).format(betrag) + " €";
     }
 
-    /** Mit Vorzeichen, z. B. "+3.228,70 €" */
+    /**
+     * Mit Vorzeichen, z. B. "+3.228,70 €"
+     *
+     * @param betrag Betrag
+     * @return z. B. "+3.228,70 €"
+     */
     static String euroMitVorzeichen(BigDecimal betrag) {
         return (betrag.signum() > 0 ? "+" : "") + euro(betrag);
     }
 
-    /** z. B. "12,0 m²" oder "36 Stk." */
+    /**
+     * z. B. "12,0 m²" oder "36 Stk."
+     *
+     * @param menge Menge
+     * @param einheit Einheit
+     * @return z. B. "12,0 m²" oder "36 Stk."
+     */
     static String menge(BigDecimal menge, Einheit einheit) {
         return zahl(menge, einheit) + " " + einheit.kuerzel();
     }
 
-    /** Menge ohne Einheit: Stueck ganzzahlig, sonst mindestens eine Nachkommastelle. */
+    /**
+     * Menge ohne Einheit: Stueck ganzzahlig, sonst mindestens eine Nachkommastelle.
+     *
+     * @param menge Menge
+     * @param einheit Einheit (Stueck ganzzahlig, sonst mindestens eine Nachkommastelle)
+     * @return Menge ohne Einheit
+     */
     static String zahl(BigDecimal menge, Einheit einheit) {
         String muster = einheit == Einheit.STUECK ? "#,##0.##" : "#,##0.0#";
         return new DecimalFormat(muster, DEUTSCH).format(menge);
     }
 
+    /**
+     * @param zeitpunkt Zeitpunkt
+     * @return Datum in Europe/Berlin, z. B. "08.10.2026"
+     */
     static String datum(Instant zeitpunkt) {
         return DATUM.format(zeitpunkt.atZone(BERLIN));
     }
 
+    /**
+     * @param zeitpunkt Zeitpunkt
+     * @return z. B. "05.10."
+     */
     static String tagMonat(LocalDateTime zeitpunkt) {
         return TAG_MONAT.format(zeitpunkt);
     }
 
-    /** Minuten als Stunden, z. B. "147:15 h" */
+    /**
+     * Minuten als Stunden, z. B. "147:15 h"
+     *
+     * @param minuten Minuten
+     * @return Stunden, z. B. "147:15 h"
+     */
     static String stunden(int minuten) {
         return String.format(Locale.GERMANY, "%d:%02d h", minuten / 60, minuten % 60);
     }

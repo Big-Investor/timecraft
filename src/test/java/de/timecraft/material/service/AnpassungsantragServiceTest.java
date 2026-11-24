@@ -45,6 +45,11 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 @Import({AnpassungsantragService.class, ProjektZugriff.class, Personennamen.class,
         AnpassungsantragServiceTest.Testumgebung.class})
+/**
+ * Tests fuer AnpassungsantragService.
+ *
+ * @author Tharsan Arumuganathar
+ */
 class AnpassungsantragServiceTest {
 
     static final long JONAS = 1;

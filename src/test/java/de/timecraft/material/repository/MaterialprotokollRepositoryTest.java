@@ -19,6 +19,11 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
+/**
+ * Tests fuer MaterialprotokollRepository.
+ *
+ * @author Tharsan Arumuganathar
+ */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")

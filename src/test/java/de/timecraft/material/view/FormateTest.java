@@ -8,6 +8,11 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Tests fuer Formate.
+ *
+ * @author Tharsan Arumuganathar
+ */
 class FormateTest {
 
     @Test

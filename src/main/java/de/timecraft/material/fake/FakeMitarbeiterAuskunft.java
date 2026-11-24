@@ -14,13 +14,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** Fake (Tests und Profil "fake") fuer die MitarbeiterAuskunft von M1: Personen und Stundensaetze im Speicher. */
+/**
+ * Fake (Tests und Profil "fake") fuer die MitarbeiterAuskunft von M1: Personen und Stundensaetze im Speicher.
+ *
+ * @author Tharsan Arumuganathar
+ */
 public class FakeMitarbeiterAuskunft implements MitarbeiterAuskunft {
 
     private final Map<Long, MitarbeiterInfo> personen = new LinkedHashMap<>();
     private final Map<Long, BigDecimal> stundensaetze = new LinkedHashMap<>();
 
-    /** Person anlegen; stundensatz null heisst: kein Stundensatz hinterlegt. */
+    /**
+     * Legt eine aktive Person an.
+     *
+     * @param id Mitarbeiter-ID
+     * @param vorname Vorname
+     * @param nachname Nachname
+     * @param rolle Rolle des Kontos
+     * @param stundensatz Stundensatz in Euro; null heisst: kein Stundensatz hinterlegt
+     */
     public void hinzufuegen(long id, String vorname, String nachname, Rolle rolle, BigDecimal stundensatz) {
         personen.put(id, new MitarbeiterInfo(id, "P-" + id, vorname, nachname, rolle, true, null,
                 LocalDate.of(1990, 1, 1), new BigDecimal("40.0"),

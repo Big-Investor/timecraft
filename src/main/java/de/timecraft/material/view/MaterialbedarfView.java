@@ -42,6 +42,8 @@ import java.util.List;
  * Materialplanung &amp; Vorkalkulation eines Projekts (Mockup "Material · Materialplanung &amp; Vorkalkulation"):
  * Warnbanner offener Mehrbedarf, Materialtabelle mit Vorkalkulation, Position hinzufuegen, Auftragskosten
  * mit Angebotspreis und Unterdeckungswarnung, Projekthistorie. M3 verlinkt diese Route aus dem Projektdetail.
+ *
+ * @author Tharsan Arumuganathar
  */
 @Route(value = MaterialbedarfView.ROUTE, layout = HauptLayout.class)
 @PageTitle("Materialplanung & Vorkalkulation")
@@ -58,6 +60,13 @@ public class MaterialbedarfView extends Div implements BeforeEnterObserver {
     private final AktuelleSitzung sitzung;
     private long projektId;
 
+    /**
+     * @param vorkalkulationService Planung und Vorkalkulation
+     * @param kostenService Auftragskosten und Angebotspreis
+     * @param antragService Mehrbedarfe und Historie
+     * @param materialService Katalog fuer neue Positionen
+     * @param sitzung angemeldete Person
+     */
     public MaterialbedarfView(VorkalkulationService vorkalkulationService, KostenService kostenService,
             AnpassungsantragService antragService, MaterialService materialService, AktuelleSitzung sitzung) {
         this.vorkalkulationService = vorkalkulationService;

@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Materialplanung (Soll) und Vorkalkulation eines Projekts (FA-M4-02, FA-M4-03).
  * Jedes Material steht hoechstens einmal im Projekt; spaetere Erhoehungen laufen ueber einen Antrag.
+ *
+ * @author Tharsan Arumuganathar
  */
 @Service
 public class VorkalkulationService {
@@ -30,6 +32,13 @@ public class VorkalkulationService {
     private final ProjektZugriff projektZugriff;
     private final Clock clock;
 
+    /**
+     * @param materialRepository Materialstamm
+     * @param positionRepository Materialpositionen
+     * @param protokollRepository Materialprotokoll
+     * @param projektZugriff Projekte und projektbezogene Rechte
+     * @param clock Uhr (Europe/Berlin)
+     */
     public VorkalkulationService(MaterialRepository materialRepository, MaterialpositionRepository positionRepository,
             MaterialprotokollRepository protokollRepository, ProjektZugriff projektZugriff, Clock clock) {
         this.materialRepository = materialRepository;
@@ -39,7 +48,16 @@ public class VorkalkulationService {
         this.clock = clock;
     }
 
-    /** Bucht ein Material mit Soll-Menge ins Projekt und protokolliert GEBUCHT (eine Transaktion). */
+    /**
+     * Bucht ein Material mit Soll-Menge ins Projekt und protokolliert GEBUCHT (eine Transaktion).
+     *
+     * @param mitarbeiterId angemeldete Person (verantwortliche Projektleitung)
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param projektId aktives Projekt
+     * @param materialId aktives Material, noch nicht im Projekt
+     * @param sollMenge geplante Menge, groesser als 0
+     * @return gespeicherte Position
+     */
     @Transactional
     public Materialposition positionHinzufuegen(long mitarbeiterId, Rolle rolle, long projektId, long materialId,
             BigDecimal sollMenge) {
@@ -60,21 +78,41 @@ public class VorkalkulationService {
         return position;
     }
 
-    /** Vorkalkulation mit Preisen: verantwortliche Projektleitung und Admin. */
+    /**
+     * Vorkalkulation mit Preisen: verantwortliche Projektleitung und Admin.
+     *
+     * @param mitarbeiterId angemeldete Person
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param projektId Projekt
+     * @return Zeilen und Summen
+     */
     @Transactional(readOnly = true)
     public Vorkalkulation vorkalkulation(long mitarbeiterId, Rolle rolle, long projektId) {
         projektZugriff.pruefeKostensicht(mitarbeiterId, rolle, projektId);
         return Vorkalkulation.berechne(positionRepository.findByProjektIdOrderByIdAsc(projektId));
     }
 
-    /** Projekte fuer die Materialuebersicht: verantwortete (Projektleitung) bzw. alle (Admin). */
+    /**
+     * Projekte fuer die Materialuebersicht: verantwortete (Projektleitung) bzw. alle (Admin).
+     *
+     * @param mitarbeiterId angemeldete Person
+     * @param rolle Rolle der angemeldeten Person (Projektleitung oder Admin)
+     * @return verantwortete Projekte (Projektleitung) bzw. alle (Admin)
+     */
     @Transactional(readOnly = true)
     public List<Projektkopf> projekte(long mitarbeiterId, Rolle rolle) {
         return projektZugriff.projekteMitKostensicht(mitarbeiterId, rolle).stream()
                 .map(p -> Projektkopf.aus(p, mitarbeiterId, rolle)).toList();
     }
 
-    /** Kopf der Materialplanung eines Projekts: verantwortliche Projektleitung und Admin. */
+    /**
+     * Kopf der Materialplanung eines Projekts: verantwortliche Projektleitung und Admin.
+     *
+     * @param mitarbeiterId angemeldete Person
+     * @param rolle Rolle der angemeldeten Person (Projektleitung oder Admin)
+     * @param projektId Projekt
+     * @return Kopfdaten der Materialplanung
+     */
     @Transactional(readOnly = true)
     public Projektkopf projektkopf(long mitarbeiterId, Rolle rolle, long projektId) {
         return Projektkopf.aus(projektZugriff.pruefeKostensicht(mitarbeiterId, rolle, projektId), mitarbeiterId,

@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 /**
  * "Material" fuer Mitarbeiter: fuehrt direkt zu "Mehrbedarf anfordern" (Mockup). Gleiche Bezeichnung und
  * Stelle wie {@link MaterialMenuEintrag}, aber andere Rolle; jede Person sieht genau einen Eintrag "Material".
+ *
+ * @author Tharsan Arumuganathar
  */
 @Component
 public class MehrbedarfMenuEintrag implements MenuEintrag {

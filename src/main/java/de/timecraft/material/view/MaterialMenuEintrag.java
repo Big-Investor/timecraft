@@ -5,7 +5,11 @@ import de.timecraft.geruest.layout.MenuEintrag;
 import java.util.Set;
 import org.springframework.stereotype.Component;
 
-/** "Material" fuer Projektleitung und Admin: Projektliste mit Materialplanung und Kosten (Gruppe Betrieb). */
+/**
+ * "Material" fuer Projektleitung und Admin: Projektliste mit Materialplanung und Kosten (Gruppe Betrieb).
+ *
+ * @author Tharsan Arumuganathar
+ */
 @Component
 public class MaterialMenuEintrag implements MenuEintrag {
 

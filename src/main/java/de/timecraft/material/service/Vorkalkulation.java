@@ -7,10 +7,21 @@ import java.util.List;
 /**
  * Vorkalkulation eines Projekts (FA-M4-03). Jede Zeile wird kaufmaennisch gerundet,
  * die Summen addieren die gerundeten Zeilen (so stimmen Tabelle und Summe immer ueberein).
+ *
+ * @param zeilen eine Zeile je Position
+ * @param summeKosten Summe EK
+ * @param summeVerkauf Summe VK
+ * @param summeDeckungsbeitrag Summe VK minus Summe EK
+ *
+ * @author Tharsan Arumuganathar
  */
 public record Vorkalkulation(List<Kalkulationszeile> zeilen, BigDecimal summeKosten, BigDecimal summeVerkauf,
         BigDecimal summeDeckungsbeitrag) {
 
+    /**
+     * @param positionen Positionen eines Projekts
+     * @return Zeilen und Summen der Vorkalkulation
+     */
     static Vorkalkulation berechne(List<Materialposition> positionen) {
         List<Kalkulationszeile> zeilen = positionen.stream().map(Kalkulationszeile::aus).toList();
         BigDecimal kosten = summe(zeilen.stream().map(Kalkulationszeile::kosten).toList());

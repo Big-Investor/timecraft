@@ -22,7 +22,11 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
-/** Service gegen die echte H2-Datenbank, damit Eindeutigkeit und Speichern wirklich geprueft werden. */
+/**
+ * Service gegen die echte H2-Datenbank, damit Eindeutigkeit und Speichern wirklich geprueft werden.
+ *
+ * @author Tharsan Arumuganathar
+ */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")

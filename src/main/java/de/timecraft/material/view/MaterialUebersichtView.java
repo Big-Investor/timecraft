@@ -20,6 +20,8 @@ import jakarta.annotation.security.RolesAllowed;
 /**
  * Einstieg "Material" fuer Projektleitung (verantwortete Projekte) und Admin (alle Projekte):
  * fuehrt zur Materialplanung je Projekt. Die Projektleitung kann von hier auch selbst Mehrbedarf anfordern.
+ *
+ * @author Tharsan Arumuganathar
  */
 @Route(value = MaterialUebersichtView.ROUTE, layout = HauptLayout.class)
 @PageTitle("Material")
@@ -28,6 +30,10 @@ public class MaterialUebersichtView extends Div {
 
     static final String ROUTE = "material";
 
+    /**
+     * @param service Projektliste
+     * @param sitzung angemeldete Person
+     */
     public MaterialUebersichtView(VorkalkulationService service, AktuelleSitzung sitzung) {
         addClassName("karte");
         H2 titel = new H2(sitzung.rolle() == Rolle.ADMIN ? "Alle Projekte" : "Meine Projekte");

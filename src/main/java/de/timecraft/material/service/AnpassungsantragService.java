@@ -29,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
  * Mehrbedarf (Material-Anpassungsantrag) einreichen, zurueckziehen und entscheiden (FA-M4-04 bis FA-M4-06).
  * Stellt die verantwortliche Projektleitung selbst den Antrag, ist er sofort genehmigt: So hat jede
  * Mengenaenderung einen Antrag mit Begruendung.
+ *
+ * @author Tharsan Arumuganathar
  */
 @Service
 public class AnpassungsantragService {
@@ -45,6 +47,14 @@ public class AnpassungsantragService {
     private final Personennamen personennamen;
     private final Clock clock;
 
+    /**
+     * @param antragRepository Antraege
+     * @param positionRepository Materialpositionen
+     * @param protokollRepository Materialprotokoll
+     * @param projektZugriff Projekte und projektbezogene Rechte
+     * @param personennamen Namen zu Mitarbeiter-IDs
+     * @param clock Uhr (Europe/Berlin)
+     */
     public AnpassungsantragService(AnpassungsantragRepository antragRepository,
             MaterialpositionRepository positionRepository, MaterialprotokollRepository protokollRepository,
             ProjektZugriff projektZugriff, Personennamen personennamen, Clock clock) {
@@ -56,7 +66,14 @@ public class AnpassungsantragService {
         this.clock = clock;
     }
 
-    /** Geplante Materialien des Projekts ohne Preise, als Auswahl fuer den Mehrbedarf. */
+    /**
+     * Geplante Materialien des Projekts ohne Preise, als Auswahl fuer den Mehrbedarf.
+     *
+     * @param mitarbeiterId angemeldete Person
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param projektId Projekt
+     * @return Positionen mit Bezeichnung, Einheit und Soll-Menge
+     */
     @Transactional(readOnly = true)
     public List<PlanungOhnePreis> geplanteMaterialien(long mitarbeiterId, Rolle rolle, long projektId) {
         projektZugriff.pruefeTeilnahme(mitarbeiterId, rolle, projektId);
@@ -66,6 +83,18 @@ public class AnpassungsantragService {
                 .toList();
     }
 
+    /**
+     * Stellt einen Mehrbedarf (Status OFFEN). Stellt ihn die verantwortliche Projektleitung selbst,
+     * ist er sofort genehmigt.
+     *
+     * @param mitarbeiterId angemeldete Person
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param positionId Materialposition
+     * @param zusatzmenge zusaetzliche Menge, groesser als 0
+     * @param grund gewaehlter Grund, darf leer sein
+     * @param text Pflichtbegruendung
+     * @return gespeicherter Antrag
+     */
     @Transactional
     public Materialanpassungsantrag einreichen(long mitarbeiterId, Rolle rolle, long positionId,
             BigDecimal zusatzmenge, Mehrbedarfsgrund grund, String text) {
@@ -86,7 +115,13 @@ public class AnpassungsantragService {
         return antragRepository.save(antrag);
     }
 
-    /** Eigenen offenen Antrag zurueckziehen. */
+    /**
+     * Zieht einen eigenen offenen Antrag zurueck.
+     *
+     * @param mitarbeiterId angemeldete Person
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param antragId Antrag
+     */
     @Transactional
     public void zurueckziehen(long mitarbeiterId, Rolle rolle, long antragId) {
         Rechte.pruefeAngemeldet(rolle);
@@ -98,7 +133,14 @@ public class AnpassungsantragService {
         antrag.setStatus(Antragsstatus.ZURUECKGEZOGEN);
     }
 
-    /** Offene Antraege eines Projekts fuer die verantwortliche Projektleitung (Admin darf lesen). */
+    /**
+     * Offene Antraege eines Projekts fuer die verantwortliche Projektleitung (Admin darf lesen).
+     *
+     * @param mitarbeiterId angemeldete Person
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param projektId Projekt
+     * @return offene Antraege mit Alt-/Neuwert und Kostendifferenz, aelteste zuerst
+     */
     @Transactional(readOnly = true)
     public List<AntragZurPruefung> offeneAntraege(long mitarbeiterId, Rolle rolle, long projektId) {
         projektZugriff.pruefeKostensicht(mitarbeiterId, rolle, projektId);
@@ -107,7 +149,13 @@ public class AnpassungsantragService {
                 .map(a -> AntragZurPruefung.aus(a, personennamen.name(a.getAntragstellerId()))).toList();
     }
 
-    /** Eigene Antraege, neueste zuerst. */
+    /**
+     * Eigene Antraege, neueste zuerst.
+     *
+     * @param mitarbeiterId angemeldete Person
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @return eigene Antraege ohne Preise, neueste zuerst
+     */
     @Transactional(readOnly = true)
     public List<MeinMehrbedarf> meineAntraege(long mitarbeiterId, Rolle rolle) {
         Rechte.pruefeAngemeldet(rolle);
@@ -117,14 +165,27 @@ public class AnpassungsantragService {
                 .toList();
     }
 
-    /** Aktive Projekte zur Auswahl beim Mehrbedarf, ohne Preise. */
+    /**
+     * Aktive Projekte zur Auswahl beim Mehrbedarf, ohne Preise.
+     *
+     * @param mitarbeiterId angemeldete Person
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @return aktive Projekte, fuer die die Person Mehrbedarf stellen darf, ohne Preise
+     */
     @Transactional(readOnly = true)
     public List<Projektauswahl> projekteFuerMehrbedarf(long mitarbeiterId, Rolle rolle) {
         return projektZugriff.projekteFuerMehrbedarf(mitarbeiterId, rolle).stream()
                 .map(p -> new Projektauswahl(p.projektId(), p.name())).toList();
     }
 
-    /** Projekthistorie Material (FA-M4-06): eingeplante Positionen und genehmigte Mehrbedarfe, neueste zuerst. */
+    /**
+     * Projekthistorie Material (FA-M4-06): eingeplante Positionen und genehmigte Mehrbedarfe.
+     *
+     * @param mitarbeiterId angemeldete Person
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param projektId Projekt
+     * @return Eintraege, neueste zuerst
+     */
     @Transactional(readOnly = true)
     public List<HistorienEintrag> projekthistorie(long mitarbeiterId, Rolle rolle, long projektId) {
         projektZugriff.pruefeKostensicht(mitarbeiterId, rolle, projektId);
@@ -165,7 +226,13 @@ public class AnpassungsantragService {
         return eintraege;
     }
 
-    /** Freigabe: Soll-Menge erhoehen, Antrag GENEHMIGT, Protokoll GENEHMIGT, alles in einer Transaktion. */
+    /**
+     * Freigabe: Soll-Menge erhoehen, Antrag GENEHMIGT, Protokoll GENEHMIGT, alles in einer Transaktion.
+     *
+     * @param mitarbeiterId angemeldete Person (verantwortliche Projektleitung)
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param antragId offener Antrag
+     */
     @Transactional
     public void freigeben(long mitarbeiterId, Rolle rolle, long antragId) {
         Rechte.pruefeAngemeldet(rolle);
@@ -177,7 +244,14 @@ public class AnpassungsantragService {
         genehmigen(antrag, mitarbeiterId, clock.instant());
     }
 
-    /** Ablehnung mit Pflichtkommentar; Mengen bleiben unveraendert. */
+    /**
+     * Ablehnung mit Pflichtkommentar; Mengen bleiben unveraendert.
+     *
+     * @param mitarbeiterId angemeldete Person (verantwortliche Projektleitung)
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param antragId offener Antrag
+     * @param kommentar Pflichtbegruendung der Ablehnung
+     */
     @Transactional
     public void ablehnen(long mitarbeiterId, Rolle rolle, long antragId, String kommentar) {
         Rechte.pruefeAngemeldet(rolle);

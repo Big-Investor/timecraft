@@ -3,7 +3,11 @@ package de.timecraft.material.model;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-/** Speichert eine Einheit als Kuerzel (z. B. "m²") statt als Enum-Namen. */
+/**
+ * Speichert eine Einheit als Kuerzel (z. B. "m²") statt als Enum-Namen.
+ *
+ * @author Tharsan Arumuganathar
+ */
 @Converter
 public class EinheitKonverter implements AttributeConverter<Einheit, String> {
 

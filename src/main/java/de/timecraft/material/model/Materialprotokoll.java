@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 /**
  * Unveraenderlicher Eintrag der Materialhistorie (Tabelle materialprotokoll).
  * Keine Setter, alle Spalten nicht aenderbar; das Repository bietet kein Loeschen an.
+ *
+ * @author Tharsan Arumuganathar
  */
 @Entity
 @Table(name = "materialprotokoll")
@@ -51,6 +53,14 @@ public class Materialprotokoll {
         // Nur fuer JPA
     }
 
+    /**
+     * @param materialposition betroffene Position
+     * @param geaendertVonId Person, die die Aenderung ausgeloest hat
+     * @param zeitpunkt Zeitpunkt der Aenderung (Europe/Berlin)
+     * @param aktion Art der Aenderung
+     * @param alterWert Menge vorher, leer bei GEBUCHT
+     * @param neuerWert Menge nachher
+     */
     public Materialprotokoll(Materialposition materialposition, long geaendertVonId, LocalDateTime zeitpunkt,
             Protokollaktion aktion, BigDecimal alterWert, BigDecimal neuerWert) {
         this.materialposition = materialposition;

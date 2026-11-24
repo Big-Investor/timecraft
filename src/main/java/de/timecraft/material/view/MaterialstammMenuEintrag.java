@@ -5,7 +5,11 @@ import de.timecraft.geruest.layout.MenuEintrag;
 import java.util.Set;
 import org.springframework.stereotype.Component;
 
-/** "Materialstamm" nur fuer den Admin (Gruppe Verwaltung). */
+/**
+ * "Materialstamm" nur fuer den Admin (Gruppe Verwaltung).
+ *
+ * @author Tharsan Arumuganathar
+ */
 @Component
 public class MaterialstammMenuEintrag implements MenuEintrag {
 

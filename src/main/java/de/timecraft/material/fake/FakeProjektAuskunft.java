@@ -9,18 +9,32 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/** Fake fuer die ProjektAuskunft von M3 (Tests und Profil "fake"): Projekte und Zuordnungen im Speicher. */
+/**
+ * Fake fuer die ProjektAuskunft von M3 (Tests und Profil "fake"): Projekte und Zuordnungen im Speicher.
+ *
+ * @author Tharsan Arumuganathar
+ */
 public class FakeProjektAuskunft implements ProjektAuskunft {
 
     private final Map<Long, ProjektInfo> projekte = new LinkedHashMap<>();
     private final Map<Long, Set<Long>> zuordnungen = new LinkedHashMap<>();
 
+    /**
+     * Legt ein Projekt mit seinen zugeordneten Personen an.
+     *
+     * @param projekt Projektdaten
+     * @param mitarbeiterIds dem Projekt zugeordnete Personen
+     */
     public void hinzufuegen(ProjektInfo projekt, Long... mitarbeiterIds) {
         projekte.put(projekt.projektId(), projekt);
         zuordnungen.put(projekt.projektId(), new LinkedHashSet<>(List.of(mitarbeiterIds)));
     }
 
-    /** Ersetzt die Projektdaten (fuer FakeAngebotspreisPflege); Zuordnungen bleiben. */
+    /**
+     * Ersetzt die Projektdaten (fuer FakeAngebotspreisPflege); Zuordnungen bleiben.
+     *
+     * @param projekt neue Projektdaten mit derselben Projekt-ID
+     */
     public void ersetzen(ProjektInfo projekt) {
         projekte.put(projekt.projektId(), projekt);
     }

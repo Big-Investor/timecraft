@@ -26,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
  * Kostenaggregation und Unterdeckungswarnung (FA-M4-07, FA-M4-08) sowie Pflege des Angebotspreises.
  * Personalkosten: je Person anrechenbare Minuten aller Monate vom Projektstart bis heute x Stundensatz / 60.
  * Die fremden Schnittstellen werden {@code @Lazy} injiziert, weil es M1, M2 und M3 im M4-Branch noch nicht gibt.
+ *
+ * @author Tharsan Arumuganathar
  */
 @Service
 public class KostenService {
@@ -40,6 +42,15 @@ public class KostenService {
     private final Personennamen personennamen;
     private final Clock clock;
 
+    /**
+     * @param positionRepository Materialpositionen
+     * @param projektZugriff Projekte und projektbezogene Rechte
+     * @param buchungsAuskunft Arbeitszeiten aus M2
+     * @param mitarbeiterAuskunft Stundensaetze aus M1
+     * @param angebotspreisPflege Angebotspreis in M3 setzen
+     * @param personennamen Namen zu Mitarbeiter-IDs
+     * @param clock Uhr (Europe/Berlin)
+     */
     public KostenService(MaterialpositionRepository positionRepository, ProjektZugriff projektZugriff,
             @Lazy BuchungsAuskunft buchungsAuskunft, @Lazy MitarbeiterAuskunft mitarbeiterAuskunft,
             @Lazy AngebotspreisPflege angebotspreisPflege, Personennamen personennamen, Clock clock) {
@@ -52,7 +63,14 @@ public class KostenService {
         this.clock = clock;
     }
 
-    /** Kostenuebersicht: verantwortliche Projektleitung und Admin. */
+    /**
+     * Gesamtauftragskosten und Kostendeckung: verantwortliche Projektleitung und Admin.
+     *
+     * @param mitarbeiterId angemeldete Person
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param projektId Projekt
+     * @return Material-, Personal- und Gesamtkosten mit Kostendeckung
+     */
     @Transactional(readOnly = true)
     public Kostenuebersicht kosten(long mitarbeiterId, Rolle rolle, long projektId) {
         ProjektInfo projekt = projektZugriff.pruefeKostensicht(mitarbeiterId, rolle, projektId);
@@ -76,7 +94,14 @@ public class KostenService {
         return uebersicht(material, personal, minuten, projekt.angebotspreis(), List.copyOf(ohneStundensatz));
     }
 
-    /** Angebotspreis setzen: nur die verantwortliche Projektleitung eines aktiven Projekts. */
+    /**
+     * Angebotspreis setzen: nur die verantwortliche Projektleitung eines aktiven Projekts.
+     *
+     * @param mitarbeiterId angemeldete Person
+     * @param rolle Rolle der angemeldeten Person, null heisst nicht angemeldet
+     * @param projektId Projekt
+     * @param angebotspreis neuer Angebotspreis (netto), wird auf zwei Stellen gerundet
+     */
     @Transactional
     public void setzeAngebotspreis(long mitarbeiterId, Rolle rolle, long projektId, BigDecimal angebotspreis) {
         ProjektZugriff.pruefeAktiv(projektZugriff.pruefeVerantwortlich(mitarbeiterId, rolle, projektId));

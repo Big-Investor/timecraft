@@ -39,6 +39,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 @Import({AnpassungsantragService.class, ProjektZugriff.class, Personennamen.class,
         AnpassungsantragServiceTest.Testumgebung.class})
+/**
+ * Tests fuer AnpassungsantragRollback.
+ *
+ * @author Tharsan Arumuganathar
+ */
 class AnpassungsantragRollbackTest {
 
     @Autowired

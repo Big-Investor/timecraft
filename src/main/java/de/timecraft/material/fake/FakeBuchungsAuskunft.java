@@ -16,13 +16,22 @@ import java.util.Optional;
 /**
  * Fake (Tests und Profil "fake") fuer die BuchungsAuskunft von M2. M4 braucht nur {@code segmenteProjekt};
  * die uebrigen Methoden liefern leere Ergebnisse wie bei einem Mitarbeiter ohne Buchungen.
+ *
+ * @author Tharsan Arumuganathar
  */
 public class FakeBuchungsAuskunft implements BuchungsAuskunft {
 
     private final List<ZeitSegment> segmente = new ArrayList<>();
     private long naechsteId = 1;
 
-    /** Abgeschlossene Buchung an einem Tag mit anrechenbaren Minuten (Pause schon abgezogen). */
+    /**
+     * Legt eine abgeschlossene Buchung an einem Tag an (Pause schon abgezogen).
+     *
+     * @param mitarbeiterId gebuchte Person
+     * @param projektId gebuchtes Projekt
+     * @param tag Kalendertag der Buchung
+     * @param anrechenbareMinuten anrechenbare Arbeitszeit in Minuten
+     */
     public void segment(long mitarbeiterId, long projektId, LocalDate tag, int anrechenbareMinuten) {
         Instant beginn = tag.atStartOfDay(ZoneId.of("Europe/Berlin")).toInstant();
         segmente.add(new ZeitSegment(naechsteId++, mitarbeiterId, projektId, Standort.UNTERWEGS, tag, beginn,

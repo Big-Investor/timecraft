@@ -9,7 +9,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 
-/** Ein Material im Stammkatalog (Tabelle material). */
+/**
+ * Ein Material im Stammkatalog (Tabelle material).
+ *
+ * @author Tharsan Arumuganathar
+ */
 @Entity
 @Table(name = "material")
 public class Material {
@@ -45,7 +49,16 @@ public class Material {
         // Nur fuer JPA
     }
 
-    /** Neues Material ist aktiv. */
+    /**
+     * Neues Material ist aktiv.
+     *
+     * @param artikelnummer eindeutige Artikelnummer
+     * @param bezeichnung Bezeichnung
+     * @param kategorie Kategorie, darf leer sein
+     * @param einheit Mengeneinheit
+     * @param einkaufspreis Einkaufspreis je Einheit
+     * @param verkaufspreis Verkaufspreis je Einheit
+     */
     public Material(String artikelnummer, String bezeichnung, String kategorie, Einheit einheit,
             BigDecimal einkaufspreis, BigDecimal verkaufspreis) {
         this.artikelnummer = artikelnummer;
@@ -57,7 +70,16 @@ public class Material {
         this.aktiv = true;
     }
 
-    /** Uebernimmt geaenderte Stammdaten; die Pruefung macht der Service. */
+    /**
+     * Uebernimmt geaenderte Stammdaten; die Pruefung macht der Service.
+     *
+     * @param artikelnummer eindeutige Artikelnummer
+     * @param bezeichnung Bezeichnung
+     * @param kategorie Kategorie, darf leer sein
+     * @param einheit Mengeneinheit
+     * @param einkaufspreis Einkaufspreis je Einheit
+     * @param verkaufspreis Verkaufspreis je Einheit
+     */
     public void aendern(String artikelnummer, String bezeichnung, String kategorie, Einheit einheit,
             BigDecimal einkaufspreis, BigDecimal verkaufspreis) {
         this.artikelnummer = artikelnummer;
@@ -68,11 +90,16 @@ public class Material {
         this.verkaufspreis = verkaufspreis;
     }
 
-    /** Material kann nicht mehr neu eingeplant werden, bestehende Positionen bleiben. */
+    /**
+     * Material kann nicht mehr neu eingeplant werden, bestehende Positionen bleiben.
+     */
     public void deaktivieren() {
         this.aktiv = false;
     }
 
+    /**
+     * Material kann wieder eingeplant werden.
+     */
     public void aktivieren() {
         this.aktiv = true;
     }

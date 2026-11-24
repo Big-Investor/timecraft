@@ -13,6 +13,8 @@ import java.math.BigDecimal;
 /**
  * Antrag auf Mehrbedarf fuer eine Materialposition (Tabelle materialanpassungsantrag).
  * Die gemeinsamen Felder (Antragsteller, Status, Begruendung ...) stehen in der Tabelle antrag von M5.
+ *
+ * @author Tharsan Arumuganathar
  */
 @Entity
 @Table(name = "materialanpassungsantrag")
@@ -31,6 +33,10 @@ public class Materialanpassungsantrag extends Antrag {
         // Nur fuer JPA
     }
 
+    /**
+     * @param materialposition Position, deren Soll-Menge erhoeht werden soll
+     * @param zusatzmenge beantragte zusaetzliche Menge
+     */
     public Materialanpassungsantrag(Materialposition materialposition, BigDecimal zusatzmenge) {
         this.materialposition = materialposition;
         this.zusatzmenge = zusatzmenge;

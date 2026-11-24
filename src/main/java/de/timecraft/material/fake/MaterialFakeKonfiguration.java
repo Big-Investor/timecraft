@@ -24,6 +24,8 @@ import org.springframework.context.annotation.Profile;
  * Beispielmaterial wie in den Mockups. Die IDs 1 bis 3 passen zu den Platzhalter-Benutzern des Geruests
  * (mitarbeiter = Jonas, projektleitung = Lena, admin = Sabine). Die Beispieldaten laufen ueber die Services,
  * also mit denselben Regeln wie in der Oberflaeche.
+ *
+ * @author Tharsan Arumuganathar
  */
 @Configuration
 @Profile("fake")
@@ -40,6 +42,9 @@ public class MaterialFakeKonfiguration {
     static final long DACHSTUHL = 1040;
     static final long ALTBAU_ARCHIV = 1001;
 
+    /**
+     * @return Personen der Beispieldaten mit Stundensaetzen
+     */
     @Bean
     public FakeMitarbeiterAuskunft fakeMitarbeiterAuskunft() {
         FakeMitarbeiterAuskunft personen = new FakeMitarbeiterAuskunft();
@@ -51,6 +56,10 @@ public class MaterialFakeKonfiguration {
         return personen;
     }
 
+    /**
+     * @param clock Uhr; die Projekte starten zwei Monate vor heute
+     * @return Projekte der Beispieldaten mit Zuordnungen
+     */
     @Bean
     public FakeProjektAuskunft fakeProjektAuskunft(Clock clock) {
         LocalDate start = LocalDate.now(clock).minusMonths(2).withDayOfMonth(1);
@@ -66,12 +75,21 @@ public class MaterialFakeKonfiguration {
         return projekte;
     }
 
+    /**
+     * @param fakeProjektAuskunft Projekte, deren Angebotspreis gesetzt wird
+     * @return Fake fuer das Setzen des Angebotspreises
+     */
     @Bean
     public FakeAngebotspreisPflege fakeAngebotspreisPflege(FakeProjektAuskunft fakeProjektAuskunft) {
         return new FakeAngebotspreisPflege(fakeProjektAuskunft);
     }
 
-    /** Arbeitszeiten auf die Projekte, an Werktagen der letzten Wochen. */
+    /**
+     * Arbeitszeiten auf die Projekte, an Werktagen der letzten Wochen.
+     *
+     * @param clock Uhr; gebucht wird relativ zu heute
+     * @return Buchungen der Beispieldaten
+     */
     @Bean
     public FakeBuchungsAuskunft fakeBuchungsAuskunft(Clock clock) {
         FakeBuchungsAuskunft buchungen = new FakeBuchungsAuskunft();
@@ -88,7 +106,14 @@ public class MaterialFakeKonfiguration {
         return buchungen;
     }
 
-    /** Legt beim ersten Start Material, Planung und Mehrbedarfe wie in den Mockups an. */
+    /**
+     * Legt beim ersten Start Material, Planung und Mehrbedarfe wie in den Mockups an.
+     *
+     * @param materialService legt den Materialstamm an
+     * @param vorkalkulation plant die Positionen
+     * @param antraege stellt und entscheidet die Beispiel-Mehrbedarfe
+     * @return Startaufgabe, die nur bei leerem Materialstamm etwas anlegt
+     */
     @Bean
     public ApplicationRunner materialBeispieldaten(MaterialService materialService,
             VorkalkulationService vorkalkulation, AnpassungsantragService antraege) {

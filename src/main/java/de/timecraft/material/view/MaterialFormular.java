@@ -15,6 +15,8 @@ import java.util.function.Predicate;
 /**
  * Dialog zum Anlegen und Bearbeiten eines Materials. Sammelt nur die Eingaben;
  * pruefen und speichern macht der MaterialService (ueber den Rueckruf der View, true = gespeichert).
+ *
+ * @author Tharsan Arumuganathar
  */
 class MaterialFormular extends Dialog {
 
@@ -25,6 +27,10 @@ class MaterialFormular extends Dialog {
     private final BigDecimalField einkaufspreis = new BigDecimalField("Einkaufspreis (EK) in €");
     private final BigDecimalField verkaufspreis = new BigDecimalField("Verkaufspreis (VK) in €");
 
+    /**
+     * @param material zu bearbeitendes Material, null fuer ein neues
+     * @param speichern Rueckruf zum Speichern, true = gespeichert (Dialog schliesst)
+     */
     MaterialFormular(Material material, Predicate<MaterialDaten> speichern) {
         setHeaderTitle(material == null ? "Neues Material" : "Material bearbeiten");
         artikelnummer.setMaxLength(20);

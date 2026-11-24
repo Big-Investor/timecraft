@@ -16,9 +16,16 @@ import java.util.function.LongPredicate;
 /**
  * Offene Mehrbedarfe pruefen (FA-M4-05): Alt-/Neuwert, Kostendifferenz und Begruendung, dann Freigeben oder
  * Ablehnen. Die Entscheidung trifft der Service ueber die Rueckrufe der View (true = erledigt).
+ *
+ * @author Tharsan Arumuganathar
  */
 class AntragPruefenDialog extends Dialog {
 
+    /**
+     * @param antraege offene Antraege des Projekts
+     * @param freigeben Rueckruf fuer die Freigabe, true = erledigt
+     * @param ablehnen Rueckruf fuer die Ablehnung mit Kommentar, true = erledigt
+     */
     AntragPruefenDialog(List<AntragZurPruefung> antraege, LongPredicate freigeben,
             BiPredicate<Long, String> ablehnen) {
         setHeaderTitle("Offene Mehrbedarfe prüfen");

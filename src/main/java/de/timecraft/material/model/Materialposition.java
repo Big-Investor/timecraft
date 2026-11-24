@@ -10,7 +10,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 
-/** Geplantes Material eines Projekts mit Soll-Menge (Tabelle materialposition). Das Projekt (M3) nur als ID. */
+/**
+ * Geplantes Material eines Projekts mit Soll-Menge (Tabelle materialposition). Das Projekt (M3) nur als ID.
+ *
+ * @author Tharsan Arumuganathar
+ */
 @Entity
 @Table(name = "materialposition")
 public class Materialposition {
@@ -34,13 +38,22 @@ public class Materialposition {
         // Nur fuer JPA
     }
 
+    /**
+     * @param projektId Projekt aus M3 (nur ID)
+     * @param material eingeplantes Material
+     * @param sollMenge geplante Menge
+     */
     public Materialposition(long projektId, Material material, BigDecimal sollMenge) {
         this.projektId = projektId;
         this.material = material;
         this.sollMenge = sollMenge;
     }
 
-    /** Erhoeht die Soll-Menge nach einem genehmigten Mehrbedarf; die Pruefung macht der Service. */
+    /**
+     * Erhoeht die Soll-Menge nach einem genehmigten Mehrbedarf; die Pruefung macht der Service.
+     *
+     * @param zusatzmenge genehmigte zusaetzliche Menge
+     */
     public void erhoeheSollMenge(BigDecimal zusatzmenge) {
         this.sollMenge = this.sollMenge.add(zusatzmenge);
     }

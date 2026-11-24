@@ -35,6 +35,8 @@ import java.util.Map;
 /**
  * Mehrbedarf anfordern (FA-M4-04, Mockup "Material · Mehrbedarf anfordern") in vier Schritten:
  * Projekt, Material, zusaetzliche Menge, Begruendung. Rechts die eigenen Antraege. Keine Preise.
+ *
+ * @author Tharsan Arumuganathar
  */
 @Route(value = AnpassungsantragView.ROUTE, layout = HauptLayout.class)
 @PageTitle("Mehrbedarf anfordern")
@@ -56,6 +58,10 @@ public class AnpassungsantragView extends Div {
     private final Div meine = new Div();
     private Mehrbedarfsgrund grund;
 
+    /**
+     * @param service Mehrbedarf-Service
+     * @param sitzung angemeldete Person
+     */
     public AnpassungsantragView(AnpassungsantragService service, AktuelleSitzung sitzung) {
         this.service = service;
         this.sitzung = sitzung;

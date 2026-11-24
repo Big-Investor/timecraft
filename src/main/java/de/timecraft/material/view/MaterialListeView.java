@@ -16,7 +16,11 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 
-/** Materialstamm (FA-M4-01): Liste mit Preisen, anlegen, bearbeiten, deaktivieren und wieder aktivieren. */
+/**
+ * Materialstamm (FA-M4-01): Liste mit Preisen, anlegen, bearbeiten, deaktivieren und wieder aktivieren.
+ *
+ * @author Tharsan Arumuganathar
+ */
 @Route(value = MaterialListeView.ROUTE, layout = HauptLayout.class)
 @PageTitle("Materialstamm")
 @RolesAllowed("ADMIN")
@@ -28,6 +32,10 @@ public class MaterialListeView extends Div {
     private final AktuelleSitzung sitzung;
     private final Grid<Material> liste = new Grid<>();
 
+    /**
+     * @param service Materialstamm-Service
+     * @param sitzung angemeldete Person
+     */
     public MaterialListeView(MaterialService service, AktuelleSitzung sitzung) {
         this.service = service;
         this.sitzung = sitzung;
