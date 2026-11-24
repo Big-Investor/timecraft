@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
  * Erfundene Personen: Die IDs 1, 2 und 3 gehören zu den Platzhalter-Benutzern des Gerüsts
  * (mitarbeiter, projektleitung, admin). Person 8 ist ein ehemaliger Mitarbeiter.
  * Die angemeldete Person hat die Rolle aus der Property timecraft.fake.rolle.
+ *
+ * @author Tim Stukenbröker
  */
 @Component
 @Profile("fake")

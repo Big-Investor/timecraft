@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
  * <p>
  * Die Person kommt als Parameter (Mitarbeiter-ID und Rolle), so wie im Gerüst vorgegeben.
  * Eine Rolle null bedeutet: Es ist niemand angemeldet.
+ *
+ * @author Tim Stukenbröker
  */
 @Component
 public class ProjektBerechtigung {

@@ -27,6 +27,8 @@ import org.springframework.test.context.ActiveProfiles;
  * Altprojekt WEBSITE 2020  01.01.2020  31.12.2020  ARCHIVIERT   12
  * 50% Rabatt-Aktion        01.07.2026  30.09.2026  AKTIV        niemand
  * </pre>
+ *
+ * @author Tim Stukenbröker
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

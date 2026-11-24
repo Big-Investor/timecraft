@@ -16,6 +16,8 @@ import java.util.List;
  * Personen, die dem Projekt noch nicht zugeordnet sind. Welche das sind und ob die Zuordnung erlaubt ist,
  * entscheidet der {@link ProjektService}. Sind schon alle zugeordnet, zeigt der Dialog nur einen Hinweis.
  * Bei einem Fehler bleibt er offen und es wird nichts gespeichert.
+ *
+ * @author Tim Stukenbröker
  */
 public class ZuordnungsDialog extends Dialog {
 

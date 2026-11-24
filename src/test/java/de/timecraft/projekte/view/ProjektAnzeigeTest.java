@@ -12,7 +12,11 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 
-/** Prüft die kleinen Anzeigehilfen und den Menüpunkt der Projektliste. */
+/**
+ * Prüft die kleinen Anzeigehilfen und den Menüpunkt der Projektliste.
+ *
+ * @author Tim Stukenbröker
+ */
 class ProjektAnzeigeTest {
 
     @Test

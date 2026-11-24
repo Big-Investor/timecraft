@@ -43,6 +43,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * Prüft das Detailfenster ohne Browser: Die View zeigt Reiter und Schaltflächen genau so, wie es die
  * {@link ProjektSicht} aus dem Service sagt, und leitet bei fehlendem Zugriff zur Liste zurück.
  * Was wer darf, prüft ProjektServiceSichtTest. Das Projekt 10 heißt "Website", Projektleitung ist Lena Schröder.
+ *
+ * @author Tim Stukenbröker
  */
 class ProjektDetailViewTest {
 

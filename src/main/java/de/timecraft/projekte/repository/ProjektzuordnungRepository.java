@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * Der Schlüssel ist das Paar (Mitarbeiter, Projekt), siehe {@link Projektzuordnung.Schluessel}.
  * Spring Data baut die Abfragen unten allein aus den Methodennamen:
  * "findByProjektId" heißt "suche alle Zeilen, deren projektId diesen Wert hat".
+ *
+ * @author Tim Stukenbröker
  */
 public interface ProjektzuordnungRepository extends JpaRepository<Projektzuordnung, Projektzuordnung.Schluessel> {
 

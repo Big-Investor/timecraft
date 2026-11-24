@@ -31,6 +31,8 @@ import org.junit.jupiter.api.Test;
  * Prüft die Hilfsmethoden, die die Oberfläche braucht: Namen für die Spalte "Projektleitung",
  * die Auswahl der Projektleitungen im Formular und der Hinweis vor dem Archivieren.
  * Ohne Datenbank, mit Mockito-Attrappen. Ausgangslage: Das Projekt 10 gehört der Projektleitung 2.
+ *
+ * @author Tim Stukenbröker
  */
 class ProjektServiceOberflaechenHilfenTest {
 

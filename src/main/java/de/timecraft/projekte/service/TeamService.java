@@ -39,6 +39,8 @@ import org.springframework.transaction.annotation.Transactional;
  * </ul>
  * Die angemeldete Person kommt als Parameter (Mitarbeiter-ID und Rolle), eine Rolle null bedeutet:
  * Es ist niemand angemeldet.
+ *
+ * @author Tim Stukenbröker
  */
 @Service
 public class TeamService {

@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
  * Legt beim Start im Profil "fake" erfundene Demoprojekte an, aber nur, wenn es noch kein Projekt gibt.
  * Die Personen stammen aus {@link FakeMitarbeiterAuskunft}: Lena Schröder (2) und Sabine Keller (7) sind
  * Projektleitungen, Jonas (1), Mehmet (4), Felix (5) und Anna (6) sind Mitarbeiter.
+ *
+ * @author Tim Stukenbröker
  */
 @Component
 @Profile("fake")

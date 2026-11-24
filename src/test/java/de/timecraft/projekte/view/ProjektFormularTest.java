@@ -38,6 +38,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 /**
  * Prüft das Projekt-Formular ohne Browser: Die Eingaben gehen unverändert an den Service, bei einem Fehler
  * bleibt das Formular offen (UC-M3-01, UC-M3-02). Admin hat die ID 3.
+ *
+ * @author Tim Stukenbröker
  */
 class ProjektFormularTest {
 

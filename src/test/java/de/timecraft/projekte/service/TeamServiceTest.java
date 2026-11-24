@@ -54,6 +54,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
  * 14  Dirk Draussen     MITARBEITER      "Shop"                    (nicht dem Projekt "Website" zugeordnet)
  * </pre>
  * Das Projekt "Leer" ist aktiv und hat kein Team.
+ *
+ * @author Tim Stukenbröker
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

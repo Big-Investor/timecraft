@@ -23,6 +23,8 @@ import java.util.function.Consumer;
  * Mit {@code projekt == null} legt es ein neues Projekt an, sonst ändert es das übergebene.
  * Ungültige Eingaben (Pflichtfelder, Zieldatum vor Startdatum ...) prüft allein der Service: Das Formular
  * zeigt seine deutsche Meldung, bleibt offen und es wird nichts gespeichert.
+ *
+ * @author Tim Stukenbröker
  */
 public class ProjektFormular extends Dialog {
 

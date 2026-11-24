@@ -28,6 +28,8 @@ import java.util.List;
  * </ul>
  * Wer was sehen darf, entscheidet der {@link TeamService}; ob die Vollansicht gezeigt wird, sagt die
  * {@code ProjektSicht} aus dem ProjektService. Die Anzeige zeigt den Stand beim Aufruf.
+ *
+ * @author Tim Stukenbröker
  */
 public class TeamTab extends Div {
 

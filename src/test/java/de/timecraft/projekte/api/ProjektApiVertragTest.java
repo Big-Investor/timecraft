@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>
  * Die Methode ist "@Transactional": Alles wird am Ende zurückgerollt, damit die gemeinsame Test-Datenbank
  * für andere Tests unverändert bleibt.
+ *
+ * @author Tim Stukenbröker
  */
 @SpringBootTest
 @ActiveProfiles("test")

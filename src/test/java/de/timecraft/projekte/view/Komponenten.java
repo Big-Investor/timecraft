@@ -6,7 +6,11 @@ import com.vaadin.flow.component.dialog.Dialog;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Testhilfe: sucht Oberflächenelemente im Komponentenbaum einer View, ohne Browser. */
+/**
+ * Testhilfe: sucht Oberflächenelemente im Komponentenbaum einer View, ohne Browser.
+ *
+ * @author Tim Stukenbröker
+ */
 final class Komponenten {
 
     private Komponenten() {

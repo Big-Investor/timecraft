@@ -34,6 +34,8 @@ import org.mockito.ArgumentCaptor;
  * Mockito-Attrappen (Mocks), die nur das tun, was der Test ihnen vorgibt.
  * <p>
  * Die Personen im Test (frei gewählte Zahlen): Admin 3, Projektleitung 2, Mitarbeiter 1.
+ *
+ * @author Tim Stukenbröker
  */
 class ProjektServiceAnlegenTest {
 

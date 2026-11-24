@@ -9,6 +9,8 @@ import java.time.LocalDate;
  * <p>
  * Alle gesetzten Filter gelten gleichzeitig (UND). Datumsgrenzen gehören dazu: Ein Projekt mit dem
  * Startdatum 01.03. erscheint also auch bei "Start von 01.03.".
+ *
+ * @author Tim Stukenbröker
  */
 public class ProjektFilter {
 

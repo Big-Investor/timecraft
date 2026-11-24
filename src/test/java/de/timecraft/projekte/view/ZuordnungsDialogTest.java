@@ -28,7 +28,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-/** Prüft den Dialog "Mitarbeiter zuordnen" ohne Browser (UC-M3-05). Das Projekt 10 gehört der Projektleitung 2. */
+/**
+ * Prüft den Dialog "Mitarbeiter zuordnen" ohne Browser (UC-M3-05). Das Projekt 10 gehört der Projektleitung 2.
+ *
+ * @author Tim Stukenbröker
+ */
 class ZuordnungsDialogTest {
 
     // Vaadin merkt sich die aktuelle UI nur schwach: Ohne dieses Feld kann der Müllsammler sie im Test wegräumen.

@@ -36,6 +36,8 @@ import org.junit.jupiter.api.Test;
  * Ausgangslage in jedem Test: Das Projekt 10 "Website" gehört der Projektleitung 2.
  * Personen (frei gewählte Zahlen): Admin 3, verantwortliche Projektleitung 2,
  * andere Projektleitung 7, Mitarbeiter 1.
+ *
+ * @author Tim Stukenbröker
  */
 class ProjektServiceAendernTest {
 

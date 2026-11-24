@@ -19,6 +19,8 @@ import org.springframework.test.context.ActiveProfiles;
  * Prüft die Tabelle "projekt" gegen eine echte (H2-)Datenbank.
  * Nach dem Speichern wird der Zwischenspeicher von JPA geleert (flush + clear),
  * damit das Projekt wirklich aus der Datenbank gelesen wird und nicht aus dem Speicher.
+ *
+ * @author Tim Stukenbröker
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

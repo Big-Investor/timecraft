@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
  * Ersatz für die BuchungsAuskunft von Modul M2, nur im Profil "fake". Es laufen zwei erfundene Buchungen
  * auf das Projekt 1 (das erste Demoprojekt aus {@link FakeDemoDaten}): Jonas (ID 1) unterwegs seit 07:02
  * und Mehmet (ID 4) unterwegs seit 06:58, jeweils heute. Alles andere ist leer.
+ *
+ * @author Tim Stukenbröker
  */
 @Component
 @Profile("fake")

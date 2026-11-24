@@ -12,7 +12,11 @@ import java.time.ZoneId;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-/** Prüft, dass die Fakes für M1 und M2 sich wie im Vertrag verhalten und Beispieldaten für alle Rollen haben. */
+/**
+ * Prüft, dass die Fakes für M1 und M2 sich wie im Vertrag verhalten und Beispieldaten für alle Rollen haben.
+ *
+ * @author Tim Stukenbröker
+ */
 class FakeAuskunftTest {
 
     private final FakeMitarbeiterAuskunft mitarbeiter = new FakeMitarbeiterAuskunft(Rolle.PROJEKTLEITUNG);

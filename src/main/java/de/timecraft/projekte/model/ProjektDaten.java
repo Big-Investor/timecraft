@@ -15,6 +15,8 @@ import java.time.LocalDate;
  * @param startdatum       Pflicht
  * @param zieldatum        Pflicht, nicht vor dem Startdatum
  * @param projektleitungId Mitarbeiter-ID der verantwortlichen Projektleitung (Pflicht); null = noch nicht gewählt
+ *
+ * @author Tim Stukenbröker
  */
 public record ProjektDaten(
         String name, String beschreibung, LocalDate startdatum, LocalDate zieldatum, Long projektleitungId) {

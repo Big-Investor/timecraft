@@ -30,6 +30,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Prüft ProjektService.archivieren und reaktivieren ohne Datenbank mit Mockito-Attrappen.
  * Ausgangslage: Das Projekt 10 gehört der Projektleitung 2. Admin hat die ID 3.
+ *
+ * @author Tim Stukenbröker
  */
 class ProjektServiceArchivierenTest {
 

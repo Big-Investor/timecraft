@@ -28,6 +28,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
  * <p>
  * Nach jedem Schritt werden die Daten mit flush() in die Datenbank geschrieben und mit clear()
  * aus dem Zwischenspeicher geworfen. Das anschließende find() liest dann wirklich aus der Datenbank.
+ *
+ * @author Tim Stukenbröker
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

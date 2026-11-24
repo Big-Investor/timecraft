@@ -9,6 +9,8 @@ import de.timecraft.zeiterfassung.api.Standort;
  * <p>
  * Beide Filter wirken gemeinsam. Der Standortfilter gilt nur für eingestempelte Personen: Wer nicht
  * eingestempelt ist, hat keinen Standort und erscheint bei gesetztem Standortfilter nie.
+ *
+ * @author Tim Stukenbröker
  */
 public class TeamFilter {
 

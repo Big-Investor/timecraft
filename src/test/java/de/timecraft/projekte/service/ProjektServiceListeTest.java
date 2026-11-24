@@ -40,6 +40,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
  * Admin hat die ID 3, die Projektleitung die ID 2 (sie ist hier nur Besucherin: Die Projekte
  * gehören einer anderen Projektleitung, die Liste zeigt ja alle aktiven Projekte).
  * Mitarbeiter 13 ist keinem Projekt zugeordnet.
+ *
+ * @author Tim Stukenbröker
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

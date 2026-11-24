@@ -15,5 +15,7 @@ import java.time.Instant;
  * @param eingestempelt true = hat eine laufende Buchung auf dieses Projekt, false = nicht, null = darf die Rolle nicht sehen
  * @param standort      Standort der laufenden Buchung; null, wenn nicht eingestempelt oder nicht sichtbar
  * @param beginn        Beginn der laufenden Buchung; null, wenn nicht eingestempelt oder nicht sichtbar
+ *
+ * @author Tim Stukenbröker
  */
 public record TeamEintrag(long mitarbeiterId, String name, Boolean eingestempelt, Standort standort, Instant beginn) { }

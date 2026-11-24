@@ -8,6 +8,8 @@ package de.timecraft.projekte.model;
  * mehr eingestempelt werden.
  * <p>
  * In der Datenbank steht der Name als Text (z. B. "AKTIV") in der Spalte projekt.status.
+ *
+ * @author Tim Stukenbröker
  */
 public enum ProjektStatus {
     AKTIV,

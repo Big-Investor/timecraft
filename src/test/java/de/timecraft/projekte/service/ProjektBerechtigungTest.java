@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Prüft die Rechteregeln ohne Datenbank und ohne Spring: Die Klasse hat keine Abhängigkeiten,
  * man kann sie einfach mit "new" erzeugen.
+ *
+ * @author Tim Stukenbröker
  */
 class ProjektBerechtigungTest {
 

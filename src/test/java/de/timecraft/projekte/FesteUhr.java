@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Bean;
  * Mit "new ProjektService(..., FesteUhr.UHR)" nutzt man sie direkt, in Datenbanktests bindet man
  * die ganze Klasse mit "@Import(FesteUhr.class)" ein und bekommt sie als Clock-Bean.
  * Die feste Zeit ist der 18.11.2026, 10:00 Uhr in Berlin (Europe/Berlin).
+ *
+ * @author Tim Stukenbröker
  */
 @TestConfiguration
 public class FesteUhr {

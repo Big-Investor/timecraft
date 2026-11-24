@@ -37,6 +37,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * Prüft die Projektliste ohne Browser mit einem Mockito-Service. Die View hat keine Fachregeln: Getestet wird nur,
  * dass sie die angemeldete Person und die Filter an den Service gibt und sein Ergebnis anzeigt.
  * Was welche Rolle sehen darf, prüfen die Service-Tests (ProjektServiceListeTest).
+ *
+ * @author Tim Stukenbröker
  */
 class ProjektListeViewTest {
 

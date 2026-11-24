@@ -21,6 +21,8 @@ import org.springframework.test.context.ActiveProfiles;
  * Prüft die Tabelle "projektzuordnung" gegen eine echte (H2-)Datenbank:
  * Primärschlüssel (Mitarbeiter + Projekt), Fremdschlüssel auf "projekt" und die Abfragen.
  * Die Mitarbeiter-IDs sind frei gewählte Zahlen, denn die Mitarbeiter-Tabelle gehört zu Modul M1.
+ *
+ * @author Tim Stukenbröker
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

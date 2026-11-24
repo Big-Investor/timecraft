@@ -21,6 +21,8 @@ import org.springframework.test.context.ActiveProfiles;
  * Die Klasse wird hier bewusst von Hand erzeugt und nicht als Bean geladen: Als Bean würde ihr
  * CommandLineRunner beim Laden des Test-Kontexts laufen und Projekte in die gemeinsame Testdatenbank
  * schreiben, die andere Tests stören würden. So entstehen die Daten nur in der Test-Transaktion.
+ *
+ * @author Tim Stukenbröker
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

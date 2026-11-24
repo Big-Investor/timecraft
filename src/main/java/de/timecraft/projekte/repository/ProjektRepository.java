@@ -14,6 +14,8 @@ import org.springframework.data.repository.query.Param;
  * <p>
  * Von JpaRepository gibt es fertig: save (speichern), findById (suchen), findAll (alle holen).
  * Dazu kommt die Filterabfrage für die Projektliste.
+ *
+ * @author Tim Stukenbröker
  */
 public interface ProjektRepository extends JpaRepository<Projekt, Long> {
 

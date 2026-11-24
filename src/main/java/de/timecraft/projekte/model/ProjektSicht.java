@@ -14,6 +14,8 @@ package de.timecraft.projekte.model;
  * @param beschreibungAenderbar  die verantwortliche Projektleitung darf die Beschreibung ihres aktiven Projekts ändern
  * @param verwaltbar             Admin: Projekt bearbeiten, archivieren, reaktivieren
  * @param materialplanungSichtbar Verweis auf die Materialplanung (M4) für Projektleitung und Admin, nicht für Mitarbeiter
+ *
+ * @author Tim Stukenbröker
  */
 public record ProjektSicht(
         Projekt projekt, String projektleitungName, boolean teamSichtbar, boolean teamVollansicht,

@@ -39,6 +39,8 @@ import java.util.NoSuchElementException;
  * <p>
  * Der Reiter "Materialplanung" hat keinen eigenen Inhalt: Er verweist auf die Seite von Modul M4.
  * Die Kopfzeile des Gerüsts zeigt den festen Seitentitel; Projektname und Pfad stehen deshalb im Inhalt.
+ *
+ * @author Tim Stukenbröker
  */
 @Route(value = ProjektDetailView.ROUTE, layout = HauptLayout.class)
 @PageTitle("Projekt")

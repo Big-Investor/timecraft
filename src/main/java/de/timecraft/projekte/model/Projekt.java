@@ -19,6 +19,8 @@ import java.time.LocalDate;
  * <p>
  * Diese Klasse enthält nur Daten, keine Fachregeln. Die Regeln (z. B. "Zieldatum nicht vor
  * Startdatum") prüft später der ProjektService.
+ *
+ * @author Tim Stukenbröker
  */
 @Entity
 @Table(name = "projekt")

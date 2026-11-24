@@ -33,6 +33,8 @@ import java.util.stream.Collectors;
  * Die Projektliste mit Filterleiste (Mockup "Projektliste"). Welche Projekte eine Rolle sehen darf,
  * entscheidet allein der {@link ProjektService}; die View zeigt nur an, was er liefert. Jede Änderung
  * an einem Filterfeld lädt die Liste neu, "Filter zurücksetzen" leert alle Felder.
+ *
+ * @author Tim Stukenbröker
  */
 @Route(value = ProjektListeView.ROUTE, layout = HauptLayout.class)
 @PageTitle("Projekte")

@@ -20,6 +20,8 @@ import java.util.Objects;
  * JPA braucht für so einen zusammengesetzten Schlüssel eine kleine Hilfsklasse ({@link Schluessel}).
  * <p>
  * Auch hier keine Fachregeln, nur Daten. Wer wen zuordnen darf, prüft später der Service.
+ *
+ * @author Tim Stukenbröker
  */
 @Entity
 @Table(name = "projektzuordnung")

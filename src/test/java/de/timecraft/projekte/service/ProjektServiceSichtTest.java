@@ -28,6 +28,8 @@ import org.junit.jupiter.api.Test;
  * Prüft ProjektService.projektSehen: Wer das Detailfenster öffnen darf und was die Person dort darf
  * (FA-M3-05, FA-M3-08, QA-M3-03). Ohne Datenbank. Ausgangslage: Das Projekt 10 gehört der
  * Projektleitung 2, dem Mitarbeiter 1 ist es zugeordnet, der Mitarbeiter 5 nicht. Admin hat die ID 3.
+ *
+ * @author Tim Stukenbröker
  */
 class ProjektServiceSichtTest {
 

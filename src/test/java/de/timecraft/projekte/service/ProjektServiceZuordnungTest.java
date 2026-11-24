@@ -47,6 +47,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
  * 14  Dirk Alt          MITARBEITER      nein (deaktiviert)
  * </pre>
  * Projekt "Website" ist aktiv, "Altprojekt" ist archiviert (beide gehören der Projektleitung 2).
+ *
+ * @author Tim Stukenbröker
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

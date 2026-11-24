@@ -15,6 +15,8 @@ import java.time.format.DateTimeFormatter;
  * Texte und kleine Anzeigeelemente für Projekte und Team, damit Liste, Detailfenster und Team-Reiter
  * dasselbe zeigen: Projekt-ID wie im Mockup ("P-1024"), Datum als TT.MM.JJJJ, Status als farbige Marke.
  * Reine Darstellung, keine Fachregeln.
+ *
+ * @author Tim Stukenbröker
  */
 final class ProjektAnzeige {
 

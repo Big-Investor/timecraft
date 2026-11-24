@@ -38,6 +38,8 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>
  * Ein Projekt wird nie gelöscht: Es gibt dafür absichtlich keine Methode. Abgeschlossene
  * Projekte werden archiviert, ihre Buchungen bleiben erhalten.
+ *
+ * @author Tim Stukenbröker
  */
 @Service
 public class ProjektService {

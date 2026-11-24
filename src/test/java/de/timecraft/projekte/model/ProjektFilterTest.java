@@ -4,7 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-/** Prüft, dass ein leeres Namensfeld als "nicht filtern" gilt und ein frischer Filter nichts filtert. */
+/**
+ * Prüft, dass ein leeres Namensfeld als "nicht filtern" gilt und ein frischer Filter nichts filtert.
+ *
+ * @author Tim Stukenbröker
+ */
 class ProjektFilterTest {
 
     @Test

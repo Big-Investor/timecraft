@@ -26,6 +26,8 @@ import org.springframework.test.context.ActiveProfiles;
  * <p>
  * Die api prüft keine Rechte (Vertrag), deshalb gibt es hier keine Rollentests. Nach jedem Aufruf wird der Wert
  * aus der Datenbank neu gelesen ({@link #preisInDerDatenbank}), damit der Test wirklich das Gespeicherte prüft.
+ *
+ * @author Tim Stukenbröker
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

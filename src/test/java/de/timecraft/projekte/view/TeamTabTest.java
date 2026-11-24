@@ -41,6 +41,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * Prüft den Reiter "Team" ohne Browser mit Mockito-Services: Spalten und Schaltflächen je Ansicht, Filter,
  * Leerzustände, Entfernen mit Bestätigung. Wer was sehen darf, prüfen die Service-Tests (TeamServiceTest).
  * Das Projekt 10 gehört der Projektleitung 2.
+ *
+ * @author Tim Stukenbröker
  */
 class TeamTabTest {
 

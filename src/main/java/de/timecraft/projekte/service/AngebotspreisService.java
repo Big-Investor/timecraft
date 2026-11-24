@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
  * angemeldete Person die verantwortliche Projektleitung des aktiven Projekts ist. Geprüft wird nur, was die
  * Datenbank braucht, damit nie ein technischer Fehler entsteht: Das Projekt muss es geben, und der Preis
  * muss in die Spalte NUMERIC(10,2) passen.
+ *
+ * @author Tim Stukenbröker
  */
 @Service
 public class AngebotspreisService implements AngebotspreisPflege {

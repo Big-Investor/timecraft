@@ -35,6 +35,8 @@ import org.springframework.test.context.ActiveProfiles;
  * Rabatt-Aktion       99              AKTIV        niemand     (leer)
  * </pre>
  * Mitarbeiter 13 ist keinem Projekt zugeordnet.
+ *
+ * @author Tim Stukenbröker
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

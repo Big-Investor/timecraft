@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
  * des anderen Moduls prüft sie. Sie gibt nur Daten weiter (als {@link ProjektInfo}, nie als Entity) und
  * ändert nichts. Alle Listen sind nach Projekt-ID bzw. Mitarbeiter-ID sortiert, damit die Reihenfolge
  * immer gleich ist. Eine unbekannte ID ergibt eine leere Liste oder ein leeres Optional, nie einen Fehler.
+ *
+ * @author Tim Stukenbröker
  */
 @Service
 @Transactional(readOnly = true)
