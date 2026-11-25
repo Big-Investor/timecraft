@@ -30,6 +30,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * „Person wählen“ und fremder Kalender je Rolle (FA-M6-07, FA-M6-11, QA-M6-03, QA-M6-04, UC-M6-04, US-M6-04, US-M6-06).
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 class KalenderServicePersonWaehlenTest {
 

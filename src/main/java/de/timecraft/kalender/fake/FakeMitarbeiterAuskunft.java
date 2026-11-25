@@ -15,7 +15,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/** Fake fuer die MitarbeiterAuskunft von M1: Personen liegen im Speicher. */
+/**
+ * Fake fuer die MitarbeiterAuskunft von M1: Personen liegen im Speicher.
+ *
+ * @author Bennet Antonio Brinkmeier
+ */
 public class FakeMitarbeiterAuskunft implements MitarbeiterAuskunft {
 
     private final Map<Long, MitarbeiterInfo> personen = new LinkedHashMap<>();

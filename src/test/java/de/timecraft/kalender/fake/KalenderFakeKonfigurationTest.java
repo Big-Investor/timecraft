@@ -14,7 +14,11 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 
-/** Die Beispieldaten fuer den lokalen Start zeigen alle drei Rollen sinnvoll (CLAUDE.md Abschnitt 9). */
+/**
+ * Die Beispieldaten fuer den lokalen Start zeigen alle drei Rollen sinnvoll (CLAUDE.md Abschnitt 9).
+ *
+ * @author Bennet Antonio Brinkmeier
+ */
 class KalenderFakeKonfigurationTest {
 
     // Mittwoch, 18.11.2026, 10:28 Uhr

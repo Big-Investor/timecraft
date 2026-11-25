@@ -25,6 +25,8 @@ import org.springframework.context.annotation.Profile;
  * als Beans bereit. Die IDs 1 bis 3 passen zu den Platzhalter-Benutzern des Geruests
  * (mitarbeiter, projektleitung, admin); die Rolle waehlt man also einfach ueber die Anmeldung.
  * Die Buchungen liegen relativ zum heutigen Tag, damit die aktuelle Woche immer gefuellt ist.
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 @Configuration
 @Profile("fake")

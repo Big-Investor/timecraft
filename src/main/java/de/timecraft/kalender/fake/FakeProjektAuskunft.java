@@ -10,7 +10,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/** Fake fuer die ProjektAuskunft von M3: Projekte und Zuordnungen liegen im Speicher. */
+/**
+ * Fake fuer die ProjektAuskunft von M3: Projekte und Zuordnungen liegen im Speicher.
+ *
+ * @author Bennet Antonio Brinkmeier
+ */
 public class FakeProjektAuskunft implements ProjektAuskunft {
 
     private final Map<Long, ProjektInfo> projekte = new LinkedHashMap<>();

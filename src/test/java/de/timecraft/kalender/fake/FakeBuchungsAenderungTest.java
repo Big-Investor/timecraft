@@ -13,7 +13,11 @@ import java.time.Instant;
 import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 
-/** Der Fake fuer den lokalen Start aendert Buchung und Historie wie M2 und meldet Ueberschneidungen. */
+/**
+ * Der Fake fuer den lokalen Start aendert Buchung und Historie wie M2 und meldet Ueberschneidungen.
+ *
+ * @author Bennet Antonio Brinkmeier
+ */
 class FakeBuchungsAenderungTest {
 
     private static final Instant JETZT = Instant.parse("2026-11-02T09:00:00Z");

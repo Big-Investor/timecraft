@@ -13,6 +13,8 @@ import java.util.function.LongConsumer;
  * Tages- und Wochenansicht nach dem Mockup „Kalender – Wochenansicht“: Spalte je Tag mit Kopf
  * (Datum, Tagessumme), Stundenleiste links, jede Buchung als Block auf ihrer Uhrzeit (FA-M6-03, 04).
  * Gestaltung per Inline-Styles (Entscheidung Bennet, 2026-11-18).
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 class KalenderRaster extends Div {
 

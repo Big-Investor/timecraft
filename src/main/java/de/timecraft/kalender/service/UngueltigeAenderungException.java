@@ -5,6 +5,8 @@ import de.timecraft.geruest.common.FachlicheException;
 /**
  * Eine Eingabe im Aenderungsformular ist ungueltig (UC-M6-05 4a, 4c). Nennt das Feld,
  * damit die Oberflaeche die Meldung am Feld zeigen kann. Es wird nichts gespeichert.
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 public class UngueltigeAenderungException extends FachlicheException {
 

@@ -19,6 +19,8 @@ import de.timecraft.kalender.service.KalenderService;
  * Detailfenster einer Buchung (FA-M6-05, 10): Projekt, Projekt-ID, Projektleitung, Standort, Beginn, Ende,
  * Dauer und Aenderungshistorie. „Bearbeiten“ erscheint nur, wenn der Service es erlaubt (UC-M6-05 1a, 1b);
  * die Pruefung beim Speichern macht der Service trotzdem noch einmal.
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 class BuchungDetailDialog extends Dialog {
 

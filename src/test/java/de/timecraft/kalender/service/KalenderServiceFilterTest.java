@@ -23,7 +23,11 @@ import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-/** Filter nach Projekt und Standort, auch fuer die Summen (FA-M6-06, US-M6-02). */
+/**
+ * Filter nach Projekt und Standort, auch fuer die Summen (FA-M6-06, US-M6-02).
+ *
+ * @author Bennet Antonio Brinkmeier
+ */
 class KalenderServiceFilterTest {
 
     private static final long JONAS = 1;

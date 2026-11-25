@@ -5,7 +5,11 @@ import de.timecraft.geruest.layout.MenuEintrag;
 import java.util.Set;
 import org.springframework.stereotype.Component;
 
-/** Menüpunkt „Kalender“ für alle Rollen (FA-M6-01), Gruppe Zeit, im Mockup nach „Zeitkonto“. */
+/**
+ * Menüpunkt „Kalender“ für alle Rollen (FA-M6-01), Gruppe Zeit, im Mockup nach „Zeitkonto“.
+ *
+ * @author Bennet Antonio Brinkmeier
+ */
 @Component
 public class KalenderMenuEintrag implements MenuEintrag {
 

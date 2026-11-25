@@ -8,6 +8,8 @@ import java.time.LocalDate;
 /**
  * Monatsansicht: je Tag nur die Summe der gebuchten Stunden (FA-M6-03), Wochen von Montag bis Sonntag.
  * Gestaltet wie die Wochenansicht (kein eigenes Mockup, Entscheidung Bennet, 2026-11-18).
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 class MonatsRaster extends Div {
 

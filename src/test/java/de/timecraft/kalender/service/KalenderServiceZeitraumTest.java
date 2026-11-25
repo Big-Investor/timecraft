@@ -12,7 +12,11 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 
-/** Zeitraum und Blaettern (FA-M6-01, FA-M6-02). */
+/**
+ * Zeitraum und Blaettern (FA-M6-01, FA-M6-02).
+ *
+ * @author Bennet Antonio Brinkmeier
+ */
 class KalenderServiceZeitraumTest {
 
     // Donnerstag, 22.10.2026, 23:30 in Berlin (21:30 UTC): in UTC ist es auch noch der 22.

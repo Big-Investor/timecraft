@@ -30,6 +30,8 @@ import org.springframework.stereotype.Service;
  * (FA-M6-08, 09, 11, UC-M6-05). Prueft Rechte, Eingaben und Zielprojekt; die Integritaet
  * (Ueberschneidung …) prueft zusaetzlich M2 in BuchungsAenderung.aendern und schreibt Buchung
  * und Protokoll in einer Transaktion. Deren Fachausnahme geht unveraendert an die Oberflaeche.
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 @Service
 public class BuchungAenderungService {

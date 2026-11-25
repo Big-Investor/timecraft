@@ -32,6 +32,8 @@ import java.util.Map;
  * Kalender (FA-M6-01 bis 07): eigene Buchungen, fuer Projektleitung und Admin auch die einer gewaehlten
  * Person. Haelt nur den Anzeigezustand (Ansicht, Bezugstag, Filter, Person); Rechte, Summen und
  * Zeitraeume kommen aus dem KalenderService. Aufbau nach dem Mockup „Kalender – Wochenansicht“.
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 @Route(value = KalenderView.ROUTE, layout = HauptLayout.class)
 @PageTitle("Kalender")

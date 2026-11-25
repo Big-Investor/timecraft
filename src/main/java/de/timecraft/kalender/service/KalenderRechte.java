@@ -15,6 +15,8 @@ import java.util.Set;
  * Gemeinsame Rechteregeln von KalenderService und BuchungAenderungService (FA-M6-07, 08, 11):
  * Welche Personen und welche Projekte darf eine Projektleitung im Kalender sehen und aendern?
  * Keine Spring-Bean: Die Services legen sie mit ihren Auskuenften selbst an.
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 class KalenderRechte {
 

@@ -20,6 +20,8 @@ import java.util.Optional;
  * Segmente werden wie im Vertrag je Kalendertag (Europe/Berlin) zerlegt. Die Pause zieht
  * dieser Fake vom ersten Segment ab (reicht es nicht, vom naechsten); wie M2 die Pause
  * wirklich verteilt, ist Sache von M2 – der Kalender uebernimmt nur die gelieferten Minuten.
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 public class FakeBuchungsAuskunft implements BuchungsAuskunft {
 

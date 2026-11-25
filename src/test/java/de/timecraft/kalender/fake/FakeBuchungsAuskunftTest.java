@@ -11,7 +11,11 @@ import java.time.YearMonth;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-/** Prueft, dass der Fake das Vertragsverhalten von M2 nachbildet, auf das sich die Kalendertests stuetzen. */
+/**
+ * Prueft, dass der Fake das Vertragsverhalten von M2 nachbildet, auf das sich die Kalendertests stuetzen.
+ *
+ * @author Bennet Antonio Brinkmeier
+ */
 class FakeBuchungsAuskunftTest {
 
     private final FakeBuchungsAuskunft auskunft = new FakeBuchungsAuskunft();

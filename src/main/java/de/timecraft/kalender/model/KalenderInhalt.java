@@ -9,6 +9,8 @@ import java.util.Map;
  * (jeder Tag des Zeitraums, auch mit 0) und die Summe des ganzen Zeitraums, alles in Minuten.
  * projekte sind die Projekte, auf die im Zeitraum sichtbar gebucht wurde (ohne Filter),
  * sortiert nach Name: die Auswahl fuer den Projektfilter.
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 public record KalenderInhalt(
         LocalDate ersterTag, LocalDate letzterTag, List<KalenderEintrag> eintraege,

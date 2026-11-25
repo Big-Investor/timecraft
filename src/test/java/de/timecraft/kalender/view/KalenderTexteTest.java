@@ -8,7 +8,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
-/** Anzeigetexte des Kalenders wie im Mockup (FA-M6-03, 04: Stunden und Minuten). */
+/**
+ * Anzeigetexte des Kalenders wie im Mockup (FA-M6-03, 04: Stunden und Minuten).
+ *
+ * @author Bennet Antonio Brinkmeier
+ */
 class KalenderTexteTest {
 
     @Test

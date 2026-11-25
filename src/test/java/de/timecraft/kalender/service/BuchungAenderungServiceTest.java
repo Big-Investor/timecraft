@@ -31,6 +31,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Aendern einer Buchung je Rolle mit allen Regeln (FA-M6-08, 09, 11, 12, QA-M6-03, QA-A-01,
  * UC-M6-05 inkl. 1a, 1b, 4a–4d, US-M6-05, US-M6-06).
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 class BuchungAenderungServiceTest {
 

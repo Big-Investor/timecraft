@@ -20,6 +20,8 @@ import java.util.Objects;
  * „wirft Fehler“ meldet er wie M2 eine Fachausnahme (z. B. Ueberschneidung) und speichert nichts.
  * Mit einer FakeBuchungsAuskunft (lokaler Start, Profil "fake") aendert er zusaetzlich deren Buchung,
  * schreibt die Historie und meldet Ueberschneidungen wie M2.
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 public class FakeBuchungsAenderung implements BuchungsAenderung {
 

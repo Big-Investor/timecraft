@@ -6,6 +6,8 @@ import de.timecraft.zeiterfassung.api.BuchungInfo;
 /**
  * Die Buchung wurde seit dem Oeffnen des Formulars von jemand anderem geaendert (UC-M6-05 4d).
  * Es wird nichts gespeichert; der aktuelle Stand wird mitgegeben, damit das Formular ihn laden kann.
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 public class BuchungInzwischenGeaendertException extends FachlicheException {
 

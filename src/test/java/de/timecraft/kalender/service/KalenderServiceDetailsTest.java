@@ -29,6 +29,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Detailfenster einer Buchung mit Historie und Sichtpruefung je Rolle
  * (FA-M6-05, 10, 11, QA-M6-03, QA-M6-04, US-M6-03).
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 class KalenderServiceDetailsTest {
 

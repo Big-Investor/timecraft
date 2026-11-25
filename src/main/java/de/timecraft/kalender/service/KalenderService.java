@@ -44,6 +44,8 @@ import org.springframework.stereotype.Service;
  * Liest den Kalender einer Person ueber die api von M2 (Buchungen), M3 (Projekte, Zuordnungen)
  * und M1 (Personen). Aendert nichts. Prueft, wer welchen Kalender sehen darf (FA-M6-07, 11).
  * Die Zeitzone kommt aus der Clock des Geruests (Europe/Berlin).
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 @Service
 public class KalenderService {

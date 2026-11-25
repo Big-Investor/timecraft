@@ -25,6 +25,8 @@ import java.util.Locale;
  * Aenderungsformular einer Buchung (FA-M6-08, 09, UC-M6-05): Beginn, Ende, Standort, Projekt und Begruendung.
  * Braucht nur die Buchungs-ID und laesst sich deshalb auch ohne Detailfenster oeffnen (Vorbereitung K1).
  * Alle Regeln prueft der BuchungAenderungService; Fehler zu einem Feld erscheinen an diesem Feld.
+ *
+ * @author Bennet Antonio Brinkmeier
  */
 public class BuchungAendernFormular extends Dialog {
 

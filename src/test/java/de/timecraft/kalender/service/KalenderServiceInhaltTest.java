@@ -24,7 +24,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
-/** Eigener Kalender: Eintraege, Summen, Mitternacht, laufende Buchung, Zeitumstellung (FA-M6-01, 03, 04, 11; QA-M6-01). */
+/**
+ * Eigener Kalender: Eintraege, Summen, Mitternacht, laufende Buchung, Zeitumstellung (FA-M6-01, 03, 04, 11; QA-M6-01).
+ *
+ * @author Bennet Antonio Brinkmeier
+ */
 class KalenderServiceInhaltTest {
 
     private static final long JONAS = 1;

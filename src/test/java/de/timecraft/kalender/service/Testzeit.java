@@ -4,7 +4,11 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-/** Gemeinsame Zeithilfen der Kalendertests: Ortszeiten in Europe/Berlin. */
+/**
+ * Gemeinsame Zeithilfen der Kalendertests: Ortszeiten in Europe/Berlin.
+ *
+ * @author Bennet Antonio Brinkmeier
+ */
 final class Testzeit {
 
     static final ZoneId BERLIN = ZoneId.of("Europe/Berlin");

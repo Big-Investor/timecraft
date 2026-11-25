@@ -9,7 +9,11 @@ import java.time.format.TextStyle;
 import java.time.temporal.IsoFields;
 import java.util.Locale;
 
-/** Texte fuer die Anzeige im Kalender (nur Formatierung, keine Fachregeln). */
+/**
+ * Texte fuer die Anzeige im Kalender (nur Formatierung, keine Fachregeln).
+ *
+ * @author Bennet Antonio Brinkmeier
+ */
 final class KalenderTexte {
 
     private static final Locale DEUTSCH = Locale.GERMAN;
