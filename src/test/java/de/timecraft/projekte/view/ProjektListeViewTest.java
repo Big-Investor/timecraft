@@ -1,5 +1,7 @@
 package de.timecraft.projekte.view;
 
+import static de.timecraft.projekte.view.Komponenten.anmelden;
+import static de.timecraft.projekte.view.Komponenten.knopf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
@@ -18,7 +20,6 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import de.timecraft.benutzer.api.Rolle;
 import de.timecraft.geruest.common.AktuelleSitzung;
-import de.timecraft.geruest.common.TimeCraftBenutzer;
 import de.timecraft.projekte.model.Projekt;
 import de.timecraft.projekte.model.ProjektFilter;
 import de.timecraft.projekte.model.ProjektStatus;
@@ -30,7 +31,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
@@ -49,7 +49,7 @@ class ProjektListeViewTest {
 
     @BeforeEach
     void meldeProjektleitungAn() {
-        anmelden(2, "projektleitung", Rolle.PROJEKTLEITUNG);
+        anmelden(2, Rolle.PROJEKTLEITUNG);
         when(service.namenDerPersonen(anyLong(), any(), anyCollection())).thenReturn(Map.of(2L, "Lena Schröder"));
     }
 
@@ -57,12 +57,6 @@ class ProjektListeViewTest {
     void sitzungLeeren() {
         SecurityContextHolder.clearContext();
         UI.setCurrent(null);
-    }
-
-    private void anmelden(long id, String name, Rolle rolle) {
-        TimeCraftBenutzer benutzer = new TimeCraftBenutzer(id, name, "hash", rolle);
-        SecurityContextHolder.getContext().setAuthentication(
-                UsernamePasswordAuthenticationToken.authenticated(benutzer, null, benutzer.getAuthorities()));
     }
 
     private Projekt projekt(String name, ProjektStatus status) {
@@ -94,6 +88,10 @@ class ProjektListeViewTest {
 
         assertThat(angezeigteProjekte(view)).extracting(Projekt::getName).containsExactly("Küche", "Treppe");
         assertThat(view.getElement().getTextRecursively()).contains("2 Projekte");
+        assertThat(Komponenten.alle(view, Grid.class).get(0).isVisible()).isTrue();
+        assertThat(Komponenten.alle(view, com.vaadin.flow.component.html.Div.class).stream()
+                .filter(div -> "Keine Projekte gefunden".equals(div.getText()))
+                .allMatch(div -> !div.isVisible())).isTrue();
     }
 
     @Test
@@ -109,16 +107,6 @@ class ProjektListeViewTest {
 
         assertThat(view.getElement().getTextRecursively()).contains("0 Projekte", "Keine Projekte gefunden");
         assertThat(Komponenten.alle(view, Grid.class).get(0).isVisible()).isFalse();
-    }
-
-    @Test
-    void mitTreffernIstDerHinweisVersteckt() {
-        ProjektListeView view = offnen(List.of(projekt("Küche", ProjektStatus.AKTIV)));
-
-        assertThat(Komponenten.alle(view, Grid.class).get(0).isVisible()).isTrue();
-        assertThat(Komponenten.alle(view, com.vaadin.flow.component.html.Div.class).stream()
-                .filter(div -> "Keine Projekte gefunden".equals(div.getText()))
-                .allMatch(div -> !div.isVisible())).isTrue();
     }
 
     @Test
@@ -180,9 +168,7 @@ class ProjektListeViewTest {
         status.setValue(ProjektStatus.AKTIV);
         Komponenten.alle(view, DatePicker.class).get(0).setValue(LocalDate.of(2026, 1, 1));
 
-        Komponenten.alle(view, Button.class).stream()
-                .filter(knopf -> "Filter zurücksetzen".equals(knopf.getText()))
-                .findFirst().orElseThrow().click();
+        knopf(view, "Filter zurücksetzen").click();
 
         assertThat(name.isEmpty()).isTrue();
         assertThat(status.isEmpty()).isTrue();
@@ -197,19 +183,18 @@ class ProjektListeViewTest {
     void nurDerAdminSiehtDenKnopfNeuesProjekt() {
         assertThat(knoepfe(offnen(List.of()))).doesNotContain("+ Neues Projekt");
 
-        anmelden(3, "admin", Rolle.ADMIN);
+        anmelden(3, Rolle.ADMIN);
 
         assertThat(knoepfe(offnen(List.of()))).contains("+ Neues Projekt");
     }
 
     @Test
     void neuesProjektOeffnetDasFormular() {
-        anmelden(3, "admin", Rolle.ADMIN);
+        anmelden(3, Rolle.ADMIN);
         UI.setCurrent(ui);
         ProjektListeView view = offnen(List.of());
 
-        Komponenten.alle(view, Button.class).stream().filter(k -> "+ Neues Projekt".equals(k.getText()))
-                .findFirst().orElseThrow().click();
+        knopf(view, "+ Neues Projekt").click();
 
         verify(service).projektleitungenZurAuswahl(3L, Rolle.ADMIN);
     }

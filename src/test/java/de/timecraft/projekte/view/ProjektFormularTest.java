@@ -1,5 +1,7 @@
 package de.timecraft.projekte.view;
 
+import static de.timecraft.projekte.view.Komponenten.anmelden;
+import static de.timecraft.projekte.view.Komponenten.knopf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -11,7 +13,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.textfield.TextArea;
@@ -20,7 +21,6 @@ import de.timecraft.benutzer.api.MitarbeiterInfo;
 import de.timecraft.benutzer.api.Rolle;
 import de.timecraft.geruest.common.AktuelleSitzung;
 import de.timecraft.geruest.common.FachlicheException;
-import de.timecraft.geruest.common.TimeCraftBenutzer;
 import de.timecraft.projekte.model.Projekt;
 import de.timecraft.projekte.model.ProjektDaten;
 import de.timecraft.projekte.service.ProjektService;
@@ -32,7 +32,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
@@ -56,9 +55,7 @@ class ProjektFormularTest {
 
     @BeforeEach
     void meldeAdminAn() {
-        TimeCraftBenutzer benutzer = new TimeCraftBenutzer(3, "admin", "hash", Rolle.ADMIN);
-        SecurityContextHolder.getContext().setAuthentication(
-                UsernamePasswordAuthenticationToken.authenticated(benutzer, null, benutzer.getAuthorities()));
+        anmelden(3, Rolle.ADMIN);
         ui = new UI();
         UI.setCurrent(ui);
         when(service.projektleitungenZurAuswahl(3, Rolle.ADMIN)).thenReturn(List.of(sabine, lena));
@@ -74,11 +71,6 @@ class ProjektFormularTest {
         ProjektFormular formular = new ProjektFormular(service, new AktuelleSitzung(), projekt, gespeichert::add);
         formular.open();
         return formular;
-    }
-
-    private Button speichern(ProjektFormular formular) {
-        return Komponenten.alle(formular, Button.class).stream().filter(k -> "Speichern".equals(k.getText()))
-                .findFirst().orElseThrow();
     }
 
     @SuppressWarnings("unchecked")
@@ -111,7 +103,7 @@ class ProjektFormularTest {
         ProjektFormular formular = formular(null);
         fuelle(formular);
 
-        speichern(formular).click();
+        knopf(formular, "Speichern").click();
 
         ArgumentCaptor<ProjektDaten> daten = ArgumentCaptor.forClass(ProjektDaten.class);
         verify(service).anlegen(org.mockito.ArgumentMatchers.eq(3L), org.mockito.ArgumentMatchers.eq(Rolle.ADMIN),
@@ -129,7 +121,7 @@ class ProjektFormularTest {
         fuelle(formular);
         projektleitung(formular).clear();
 
-        speichern(formular).click();
+        knopf(formular, "Speichern").click();
 
         ArgumentCaptor<ProjektDaten> daten = ArgumentCaptor.forClass(ProjektDaten.class);
         verify(service).anlegen(anyLong(), any(), daten.capture());
@@ -143,7 +135,7 @@ class ProjektFormularTest {
         ProjektFormular formular = formular(null);
         fuelle(formular);
 
-        speichern(formular).click();
+        knopf(formular, "Speichern").click();
 
         assertThat(formular.isOpened()).isTrue();
         assertThat(gespeichert).isEmpty();
@@ -165,7 +157,7 @@ class ProjektFormularTest {
         assertThat(projektleitung(formular).getValue()).isEqualTo(sabine);
 
         Komponenten.mitBeschriftung(formular, TextField.class, "Projektname").setValue("Website Relaunch");
-        speichern(formular).click();
+        knopf(formular, "Speichern").click();
 
         ArgumentCaptor<ProjektDaten> daten = ArgumentCaptor.forClass(ProjektDaten.class);
         verify(service).aendern(org.mockito.ArgumentMatchers.eq(3L), org.mockito.ArgumentMatchers.eq(Rolle.ADMIN),
@@ -181,8 +173,7 @@ class ProjektFormularTest {
         ProjektFormular formular = formular(null);
         fuelle(formular);
 
-        Komponenten.alle(formular, Button.class).stream().filter(k -> "Abbrechen".equals(k.getText()))
-                .findFirst().orElseThrow().click();
+        knopf(formular, "Abbrechen").click();
 
         verify(service, never()).anlegen(anyLong(), any(), any());
         assertThat(formular.isOpened()).isFalse();

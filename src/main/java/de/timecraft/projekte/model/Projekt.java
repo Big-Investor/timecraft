@@ -18,7 +18,7 @@ import java.time.LocalDate;
  * (projektleitungId wird zu projektleitung_id). Alle Spalten entsprechen dem Relationenmodell.
  * <p>
  * Diese Klasse enthält nur Daten, keine Fachregeln. Die Regeln (z. B. "Zieldatum nicht vor
- * Startdatum") prüft später der ProjektService.
+ * Startdatum") prüft der ProjektService.
  *
  * @author Tim Stukenbröker
  */

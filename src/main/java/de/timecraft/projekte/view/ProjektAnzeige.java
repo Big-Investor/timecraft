@@ -43,14 +43,10 @@ final class ProjektAnzeige {
         return DATUM.format(start) + " – " + DATUM.format(ziel);
     }
 
-    /** Kleingeschriebener Statustext für die Marke in der Liste ("aktiv", "archiviert"). */
-    static String status(ProjektStatus status) {
-        return status == ProjektStatus.AKTIV ? "aktiv" : "archiviert";
-    }
-
-    /** Grüne Marke für aktiv, graue für archiviert. */
+    /** Grüne Marke "aktiv" oder graue Marke "archiviert". */
     static Span statusMarke(ProjektStatus status) {
-        return marke(status(status), status == ProjektStatus.AKTIV);
+        boolean aktiv = status == ProjektStatus.AKTIV;
+        return marke(aktiv ? "aktiv" : "archiviert", aktiv);
     }
 
     /** Grüne Marke "eingestempelt" oder graue Marke "nicht eingestempelt" im Reiter Team. */

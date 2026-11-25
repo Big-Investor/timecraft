@@ -1,6 +1,9 @@
 package de.timecraft.projekte.view;
 
+import static de.timecraft.projekte.view.Komponenten.anmelden;
+import static de.timecraft.projekte.view.Komponenten.knopf;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
@@ -10,14 +13,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.html.Paragraph;
 import de.timecraft.benutzer.api.MitarbeiterInfo;
 import de.timecraft.benutzer.api.Rolle;
 import de.timecraft.geruest.common.AktuelleSitzung;
 import de.timecraft.geruest.common.FachlicheException;
-import de.timecraft.geruest.common.TimeCraftBenutzer;
 import de.timecraft.projekte.service.ProjektService;
 import java.util.List;
 import java.util.Set;
@@ -25,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
@@ -53,9 +53,7 @@ class ZuordnungsDialogTest {
 
     @BeforeEach
     void meldeProjektleitungAn() {
-        TimeCraftBenutzer benutzer = new TimeCraftBenutzer(2, "projektleitung", "hash", Rolle.PROJEKTLEITUNG);
-        SecurityContextHolder.getContext().setAuthentication(
-                UsernamePasswordAuthenticationToken.authenticated(benutzer, null, benutzer.getAuthorities()));
+        anmelden(2, Rolle.PROJEKTLEITUNG);
         ui = new UI();
         UI.setCurrent(ui);
         when(service.zuordenbareMitarbeiter(2, Rolle.PROJEKTLEITUNG, PROJEKT_ID)).thenReturn(List.of(jonas, anna));
@@ -69,11 +67,6 @@ class ZuordnungsDialogTest {
 
     private ZuordnungsDialog dialog() {
         return new ZuordnungsDialog(service, new AktuelleSitzung(), PROJEKT_ID, nachDemZuordnen::incrementAndGet);
-    }
-
-    private Button knopf(ZuordnungsDialog dialog, String text) {
-        return Komponenten.alle(dialog, Button.class).stream().filter(k -> text.equals(k.getText()))
-                .findFirst().orElseThrow(() -> new AssertionError("Kein Knopf " + text));
     }
 
     @SuppressWarnings("unchecked")
@@ -99,6 +92,14 @@ class ZuordnungsDialogTest {
                 .containsExactly("Alle Mitarbeiter sind dem Projekt bereits zugeordnet.");
         assertThat(Komponenten.alle(dialog, MultiSelectComboBox.class)).isEmpty();
         assertThat(knopf(dialog, "Schließen")).isNotNull();
+    }
+
+    @Test
+    void lehntDerServiceDasLadenAbEntstehtKeinDialogMitFalschemHinweis() {
+        when(service.zuordenbareMitarbeiter(2, Rolle.PROJEKTLEITUNG, PROJEKT_ID))
+                .thenThrow(new FachlicheException("Das Projekt ist archiviert."));
+
+        assertThatThrownBy(this::dialog).isInstanceOf(FachlicheException.class);
     }
 
     @Test

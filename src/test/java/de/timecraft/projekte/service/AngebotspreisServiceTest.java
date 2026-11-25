@@ -64,14 +64,6 @@ class AngebotspreisServiceTest {
     }
 
     @Test
-    void einNeuerPreisUeberschreibtDenAlten() {
-        service.setzeAngebotspreis(projektId, new BigDecimal("1500.50"));
-        service.setzeAngebotspreis(projektId, new BigDecimal("2000.00"));
-
-        assertThat(preisInDerDatenbank()).isEqualByComparingTo("2000.00");
-    }
-
-    @Test
     void nullLoeschtDenAngebotspreis() {
         service.setzeAngebotspreis(projektId, new BigDecimal("1500.50"));
 
@@ -160,18 +152,12 @@ class AngebotspreisServiceTest {
     }
 
     @Test
-    void eineUnbekannteProjektIdWirdAbgelehnt() {
-        assertThatThrownBy(() -> service.setzeAngebotspreis(UNBEKANNTE_ID, new BigDecimal("100.00")))
-                .isInstanceOf(NichtGefundenException.class)
-                .hasMessage("Das Projekt wurde nicht gefunden.");
-    }
-
-    @Test
-    void beiUnbekannterProjektIdWirdNichtsAngelegt() {
+    void eineUnbekannteProjektIdWirdAbgelehntUndNichtsAngelegt() {
         long vorher = repository.count();
 
         assertThatThrownBy(() -> service.setzeAngebotspreis(UNBEKANNTE_ID, new BigDecimal("100.00")))
-                .isInstanceOf(NichtGefundenException.class);
+                .isInstanceOf(NichtGefundenException.class)
+                .hasMessage("Das Projekt wurde nicht gefunden.");
 
         assertThat(repository.count()).isEqualTo(vorher);
     }

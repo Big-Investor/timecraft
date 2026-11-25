@@ -126,12 +126,12 @@ public class TeamTab extends Div {
     /** Lädt das Team neu (Stand jetzt). Auch für "Aktualisieren" und nach dem Zuordnen oder Entfernen. */
     public void aktualisieren() {
         try {
-            TeamFilter filter = aktuellerFilter();
+            TeamFilter filter = new TeamFilter(statusFilter.getValue(), standortFilter.getValue());
             List<TeamEintrag> team = teamService.teamAnsehen(sitzung.mitarbeiterId(), sitzung.rolle(), projektId, filter);
             liste.setItems(team);
             liste.setVisible(!team.isEmpty());
             hinweis.setVisible(team.isEmpty());
-            boolean gefiltert = filter.getEingestempelt() != null || filter.getStandort() != null;
+            boolean gefiltert = filter.eingestempelt() != null || filter.standort() != null;
             hinweis.setText(gefiltert ? "Keine Person gefunden"
                     : "Dem Projekt sind noch keine Mitarbeiter zugeordnet");
         } catch (RuntimeException fehler) {
@@ -139,15 +139,12 @@ public class TeamTab extends Div {
         }
     }
 
-    private TeamFilter aktuellerFilter() {
-        TeamFilter filter = new TeamFilter();
-        filter.setEingestempelt(statusFilter.getValue());
-        filter.setStandort(standortFilter.getValue());
-        return filter;
-    }
-
     private void zuordnen() {
-        new ZuordnungsDialog(projektService, sitzung, projektId, this::aktualisieren).open();
+        try {
+            new ZuordnungsDialog(projektService, sitzung, projektId, this::aktualisieren).open();
+        } catch (RuntimeException fehler) {
+            Meldungen.fehler(fehler);
+        }
     }
 
     private void entfernenBestaetigen(TeamEintrag eintrag) {

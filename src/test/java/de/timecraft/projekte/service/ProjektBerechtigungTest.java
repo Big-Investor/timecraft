@@ -57,22 +57,12 @@ class ProjektBerechtigungTest {
     }
 
     @Test
-    void projektleitungEinesAnderenProjektsIstVerweigert() {
-        long andereProjektleitung = 7L;
-
-        assertThatThrownBy(() -> berechtigung.pruefeVerantwortlicheProjektleitung(andereProjektleitung, Rolle.PROJEKTLEITUNG, projekt))
+    void fremdeProjektleitungAdminUndMitarbeiterSindNieVerantwortlich() {
+        assertThatThrownBy(() -> berechtigung.pruefeVerantwortlicheProjektleitung(7L, Rolle.PROJEKTLEITUNG, projekt))
                 .isInstanceOf(ZugriffVerweigertException.class);
-    }
-
-    @Test
-    void adminIstNieVerantwortlicheProjektleitung() {
         // Auch mit derselben ID wie die Projektleitung: Entscheidend ist die Rolle.
         assertThatThrownBy(() -> berechtigung.pruefeVerantwortlicheProjektleitung(PROJEKTLEITUNG_ID, Rolle.ADMIN, projekt))
                 .isInstanceOf(ZugriffVerweigertException.class);
-    }
-
-    @Test
-    void mitarbeiterIstNieVerantwortlicheProjektleitung() {
         assertThatThrownBy(() -> berechtigung.pruefeVerantwortlicheProjektleitung(PROJEKTLEITUNG_ID, Rolle.MITARBEITER, projekt))
                 .isInstanceOf(ZugriffVerweigertException.class);
     }

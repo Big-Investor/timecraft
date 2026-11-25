@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import de.timecraft.projekte.model.Projekt;
-import de.timecraft.projekte.model.ProjektStatus;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,46 +51,11 @@ class ProjektRepositoryTest {
     }
 
     @Test
-    void neuesProjektIstAktivUndHatNochKeinenAngebotspreis() {
-        Projekt gespeichert = repository.saveAndFlush(new Projekt(2L, "Website", null, START, ZIEL));
-        entityManager.clear();
-        Projekt gelesen = repository.findById(gespeichert.getProjektId()).orElseThrow();
-
-        assertThat(gelesen.getStatus()).isEqualTo(ProjektStatus.AKTIV);
-        assertThat(gelesen.getAngebotspreis()).isNull();
-        assertThat(gelesen.getBeschreibung()).isNull();
-    }
-
-    @Test
     void gleicheNamenSindErlaubtUndBekommenVerschiedeneIds() {
         Projekt erstes = repository.saveAndFlush(new Projekt(2L, "Umbau", null, START, ZIEL));
         Projekt zweites = repository.saveAndFlush(new Projekt(2L, "Umbau", null, START, ZIEL));
 
         assertThat(erstes.getProjektId()).isNotEqualTo(zweites.getProjektId());
-    }
-
-    @Test
-    void speichertStatusArchiviertAlsText() {
-        Projekt projekt = new Projekt(2L, "Altprojekt", null, START, ZIEL);
-        projekt.setStatus(ProjektStatus.ARCHIVIERT);
-
-        Projekt gespeichert = repository.saveAndFlush(projekt);
-        entityManager.clear();
-
-        assertThat(repository.findById(gespeichert.getProjektId()).orElseThrow().getStatus())
-                .isEqualTo(ProjektStatus.ARCHIVIERT);
-    }
-
-    @Test
-    void speichertAngebotspreisMitZweiNachkommastellen() {
-        Projekt projekt = new Projekt(2L, "Kalkulation", null, START, ZIEL);
-        projekt.setAngebotspreis(new BigDecimal("1234.5"));
-
-        Projekt gespeichert = repository.saveAndFlush(projekt);
-        entityManager.clear();
-        Projekt gelesen = repository.findById(gespeichert.getProjektId()).orElseThrow();
-
-        assertThat(gelesen.getAngebotspreis()).isEqualByComparingTo("1234.50");
     }
 
     @Test

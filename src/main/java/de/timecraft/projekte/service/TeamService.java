@@ -84,7 +84,7 @@ public class TeamService {
         // Hier sind zwei Personengruppen erlaubt (Projektleitung und zugeordneter Mitarbeiter, mit
         // unterschiedlicher Sicht). Deshalb prüft diese Methode selbst und nutzt nicht
         // ProjektBerechtigung.pruefeVerantwortlicheProjektleitung, das nur eine Gruppe zulässt.
-        boolean istProjektleitung = rolle == Rolle.PROJEKTLEITUNG && projekt.getProjektleitungId() == mitarbeiterId;
+        boolean istProjektleitung = berechtigung.istVerantwortlicheProjektleitung(mitarbeiterId, rolle, projekt);
         boolean istZugeordnet = rolle == Rolle.MITARBEITER
                 && zuordnungRepository.existsByMitarbeiterIdAndProjektId(mitarbeiterId, projektId);
         if (!istProjektleitung && !istZugeordnet) {
@@ -162,10 +162,10 @@ public class TeamService {
         if (filter == null) {
             return true;
         }
-        if (filter.getEingestempelt() != null && !filter.getEingestempelt().equals(eintrag.eingestempelt())) {
+        if (filter.eingestempelt() != null && !filter.eingestempelt().equals(eintrag.eingestempelt())) {
             return false;
         }
-        return filter.getStandort() == null || filter.getStandort() == eintrag.standort();
+        return filter.standort() == null || filter.standort() == eintrag.standort();
     }
 
     private Projekt ladeProjekt(long projektId) {

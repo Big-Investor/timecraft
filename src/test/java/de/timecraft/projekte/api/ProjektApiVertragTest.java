@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
  * AngebotspreisPflege, M2/M7 lesen ihn über ProjektAuskunft. Die einzelnen Methoden von ProjektAuskunft
  * prüft ProjektAuskunftServiceTest.
  * <p>
- * Die Methode ist "@Transactional": Alles wird am Ende zurückgerollt, damit die gemeinsame Test-Datenbank
+ * Die Testklasse ist "@Transactional": Alles wird am Ende zurückgerollt, damit die gemeinsame Test-Datenbank
  * für andere Tests unverändert bleibt.
  *
  * @author Tim Stukenbröker

@@ -2,12 +2,17 @@ package de.timecraft.projekte.view;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasLabel;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
+import de.timecraft.benutzer.api.Rolle;
+import de.timecraft.geruest.common.TimeCraftBenutzer;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * Testhilfe: sucht Oberflächenelemente im Komponentenbaum einer View, ohne Browser.
+ * Testhilfe für Views ohne Browser: sucht Oberflächenelemente im Komponentenbaum und meldet Personen an.
  *
  * @author Tim Stukenbröker
  */
@@ -37,6 +42,20 @@ final class Komponenten {
                 .filter(feld -> beschriftung.equals(feld.getLabel()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Kein " + typ.getSimpleName() + " mit Beschriftung " + beschriftung));
+    }
+
+    /** Die Schaltfläche mit diesem Text; bei einem Dialog auch aus der Fußzeile. */
+    static Button knopf(Component wurzel, String text) {
+        List<Button> knoepfe = wurzel instanceof Dialog dialog ? alle(dialog, Button.class) : alle(wurzel, Button.class);
+        return knoepfe.stream().filter(knopf -> text.equals(knopf.getText())).findFirst()
+                .orElseThrow(() -> new AssertionError("Kein Knopf " + text));
+    }
+
+    /** Meldet für den Test eine Person an. Aufräumen mit SecurityContextHolder.clearContext(). */
+    static void anmelden(long mitarbeiterId, Rolle rolle) {
+        TimeCraftBenutzer benutzer = new TimeCraftBenutzer(mitarbeiterId, "benutzer", "hash", rolle);
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated(benutzer, null, benutzer.getAuthorities()));
     }
 
     private static <T extends Component> void sammle(Component komponente, Class<T> typ, List<T> treffer) {

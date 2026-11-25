@@ -54,10 +54,12 @@ class ProjektServiceArchivierenTest {
     }
 
     @Test
-    void adminArchiviertEinAktivesProjekt() {
+    void adminArchiviertEinAktivesProjektUndAendertNurDenStatus() {
         Projekt ergebnis = service.archivieren(ADMIN_ID, Rolle.ADMIN, PROJEKT_ID);
 
         assertThat(ergebnis.getStatus()).isEqualTo(ProjektStatus.ARCHIVIERT);
+        assertThat(ergebnis.getName()).isEqualTo("Website");
+        assertThat(ergebnis.getProjektleitungId()).isEqualTo(PROJEKTLEITUNG_ID);
         verify(repository).save(projekt);
     }
 
@@ -69,14 +71,6 @@ class ProjektServiceArchivierenTest {
 
         assertThat(ergebnis.getStatus()).isEqualTo(ProjektStatus.AKTIV);
         verify(repository).save(projekt);
-    }
-
-    @Test
-    void archivierenAendertNurDenStatus() {
-        service.archivieren(ADMIN_ID, Rolle.ADMIN, PROJEKT_ID);
-
-        assertThat(projekt.getName()).isEqualTo("Website");
-        assertThat(projekt.getProjektleitungId()).isEqualTo(PROJEKTLEITUNG_ID);
     }
 
     @Test

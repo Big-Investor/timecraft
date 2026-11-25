@@ -3,7 +3,7 @@ package de.timecraft.projekte.model;
 import java.time.LocalDate;
 
 /**
- * Die Eingaben für ein Projekt, so wie die Oberfläche sie (später im Formular) liefert.
+ * Die Eingaben für ein Projekt, so wie das Formular der Oberfläche sie liefert.
  * Sie dienen zum Anlegen und zum Ändern eines Projekts und sind noch nicht geprüft:
  * Jeder Wert kann leer (null) sein. Ob die Eingaben gültig sind, entscheidet der ProjektService.
  * <p>

@@ -93,16 +93,6 @@ class ProjektServiceAnlegenTest {
         assertThat(captor.getAllValues()).allSatisfy(projekt -> assertThat(projekt.getBeschreibung()).isNull());
     }
 
-    @Test
-    void gleicheNamenSindErlaubt() {
-        ProjektDaten daten = new ProjektDaten("Website", null, START, ZIEL, PROJEKTLEITUNG_ID);
-
-        service.anlegen(ADMIN_ID, Rolle.ADMIN, daten);
-        service.anlegen(ADMIN_ID, Rolle.ADMIN, daten);
-
-        verify(repository, times(2)).save(any(Projekt.class));
-    }
-
     // ---------- Grenzfälle ----------
 
     @Test

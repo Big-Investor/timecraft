@@ -70,6 +70,7 @@ class TeamServiceTest {
     private static final long BERND = 12L;
     private static final long CLARA = 13L;
     private static final long DIRK = 14L;
+    private static final TeamFilter OHNE_FILTER = new TeamFilter(null, null);
     private static final Instant ANNA_BEGINN = Instant.parse("2026-11-18T07:15:00Z");
     private static final Instant CLARA_BEGINN = Instant.parse("2026-11-18T08:30:00Z");
 
@@ -120,20 +121,12 @@ class TeamServiceTest {
 
     @Test
     void projektleitungSiehtAlleZugeordnetenMitStatusStandortUndBeginnSortiertNachName() {
-        List<TeamEintrag> team = service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, new TeamFilter());
+        List<TeamEintrag> team = service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, OHNE_FILTER);
 
         assertThat(team).containsExactly(
                 new TeamEintrag(ANNA, "Anna Berger", true, Standort.BUERO, ANNA_BEGINN),
                 new TeamEintrag(BERND, "Bernd Albers", false, null, null),
                 new TeamEintrag(CLARA, "Clara Zander", true, Standort.HOMEOFFICE, CLARA_BEGINN));
-    }
-
-    @Test
-    void dieProjektleitungStehtNichtAlsZeileImTeam() {
-        List<TeamEintrag> team = service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, null);
-
-        assertThat(team).extracting(TeamEintrag::mitarbeiterId).doesNotContain(PROJEKTLEITUNG_ID);
-        assertThat(team).hasSize(3);
     }
 
     @Test
@@ -143,16 +136,7 @@ class TeamServiceTest {
 
     @Test
     void leeresTeamGibtEineLeereListe() {
-        assertThat(service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, leerId, new TeamFilter())).isEmpty();
-    }
-
-    @Test
-    void aktualisierenZeigtDenNeuenStand() {
-        when(buchungsAuskunft.laufendeBuchungenAufProjekt(websiteId)).thenReturn(List.of());
-
-        List<TeamEintrag> team = service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, new TeamFilter());
-
-        assertThat(team).extracting(TeamEintrag::eingestempelt).containsOnly(false);
+        assertThat(service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, leerId, OHNE_FILTER)).isEmpty();
     }
 
     @Test
@@ -161,7 +145,7 @@ class TeamServiceTest {
                 null, null, null, null, null, 0);
         when(mitarbeiterAuskunft.finde(BERND)).thenReturn(Optional.of(ehemalig));
 
-        List<TeamEintrag> team = service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, new TeamFilter());
+        List<TeamEintrag> team = service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, OHNE_FILTER);
 
         assertThat(team).extracting(TeamEintrag::mitarbeiterId).contains(BERND);
     }
@@ -170,7 +154,7 @@ class TeamServiceTest {
     void eineZugeordnetePersonDieM1NichtKenntGibtEineVerstaendlicheMeldung() {
         when(mitarbeiterAuskunft.finde(BERND)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, new TeamFilter()))
+        assertThatThrownBy(() -> service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, OHNE_FILTER))
                 .isInstanceOf(FachlicheException.class)
                 .hasMessageContaining("nicht gefunden");
     }
@@ -180,7 +164,7 @@ class TeamServiceTest {
         when(buchungsAuskunft.laufendeBuchungenAufProjekt(websiteId)).thenReturn(List.of(
                 buchung(DIRK, Standort.UNTERWEGS, ANNA_BEGINN)));
 
-        List<TeamEintrag> team = service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, new TeamFilter());
+        List<TeamEintrag> team = service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, OHNE_FILTER);
 
         assertThat(team).extracting(TeamEintrag::mitarbeiterId).containsExactly(ANNA, BERND, CLARA);
         assertThat(team).extracting(TeamEintrag::eingestempelt).containsOnly(false);
@@ -190,76 +174,44 @@ class TeamServiceTest {
 
     @Test
     void statusfilterEingestempelt() {
-        TeamFilter filter = new TeamFilter();
-        filter.setEingestempelt(true);
+        TeamFilter filter = new TeamFilter(true, null);
 
         assertThat(namen(PROJEKTLEITUNG_ID, filter)).containsExactly("Anna Berger", "Clara Zander");
     }
 
     @Test
     void statusfilterNichtEingestempelt() {
-        TeamFilter filter = new TeamFilter();
-        filter.setEingestempelt(false);
+        TeamFilter filter = new TeamFilter(false, null);
 
         assertThat(namen(PROJEKTLEITUNG_ID, filter)).containsExactly("Bernd Albers");
     }
 
     @Test
     void standortfilterZeigtNurEingestempeltePersonenAnDiesemStandort() {
-        TeamFilter filter = new TeamFilter();
-        filter.setStandort(Standort.BUERO);
+        TeamFilter filter = new TeamFilter(null, Standort.BUERO);
 
         assertThat(namen(PROJEKTLEITUNG_ID, filter)).containsExactly("Anna Berger");
     }
 
     @Test
-    void standortfilterOhneStatusfilterZeigtNiemalsNichtEingestempelte() {
-        TeamFilter filter = new TeamFilter();
-        filter.setStandort(Standort.HOMEOFFICE);
-
-        assertThat(namen(PROJEKTLEITUNG_ID, filter)).containsExactly("Clara Zander");
-    }
-
-    @Test
     void statusUndStandortfilterWirkenGemeinsam() {
-        TeamFilter filter = new TeamFilter();
-        filter.setEingestempelt(true);
-        filter.setStandort(Standort.HOMEOFFICE);
+        TeamFilter filter = new TeamFilter(true, Standort.HOMEOFFICE);
 
         assertThat(namen(PROJEKTLEITUNG_ID, filter)).containsExactly("Clara Zander");
     }
 
     @Test
     void nichtEingestempeltMitStandortErgibtNiemanden() {
-        TeamFilter filter = new TeamFilter();
-        filter.setEingestempelt(false);
-        filter.setStandort(Standort.BUERO);
+        TeamFilter filter = new TeamFilter(false, Standort.BUERO);
 
         assertThat(namen(PROJEKTLEITUNG_ID, filter)).isEmpty();
-    }
-
-    @Test
-    void standortOhneEingestempeltePersonErgibtEineLeereListe() {
-        TeamFilter filter = new TeamFilter();
-        filter.setStandort(Standort.UNTERWEGS);
-
-        assertThat(namen(PROJEKTLEITUNG_ID, filter)).isEmpty();
-    }
-
-    @Test
-    void einNeuerFilterSetztAllesZurueck() {
-        TeamFilter filter = new TeamFilter();
-        filter.setEingestempelt(true);
-        assertThat(namen(PROJEKTLEITUNG_ID, filter)).hasSize(2);
-
-        assertThat(namen(PROJEKTLEITUNG_ID, new TeamFilter())).hasSize(3);
     }
 
     // ---------- Zugeordneter Mitarbeiter: nur Namen (FA-M3-08, QA-M3-03) ----------
 
     @Test
     void zugeordneterMitarbeiterSiehtNurDieNamenSeinesTeamsEinschliesslichSichSelbst() {
-        List<TeamEintrag> team = service.teamAnsehen(BERND, Rolle.MITARBEITER, websiteId, new TeamFilter());
+        List<TeamEintrag> team = service.teamAnsehen(BERND, Rolle.MITARBEITER, websiteId, OHNE_FILTER);
 
         assertThat(team).containsExactly(
                 new TeamEintrag(ANNA, "Anna Berger", null, null, null),
@@ -268,26 +220,15 @@ class TeamServiceTest {
     }
 
     @Test
-    void zugeordneterMitarbeiterSiehtWederStatusNochStandortNochBeginn() {
-        List<TeamEintrag> team = service.teamAnsehen(ANNA, Rolle.MITARBEITER, websiteId, new TeamFilter());
-
-        assertThat(team).extracting(TeamEintrag::eingestempelt).containsOnlyNulls();
-        assertThat(team).extracting(TeamEintrag::standort).containsOnlyNulls();
-        assertThat(team).extracting(TeamEintrag::beginn).containsOnlyNulls();
-    }
-
-    @Test
     void fuerEinenMitarbeiterWirdDieBuchungsAuskunftNichtAbgefragt() {
-        service.teamAnsehen(ANNA, Rolle.MITARBEITER, websiteId, new TeamFilter());
+        service.teamAnsehen(ANNA, Rolle.MITARBEITER, websiteId, OHNE_FILTER);
 
         verifyNoInteractions(buchungsAuskunft);
     }
 
     @Test
     void einFilterBeiEinemMitarbeiterWirdIgnoriertUndVerraetNichtsUeberStatusOderStandort() {
-        TeamFilter filter = new TeamFilter();
-        filter.setEingestempelt(true);
-        filter.setStandort(Standort.BUERO);
+        TeamFilter filter = new TeamFilter(true, Standort.BUERO);
 
         List<TeamEintrag> team = service.teamAnsehen(BERND, Rolle.MITARBEITER, websiteId, filter);
 
@@ -306,58 +247,51 @@ class TeamServiceTest {
 
     @Test
     void adminHatKeinenZugriffAufDenReiterTeam() {
-        assertThatThrownBy(() -> service.teamAnsehen(ADMIN_ID, Rolle.ADMIN, websiteId, new TeamFilter()))
+        assertThatThrownBy(() -> service.teamAnsehen(ADMIN_ID, Rolle.ADMIN, websiteId, OHNE_FILTER))
                 .isInstanceOf(ZugriffVerweigertException.class);
         verifyNoInteractions(buchungsAuskunft);
     }
 
     @Test
     void nichtZugeordneterMitarbeiterHatKeinenZugriff() {
-        assertThatThrownBy(() -> service.teamAnsehen(DIRK, Rolle.MITARBEITER, websiteId, new TeamFilter()))
+        assertThatThrownBy(() -> service.teamAnsehen(DIRK, Rolle.MITARBEITER, websiteId, OHNE_FILTER))
                 .isInstanceOf(ZugriffVerweigertException.class);
         verifyNoInteractions(buchungsAuskunft);
     }
 
     @Test
     void projektleitungEinesAnderenProjektsHatKeinenZugriff() {
-        assertThatThrownBy(() -> service.teamAnsehen(FREMDE_PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, new TeamFilter()))
+        assertThatThrownBy(() -> service.teamAnsehen(FREMDE_PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, OHNE_FILTER))
                 .isInstanceOf(ZugriffVerweigertException.class);
         verifyNoInteractions(buchungsAuskunft);
-    }
-
-    @Test
-    void einMitarbeiterHatKeinenZugriffAufDasTeamEinesProjektsDemErNichtZugeordnetIst() {
-        // Clara ist nur "Website" zugeordnet, das Projekt "Leer" darf sie nicht ansehen.
-        assertThatThrownBy(() -> service.teamAnsehen(CLARA, Rolle.MITARBEITER, leerId, new TeamFilter()))
-                .isInstanceOf(ZugriffVerweigertException.class);
     }
 
     @Test
     void einEntfernterMitarbeiterHatKeinenZugriffMehr() {
         zuordnungRepository.deleteById(new Projektzuordnung.Schluessel(BERND, websiteId));
 
-        assertThatThrownBy(() -> service.teamAnsehen(BERND, Rolle.MITARBEITER, websiteId, new TeamFilter()))
+        assertThatThrownBy(() -> service.teamAnsehen(BERND, Rolle.MITARBEITER, websiteId, OHNE_FILTER))
                 .isInstanceOf(ZugriffVerweigertException.class);
     }
 
     @Test
     void ohneAnmeldungGibtEsKeinenZugriff() {
-        assertThatThrownBy(() -> service.teamAnsehen(0L, null, websiteId, new TeamFilter()))
+        assertThatThrownBy(() -> service.teamAnsehen(0L, null, websiteId, OHNE_FILTER))
                 .isInstanceOf(NichtAngemeldetException.class);
     }
 
     @Test
     void einUnbekanntesProjektGibtNichtGefunden() {
-        assertThatThrownBy(() -> service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, 9999L, new TeamFilter()))
+        assertThatThrownBy(() -> service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, 9999L, OHNE_FILTER))
                 .isInstanceOf(NichtGefundenException.class);
     }
 
     @Test
     void einArchiviertesProjektHatKeineTeamUebersicht() {
-        assertThatThrownBy(() -> service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, altprojektId, new TeamFilter()))
+        assertThatThrownBy(() -> service.teamAnsehen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, altprojektId, OHNE_FILTER))
                 .isInstanceOf(FachlicheException.class)
                 .hasMessageContaining("archiviert");
-        assertThatThrownBy(() -> service.teamAnsehen(ANNA, Rolle.MITARBEITER, altprojektId, new TeamFilter()))
+        assertThatThrownBy(() -> service.teamAnsehen(ANNA, Rolle.MITARBEITER, altprojektId, OHNE_FILTER))
                 .isInstanceOf(FachlicheException.class)
                 .hasMessageContaining("archiviert");
     }

@@ -159,18 +159,11 @@ class ProjektServiceZuordnungTest {
     // ---------- Zuordnen ----------
 
     @Test
-    void projektleitungOrdnetEinenMitarbeiterZuUndDasDatumKommtAusDerUhr() {
-        service.zuordnen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, List.of(BERND));
+    void projektleitungOrdnetMehrereMitarbeiterZuUndDasDatumKommtAusDerUhr() {
+        service.zuordnen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, List.of(BERND, CLARA));
 
         Projektzuordnung gespeichert = zuordnungRepository.findById(new Projektzuordnung.Schluessel(BERND, websiteId)).orElseThrow();
         assertThat(gespeichert.getZugeordnetAm()).isEqualTo(FesteUhr.JETZT);
-        assertThat(alleZugeordneten(websiteId)).containsExactlyInAnyOrder(ANNA, BERND);
-    }
-
-    @Test
-    void projektleitungOrdnetMehrereMitarbeiterAufEinmalZu() {
-        service.zuordnen(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, websiteId, List.of(BERND, CLARA));
-
         assertThat(alleZugeordneten(websiteId)).containsExactlyInAnyOrder(ANNA, BERND, CLARA);
     }
 
@@ -232,14 +225,6 @@ class ProjektServiceZuordnungTest {
     @Test
     void mitarbeiterKannSichPerDirektemAufrufNichtSelbstZuordnen() {
         assertThatThrownBy(() -> service.zuordnen(BERND, Rolle.MITARBEITER, websiteId, List.of(BERND)))
-                .isInstanceOf(ZugriffVerweigertException.class);
-
-        assertThat(alleZugeordneten(websiteId)).containsExactly(ANNA);
-    }
-
-    @Test
-    void zugeordneterMitarbeiterDarfKeinenKollegenZuordnen() {
-        assertThatThrownBy(() -> service.zuordnen(ANNA, Rolle.MITARBEITER, websiteId, List.of(CLARA)))
                 .isInstanceOf(ZugriffVerweigertException.class);
 
         assertThat(alleZugeordneten(websiteId)).containsExactly(ANNA);

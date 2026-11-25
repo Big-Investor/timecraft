@@ -50,7 +50,7 @@ public class ProjektFormular extends Dialog {
         setHeaderTitle(projekt == null ? "Neues Projekt" : "Projekt bearbeiten");
         setWidth("34rem");
         add(felder());
-        getFooter().add(abbrechen(), speichern());
+        getFooter().add(new Button("Abbrechen", ereignis -> close()), speichern());
         projektleitungenLaden();
         if (projekt != null) {
             felderFuellen(projekt);
@@ -75,10 +75,6 @@ public class ProjektFormular extends Dialog {
         formular.setColspan(beschreibung, 2);
         formular.setColspan(projektleitung, 2);
         return formular;
-    }
-
-    private Button abbrechen() {
-        return new Button("Abbrechen", ereignis -> close());
     }
 
     private Button speichern() {

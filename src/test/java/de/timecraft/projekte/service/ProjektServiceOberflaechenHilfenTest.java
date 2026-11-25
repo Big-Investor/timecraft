@@ -55,33 +55,15 @@ class ProjektServiceOberflaechenHilfenTest {
     // ---- namenDerPersonen ----
 
     @Test
-    void namenDerPersonenLiefertDenVollenNamenJeId() {
+    void namenDerPersonenKenntAuchEhemaligeUndLaesstUnbekannteIdsAus() {
         when(mitarbeiterAuskunft.alle()).thenReturn(List.of(
                 person(1, "Jonas", "Becker", Rolle.MITARBEITER, true),
-                person(2, "Lena", "Schröder", Rolle.PROJEKTLEITUNG, true),
+                person(2, "Lena", "Schröder", Rolle.PROJEKTLEITUNG, false),
                 person(3, "Paul", "Hartmann", Rolle.ADMIN, true)));
 
-        Map<Long, String> namen = service.namenDerPersonen(MITARBEITER_ID, Rolle.MITARBEITER, List.of(2L, 3L));
+        Map<Long, String> namen = service.namenDerPersonen(MITARBEITER_ID, Rolle.MITARBEITER, List.of(2L, 3L, 99L));
 
         assertThat(namen).containsOnly(Map.entry(2L, "Lena Schröder"), Map.entry(3L, "Paul Hartmann"));
-    }
-
-    @Test
-    void namenDerPersonenKenntAuchEhemaligeMitarbeiter() {
-        when(mitarbeiterAuskunft.alle()).thenReturn(List.of(person(2, "Lena", "Schröder", Rolle.PROJEKTLEITUNG, false)));
-
-        Map<Long, String> namen = service.namenDerPersonen(ADMIN_ID, Rolle.ADMIN, List.of(2L));
-
-        assertThat(namen).containsEntry(2L, "Lena Schröder");
-    }
-
-    @Test
-    void namenDerPersonenLaesstUnbekannteIdsAus() {
-        when(mitarbeiterAuskunft.alle()).thenReturn(List.of(person(2, "Lena", "Schröder", Rolle.PROJEKTLEITUNG, true)));
-
-        Map<Long, String> namen = service.namenDerPersonen(ADMIN_ID, Rolle.ADMIN, List.of(2L, 99L));
-
-        assertThat(namen).containsOnlyKeys(2L);
     }
 
     @Test
@@ -140,14 +122,6 @@ class ProjektServiceOberflaechenHilfenTest {
                 .thenReturn(List.of(laufendeBuchung(1, 1), laufendeBuchung(2, 4)));
 
         assertThat(service.laufendeBuchungenAnzahl(ADMIN_ID, Rolle.ADMIN, PROJEKT_ID)).isEqualTo(2);
-    }
-
-    @Test
-    void ohneLaufendeBuchungenIstDieAnzahlNull() {
-        projektVorbereiten();
-        when(buchungsAuskunft.laufendeBuchungenAufProjekt(PROJEKT_ID)).thenReturn(List.of());
-
-        assertThat(service.laufendeBuchungenAnzahl(ADMIN_ID, Rolle.ADMIN, PROJEKT_ID)).isZero();
     }
 
     @Test

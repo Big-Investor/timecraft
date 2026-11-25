@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import de.timecraft.benutzer.api.MitarbeiterAuskunft;
@@ -61,6 +60,8 @@ class ProjektServiceAendernTest {
         projekt.setAngebotspreis(new BigDecimal("1500.00"));
         when(repository.findById(PROJEKT_ID)).thenReturn(Optional.of(projekt));
         when(repository.save(any(Projekt.class))).thenAnswer(aufruf -> aufruf.getArgument(0));
+        when(mitarbeiterAuskunft.finde(PROJEKTLEITUNG_ID))
+                .thenReturn(Optional.of(person(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, true)));
     }
 
     // ---------- aendern: Admin ----------
@@ -95,12 +96,15 @@ class ProjektServiceAendernTest {
     }
 
     @Test
-    void bleibtDieProjektleitungGleichWirdSieNichtNeuGeprueft() {
-        // Auch wenn die Projektleitung inzwischen deaktiviert wäre: Der Name soll sich trotzdem ändern lassen.
-        service.aendern(ADMIN_ID, Rolle.ADMIN, PROJEKT_ID, datenMitProjektleitung(PROJEKTLEITUNG_ID, "Neuer Name"));
+    void auchEineUnveraenderteProjektleitungMussNochAktivSein() {
+        when(mitarbeiterAuskunft.finde(PROJEKTLEITUNG_ID))
+                .thenReturn(Optional.of(person(PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, false)));
 
-        assertThat(projekt.getName()).isEqualTo("Neuer Name");
-        verifyNoInteractions(mitarbeiterAuskunft);
+        assertThatThrownBy(() -> service.aendern(ADMIN_ID, Rolle.ADMIN, PROJEKT_ID,
+                datenMitProjektleitung(PROJEKTLEITUNG_ID, "Neuer Name")))
+                .isInstanceOf(FachlicheException.class).hasMessage("Die gewählte Projektleitung ist nicht mehr aktiv.");
+
+        assertProjektUnveraendert();
     }
 
     @Test

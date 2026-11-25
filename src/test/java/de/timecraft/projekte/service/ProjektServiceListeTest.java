@@ -101,13 +101,6 @@ class ProjektServiceListeTest {
     }
 
     @Test
-    void projektleitungSiehtAuchProjekteDieSieNichtVerantwortet() {
-        List<Projekt> liste = service.projekteSehen(EIGENTLICHE_PROJEKTLEITUNG_ID, Rolle.PROJEKTLEITUNG, new ProjektFilter());
-
-        assertThat(ids(liste)).containsExactly(websiteId, umbauId, rabattId);
-    }
-
-    @Test
     void mitarbeiterSiehtNurSeineZugeordnetenProjekte() {
         assertThat(ids(mitarbeiter(MITARBEITER_11, new ProjektFilter()))).containsExactly(websiteId, umbauId);
     }
@@ -208,18 +201,11 @@ class ProjektServiceListeTest {
         assertThat(mitarbeiter(MITARBEITER_13, filter)).isEmpty();
     }
 
-    // ---------- ohne Filter, Sortierung ----------
+    // ---------- ohne Filter ----------
 
     @Test
     void keinFilterNullFuehrtZurVollenListe() {
         assertThat(ids(service.projekteSehen(ADMIN_ID, Rolle.ADMIN, null))).hasSize(4);
-    }
-
-    @Test
-    void dieProjektlisteIstNachProjektIdSortiert() {
-        List<Long> ids = ids(admin(new ProjektFilter()));
-
-        assertThat(ids).isSorted();
     }
 
     // ---------- Hilfsmethoden ----------

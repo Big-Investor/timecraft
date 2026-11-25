@@ -10,7 +10,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 /**
  * Die Zuordnung eines Mitarbeiters zu einem Projekt. Jede Instanz ist eine Zeile der Tabelle "projektzuordnung".
@@ -19,7 +18,7 @@ import java.util.Objects;
  * Mitarbeiter einem Projekt nur ein einziges Mal zugeordnet sein, in mehreren Projekten aber schon.
  * JPA braucht für so einen zusammengesetzten Schlüssel eine kleine Hilfsklasse ({@link Schluessel}).
  * <p>
- * Auch hier keine Fachregeln, nur Daten. Wer wen zuordnen darf, prüft später der Service.
+ * Auch hier keine Fachregeln, nur Daten. Wer wen zuordnen darf, prüft der Service.
  *
  * @author Tim Stukenbröker
  */
@@ -82,37 +81,8 @@ public class Projektzuordnung {
 
     /**
      * Der zusammengesetzte Primärschlüssel: das Paar (mitarbeiterId, projektId).
-     * Die Feldnamen müssen genau so heißen wie die mit @Id markierten Felder oben.
-     * equals und hashCode vergleichen beide Werte, damit JPA zwei Schlüssel als gleich erkennt.
+     * Die Namen müssen genau so heißen wie die mit @Id markierten Felder oben.
+     * Ein "record" vergleicht beide Werte von selbst, damit JPA zwei Schlüssel als gleich erkennt.
      */
-    public static class Schluessel implements Serializable {
-
-        private long mitarbeiterId;
-        private long projektId;
-
-        protected Schluessel() {
-            // Nur für JPA
-        }
-
-        public Schluessel(long mitarbeiterId, long projektId) {
-            this.mitarbeiterId = mitarbeiterId;
-            this.projektId = projektId;
-        }
-
-        @Override
-        public boolean equals(Object anderes) {
-            if (this == anderes) {
-                return true;
-            }
-            if (!(anderes instanceof Schluessel schluessel)) {
-                return false;
-            }
-            return mitarbeiterId == schluessel.mitarbeiterId && projektId == schluessel.projektId;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(mitarbeiterId, projektId);
-        }
-    }
+    public record Schluessel(long mitarbeiterId, long projektId) implements Serializable { }
 }

@@ -36,14 +36,19 @@ public class ProjektBerechtigung {
     }
 
     /**
-     * Die Person muss die verantwortliche Projektleitung genau dieses Projekts sein.
+     * Ist die Person die verantwortliche Projektleitung genau dieses Projekts?
      * Dafür müssen zwei Dinge stimmen: Sie hat die Rolle PROJEKTLEITUNG (ein Admin ist nie
      * verantwortliche Projektleitung) und sie steht im Projekt als Projektleitung eingetragen.
      * Eine Projektleitung eines anderen Projekts ist also genauso ausgeschlossen wie ein Mitarbeiter.
      */
+    public boolean istVerantwortlicheProjektleitung(long mitarbeiterId, Rolle rolle, Projekt projekt) {
+        return rolle == Rolle.PROJEKTLEITUNG && projekt.getProjektleitungId() == mitarbeiterId;
+    }
+
+    /** Verlangt die verantwortliche Projektleitung dieses Projekts, siehe {@link #istVerantwortlicheProjektleitung}. */
     public void pruefeVerantwortlicheProjektleitung(long mitarbeiterId, Rolle rolle, Projekt projekt) {
         pruefeAngemeldet(rolle);
-        if (rolle != Rolle.PROJEKTLEITUNG || projekt.getProjektleitungId() != mitarbeiterId) {
+        if (!istVerantwortlicheProjektleitung(mitarbeiterId, rolle, projekt)) {
             throw new ZugriffVerweigertException("Nur die verantwortliche Projektleitung dieses Projekts darf diese Aktion ausführen.");
         }
     }

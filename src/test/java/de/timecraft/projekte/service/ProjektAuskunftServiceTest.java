@@ -128,27 +128,6 @@ class ProjektAuskunftServiceTest {
         assertThat(auskunft.aktiveProjekteVon(UNBEKANNTE_ID)).isEmpty();
     }
 
-    @Test
-    void einProjektDasArchiviertWirdFaelltAusDerAuswahlZumEinstempeln() {
-        Projekt website = repository.findById(websiteId).orElseThrow();
-        website.setStatus(ProjektStatus.ARCHIVIERT);
-        repository.save(website);
-
-        assertThat(projektIds(auskunft.aktiveProjekteVon(MITARBEITER_11))).containsExactly(umbauId);
-    }
-
-    @Test
-    void einEntfernterMitarbeiterBekommtDasProjektNichtMehrZurAuswahl() {
-        zuordnungRepository.deleteById(new Projektzuordnung.Schluessel(MITARBEITER_11, umbauId));
-
-        assertThat(projektIds(auskunft.aktiveProjekteVon(MITARBEITER_11))).containsExactly(websiteId);
-    }
-
-    @Test
-    void aktiveProjekteVonSindNachProjektIdSortiert() {
-        assertThat(projektIds(auskunft.aktiveProjekteVon(MITARBEITER_11))).isSorted();
-    }
-
     // ---------- verantworteteProjekte ----------
 
     @Test

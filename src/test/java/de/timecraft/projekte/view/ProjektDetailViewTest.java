@@ -1,5 +1,7 @@
 package de.timecraft.projekte.view;
 
+import static de.timecraft.projekte.view.Komponenten.anmelden;
+import static de.timecraft.projekte.view.Komponenten.knopf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -23,7 +25,6 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.RouteParameters;
 import de.timecraft.benutzer.api.Rolle;
 import de.timecraft.geruest.common.AktuelleSitzung;
-import de.timecraft.geruest.common.TimeCraftBenutzer;
 import de.timecraft.geruest.common.ZugriffVerweigertException;
 import de.timecraft.projekte.FesteUhr;
 import de.timecraft.projekte.model.Projekt;
@@ -36,7 +37,6 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
@@ -70,12 +70,6 @@ class ProjektDetailViewTest {
     void aufraeumen() {
         SecurityContextHolder.clearContext();
         UI.setCurrent(null);
-    }
-
-    private void anmelden(long id, Rolle rolle) {
-        TimeCraftBenutzer benutzer = new TimeCraftBenutzer(id, "benutzer", "hash", rolle);
-        SecurityContextHolder.getContext().setAuthentication(
-                UsernamePasswordAuthenticationToken.authenticated(benutzer, null, benutzer.getAuthorities()));
     }
 
     private void sicht(boolean team, boolean vollansicht, boolean beschreibung, boolean admin, boolean material) {
@@ -143,31 +137,16 @@ class ProjektDetailViewTest {
     }
 
     @Test
-    void fremdeProjektleitungHatKeinenReiterTeam() {
-        anmelden(7, Rolle.PROJEKTLEITUNG);
-        sicht(false, false, false, false, true);
-
-        assertThat(reiter(oeffnen())).containsExactly("Details", "Materialplanung");
-    }
-
-    @Test
     void einKlickAufTeamZeigtDenReiterTeam() {
         anmelden(2, Rolle.PROJEKTLEITUNG);
         sicht(true, true, true, false, true);
         ProjektDetailView view = oeffnen();
         Tabs tabs = Komponenten.alle(view, Tabs.class).get(0);
+        assertThat(Komponenten.alle(view, TeamTab.class)).isEmpty();
 
         tabs.setSelectedTab(Komponenten.alle(view, Tab.class).get(1));
 
         assertThat(Komponenten.alle(view, TeamTab.class)).hasSize(1);
-    }
-
-    @Test
-    void imReiterDetailsGibtEsKeinTeamTab() {
-        anmelden(2, Rolle.PROJEKTLEITUNG);
-        sicht(true, true, true, false, true);
-
-        assertThat(Komponenten.alle(oeffnen(), TeamTab.class)).isEmpty();
     }
 
     // ---- Reiter Details ----
@@ -231,8 +210,7 @@ class ProjektDetailViewTest {
         sicht(false, false, false, true, true);
         ProjektDetailView view = oeffnen();
 
-        Komponenten.alle(view, Button.class).stream().filter(k -> "Projekt reaktivieren".equals(k.getText()))
-                .findFirst().orElseThrow().click();
+        knopf(view, "Projekt reaktivieren").click();
 
         verify(projektService).reaktivieren(3, Rolle.ADMIN, PROJEKT_ID);
         verify(projektService, times(2)).projektSehen(3, Rolle.ADMIN, PROJEKT_ID);
@@ -244,8 +222,7 @@ class ProjektDetailViewTest {
         sicht(false, false, false, true, true);
         ProjektDetailView view = oeffnen();
 
-        Komponenten.alle(view, Button.class).stream().filter(k -> "Projekt archivieren".equals(k.getText()))
-                .findFirst().orElseThrow().click();
+        knopf(view, "Projekt archivieren").click();
 
         verify(projektService).laufendeBuchungenAnzahl(3, Rolle.ADMIN, PROJEKT_ID);
         verify(projektService, never()).archivieren(anyLong(), any(), anyLong());

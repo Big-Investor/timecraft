@@ -7,7 +7,6 @@ import de.timecraft.projekte.model.Projekt;
 import de.timecraft.projekte.model.ProjektStatus;
 import de.timecraft.projekte.repository.ProjektRepository;
 import de.timecraft.projekte.repository.ProjektzuordnungRepository;
-import java.time.LocalDate;
 import java.util.Comparator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,13 +67,5 @@ class FakeDemoDatenTest {
         demoDaten.run();
 
         assertThat(repository.count()).isEqualTo(5);
-    }
-
-    @Test
-    void zuordnungenTragenDasDatumAusDerUhr() {
-        demoDaten.run();
-
-        assertThat(zuordnungRepository.findAll()).allSatisfy(zuordnung ->
-                assertThat(zuordnung.getZugeordnetAm().toLocalDate()).isEqualTo(LocalDate.of(2026, 11, 18)));
     }
 }

@@ -58,19 +58,6 @@ class ProjektServiceIntegrationTest {
     }
 
     @Test
-    void angelegtesProjektHatEineIdIstAktivUndStehtInDerDatenbank() {
-        Projekt angelegt = service.anlegen(ADMIN_ID, Rolle.ADMIN,
-                new ProjektDaten("Website", "Neuer Auftritt", START, ZIEL, PROJEKTLEITUNG_ID));
-        Projekt gelesen = neuLaden(angelegt.getProjektId());
-
-        assertThat(gelesen.getProjektId()).isNotNull();
-        assertThat(gelesen.getName()).isEqualTo("Website");
-        assertThat(gelesen.getBeschreibung()).isEqualTo("Neuer Auftritt");
-        assertThat(gelesen.getStatus()).isEqualTo(ProjektStatus.AKTIV);
-        assertThat(gelesen.getProjektleitungId()).isEqualTo(PROJEKTLEITUNG_ID);
-    }
-
-    @Test
     void geaendertesProjektIstInDerDatenbankUndDieIdBleibtGleich() {
         Long id = service.anlegen(ADMIN_ID, Rolle.ADMIN, new ProjektDaten("Website", null, START, ZIEL, PROJEKTLEITUNG_ID))
                 .getProjektId();

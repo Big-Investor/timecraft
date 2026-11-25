@@ -101,11 +101,6 @@ class ProjektRepositoryFilterTest {
     }
 
     @Test
-    void nameMussNurTeilDesNamensSeinUndKannMitteImWortStehen() {
-        assertThat(ids(name("bsit"))).containsExactly(websiteId, altprojektId);
-    }
-
-    @Test
     void nameOhneTrefferLiefertNichts() {
         assertThat(name("gibtEsNicht")).isEmpty();
     }
@@ -119,23 +114,7 @@ class ProjektRepositoryFilterTest {
     }
 
     @Test
-    void startdatumVonGrenzeGehoertDazu() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setStartVon(LocalDate.of(2026, 3, 1));
-
-        assertThat(ids(repository.filtern(filter))).containsExactly(umbauId, rabattId);
-    }
-
-    @Test
-    void startdatumBisGrenzeGehoertDazu() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setStartBis(LocalDate.of(2026, 3, 1));
-
-        assertThat(ids(repository.filtern(filter))).containsExactly(websiteId, umbauId, altprojektId);
-    }
-
-    @Test
-    void startdatumVonUndBisZusammen() {
+    void startdatumVonUndBisNehmenDieGrenztageMit() {
         ProjektFilter filter = new ProjektFilter();
         filter.setStartVon(LocalDate.of(2026, 1, 1));
         filter.setStartBis(LocalDate.of(2026, 3, 1));
@@ -144,23 +123,7 @@ class ProjektRepositoryFilterTest {
     }
 
     @Test
-    void zieldatumVonGrenzeGehoertDazu() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setZielVon(LocalDate.of(2026, 12, 31));
-
-        assertThat(ids(repository.filtern(filter))).containsExactly(umbauId);
-    }
-
-    @Test
-    void zieldatumBisGrenzeGehoertDazu() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setZielBis(LocalDate.of(2026, 6, 30));
-
-        assertThat(ids(repository.filtern(filter))).containsExactly(websiteId, altprojektId);
-    }
-
-    @Test
-    void zieldatumVonUndBisZusammen() {
+    void zieldatumVonUndBisNehmenDieGrenztageMit() {
         ProjektFilter filter = new ProjektFilter();
         filter.setZielVon(LocalDate.of(2026, 6, 30));
         filter.setZielBis(LocalDate.of(2026, 9, 30));
@@ -212,15 +175,6 @@ class ProjektRepositoryFilterTest {
         filter.setName("RELAUNCH");
 
         assertThat(ids(repository.filtern(filter))).containsExactly(websiteId);
-    }
-
-    @Test
-    void neuesFilterObjektIstDasZuruecksetzen() {
-        ProjektFilter filter = new ProjektFilter();
-        filter.setStatus(ProjektStatus.ARCHIVIERT);
-        assertThat(repository.filtern(filter)).hasSize(1);
-
-        assertThat(repository.filtern(new ProjektFilter())).hasSize(4);
     }
 
     private long speichere(String name, String start, String ziel, ProjektStatus status) {

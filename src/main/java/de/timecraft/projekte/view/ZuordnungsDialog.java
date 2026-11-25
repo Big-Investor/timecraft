@@ -15,7 +15,8 @@ import java.util.List;
  * Dialog "Mitarbeiter zuordnen" (UC-M3-05): Die verantwortliche Projektleitung wählt eine oder mehrere
  * Personen, die dem Projekt noch nicht zugeordnet sind. Welche das sind und ob die Zuordnung erlaubt ist,
  * entscheidet der {@link ProjektService}. Sind schon alle zugeordnet, zeigt der Dialog nur einen Hinweis.
- * Bei einem Fehler bleibt er offen und es wird nichts gespeichert.
+ * Bei einem Fehler beim Speichern bleibt er offen und es wird nichts gespeichert. Lässt sich die Auswahl
+ * gar nicht laden, wirft schon der Konstruktor: Der Aufrufer zeigt die Meldung, ein Dialog erscheint nicht.
  *
  * @author Tim Stukenbröker
  */
@@ -37,7 +38,8 @@ public class ZuordnungsDialog extends Dialog {
 
         setHeaderTitle("Mitarbeiter zuordnen");
         setWidth("30rem");
-        List<MitarbeiterInfo> zuordenbare = zuordenbareLaden();
+        List<MitarbeiterInfo> zuordenbare =
+                service.zuordenbareMitarbeiter(sitzung.mitarbeiterId(), sitzung.rolle(), projektId);
         if (zuordenbare.isEmpty()) {
             add(new Paragraph("Alle Mitarbeiter sind dem Projekt bereits zugeordnet."));
             getFooter().add(new Button("Schließen", ereignis -> close()));
@@ -49,15 +51,6 @@ public class ZuordnungsDialog extends Dialog {
             Button zuordnen = new Button("Zuordnen", ereignis -> zuordnen());
             zuordnen.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
             getFooter().add(new Button("Abbrechen", ereignis -> close()), zuordnen);
-        }
-    }
-
-    private List<MitarbeiterInfo> zuordenbareLaden() {
-        try {
-            return service.zuordenbareMitarbeiter(sitzung.mitarbeiterId(), sitzung.rolle(), projektId);
-        } catch (RuntimeException fehler) {
-            Meldungen.fehler(fehler);
-            return List.of();
         }
     }
 

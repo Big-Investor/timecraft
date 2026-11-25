@@ -93,6 +93,7 @@ public class ProjektService {
     /**
      * Ändert Name, Beschreibung, Start, Ziel und Projektleitung eines Projekts. Nur der Admin darf das,
      * auch bei einem archivierten Projekt. Projekt-ID, Status und Angebotspreis bleiben unverändert.
+     * Die Projektleitung muss immer eine aktive Projektleitung sein, auch wenn sie nicht gewechselt wird.
      * <p>
      * Erst werden alle Eingaben geprüft, dann geändert. Bei einem Fehler bleibt das Projekt also
      * ganz wie es war.
@@ -102,11 +103,7 @@ public class ProjektService {
         berechtigung.pruefeAdmin(rolle);
         Projekt projekt = ladeProjekt(projektId);
         pruefeDaten(daten);
-        // Die Projektleitung wird nur geprüft, wenn der Admin sie wechselt. Sonst würde eine
-        // inzwischen deaktivierte Projektleitung jede andere Änderung (z. B. am Namen) blockieren.
-        if (daten.projektleitungId() != projekt.getProjektleitungId()) {
-            pruefeProjektleitung(daten.projektleitungId());
-        }
+        pruefeProjektleitung(daten.projektleitungId());
 
         projekt.setName(daten.name().strip());
         projekt.setBeschreibung(bereinigeBeschreibung(daten.beschreibung()));
@@ -246,7 +243,7 @@ public class ProjektService {
         berechtigung.pruefeAngemeldet(rolle);
         Projekt projekt = ladeProjekt(projektId);
         boolean aktiv = projekt.getStatus() == ProjektStatus.AKTIV;
-        boolean verantwortlich = rolle == Rolle.PROJEKTLEITUNG && projekt.getProjektleitungId() == mitarbeiterId;
+        boolean verantwortlich = berechtigung.istVerantwortlicheProjektleitung(mitarbeiterId, rolle, projekt);
         boolean zugeordnet = rolle == Rolle.MITARBEITER
                 && zuordnungRepository.existsByMitarbeiterIdAndProjektId(mitarbeiterId, projektId);
 

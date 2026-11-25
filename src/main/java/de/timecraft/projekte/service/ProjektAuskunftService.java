@@ -8,7 +8,6 @@ import de.timecraft.projekte.model.ProjektStatus;
 import de.timecraft.projekte.model.Projektzuordnung;
 import de.timecraft.projekte.repository.ProjektRepository;
 import de.timecraft.projekte.repository.ProjektzuordnungRepository;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -56,7 +55,7 @@ public class ProjektAuskunftService implements ProjektAuskunft {
 
     @Override
     public List<ProjektInfo> verantworteteProjekte(long projektleitungId) {
-        return alsInfos(repository.findByProjektleitungId(projektleitungId));
+        return alsInfos(repository.findByProjektleitungIdOrderByProjektId(projektleitungId));
     }
 
     @Override
@@ -78,10 +77,7 @@ public class ProjektAuskunftService implements ProjektAuskunft {
     }
 
     private static List<ProjektInfo> alsInfos(List<Projekt> projekte) {
-        return projekte.stream()
-                .sorted(Comparator.comparing(Projekt::getProjektId))
-                .map(ProjektAuskunftService::alsInfo)
-                .toList();
+        return projekte.stream().map(ProjektAuskunftService::alsInfo).toList();
     }
 
     private static ProjektInfo alsInfo(Projekt projekt) {

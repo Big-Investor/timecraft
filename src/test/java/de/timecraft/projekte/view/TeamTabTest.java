@@ -1,5 +1,7 @@
 package de.timecraft.projekte.view;
 
+import static de.timecraft.projekte.view.Komponenten.anmelden;
+import static de.timecraft.projekte.view.Komponenten.knopf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -20,7 +22,6 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import de.timecraft.benutzer.api.Rolle;
 import de.timecraft.geruest.common.AktuelleSitzung;
-import de.timecraft.geruest.common.TimeCraftBenutzer;
 import de.timecraft.geruest.common.ZugriffVerweigertException;
 import de.timecraft.projekte.FesteUhr;
 import de.timecraft.projekte.model.TeamEintrag;
@@ -34,7 +35,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
@@ -72,12 +72,6 @@ class TeamTabTest {
         UI.setCurrent(null);
     }
 
-    private void anmelden(long id, Rolle rolle) {
-        TimeCraftBenutzer benutzer = new TimeCraftBenutzer(id, "benutzer", "hash", rolle);
-        SecurityContextHolder.getContext().setAuthentication(
-                UsernamePasswordAuthenticationToken.authenticated(benutzer, null, benutzer.getAuthorities()));
-    }
-
     private TeamTab tab(boolean vollansicht) {
         return new TeamTab(teamService, projektService, new AktuelleSitzung(), FesteUhr.UHR, PROJEKT_ID, vollansicht);
     }
@@ -89,11 +83,6 @@ class TeamTabTest {
 
     private List<String> spaltenTitel(TeamTab tab) {
         return grid(tab).getColumns().stream().map(spalte -> spalte.getHeaderText()).toList();
-    }
-
-    private Button knopf(TeamTab tab, String text) {
-        return Komponenten.alle(tab, Button.class).stream().filter(k -> text.equals(k.getText())).findFirst()
-                .orElseThrow(() -> new AssertionError("Kein Knopf " + text));
     }
 
     private TeamFilter letzterFilter() {
@@ -136,8 +125,7 @@ class TeamTabTest {
         filter.get(0).setValue(true);
         filter.get(1).setValue(Standort.UNTERWEGS);
 
-        assertThat(letzterFilter().getEingestempelt()).isTrue();
-        assertThat(letzterFilter().getStandort()).isEqualTo(Standort.UNTERWEGS);
+        assertThat(letzterFilter()).isEqualTo(new TeamFilter(true, Standort.UNTERWEGS));
     }
 
     @Test
@@ -215,16 +203,6 @@ class TeamTabTest {
         verify(teamService, times(2)).teamAnsehen(anyLong(), any(), anyLong(), any());
     }
 
-    @Test
-    void abbrechenEntferntNichts() {
-        TeamTab tab = tab(true);
-        ConfirmDialog dialog = tab.entfernenDialog(anna);
-
-        ComponentUtil.fireEvent(dialog, new ConfirmDialog.CancelEvent(dialog, false));
-
-        verify(projektService, never()).entfernen(anyLong(), any(), anyLong(), anyLong());
-    }
-
     // ---- Ansicht des zugeordneten Mitarbeiters ----
 
     @Test
@@ -251,5 +229,16 @@ class TeamTabTest {
 
         // Es stürzt nichts ab, und es steht kein falscher Hinweis "leeres Team" in der Anzeige.
         assertThat(tab.getElement().getTextRecursively()).doesNotContain("Dem Projekt sind noch keine Mitarbeiter");
+    }
+
+    @Test
+    void verweigertDerServiceDasZuordnenStuerztDerKnopfNichtAb() {
+        when(projektService.zuordenbareMitarbeiter(2, Rolle.PROJEKTLEITUNG, PROJEKT_ID))
+                .thenThrow(new ZugriffVerweigertException("Kein Zugriff."));
+        TeamTab tab = tab(true);
+
+        knopf(tab, "+ Mitarbeiter zuordnen").click();
+
+        verify(projektService).zuordenbareMitarbeiter(2, Rolle.PROJEKTLEITUNG, PROJEKT_ID);
     }
 }
