@@ -58,6 +58,14 @@ public class FakeZeiterfassung implements BuchungsAuskunft, AbwesenheitsUebernah
         return id;
     }
 
+    /** Loescht Buchungen, Abwesenheiten und Aufrufe und schaltet den Fehlermodus ab (zwischen zwei Tests). */
+    public void leeren() {
+        buchungen.clear();
+        abwesenheiten.clear();
+        aufrufe.clear();
+        fehlermodus = false;
+    }
+
     public void setzeFehlermodus(boolean fehlermodus) {
         this.fehlermodus = fehlermodus;
     }
