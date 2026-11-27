@@ -2,7 +2,7 @@
 
 Digitale Zeiterfassung mit Projektübersicht (Softwareprojekt Wirtschaftsinformatik, Hochschule Bielefeld). Läuft nur lokal und nur mit erfundenen Testdaten.
 
-Dieses Repository enthält das **Gerüst**: Anmeldung (Platzhalter), Layout mit Menü, Startseite, Datenbank und ein Beispielmodul als Vorlage. Die sieben Module (Benutzer, Zeiterfassung, Projekte, Material, Anträge, Kalender, Auswertung) bauen darauf auf.
+Dieses Repository enthält das **Gerüst**: Anmeldung (Benutzerverwaltung aus M1), Layout mit Menü, Startseite, Datenbank und ein Beispielmodul als Vorlage. Die sieben Module (Benutzer, Zeiterfassung, Projekte, Material, Anträge, Kalender, Auswertung) bauen darauf auf.
 
 ## Voraussetzungen
 
@@ -34,15 +34,29 @@ In PowerShell: `$env:DB_PORT=5433; $env:SERVER_PORT=8081; mvn spring-boot:run`.
 
 ## Testbenutzer
 
-Die Anmeldung ist ein Platzhalter: feste Benutzer nur im Speicher, ohne Datenbank. M1 ersetzt sie später durch die echte Benutzerverwaltung.
+Die Anmeldung kommt aus M1 (Benutzerverwaltung, Tabelle `benutzer`). Beim ersten Start mit leerer Datenbank legt M1 Demo-Daten an (sieben erfundene Personen der Tischlerei Hartmann), darunter diese drei:
 
 | Benutzername     | Rolle          | Mitarbeiter-ID |
 |------------------|----------------|----------------|
-| `mitarbeiter`    | Mitarbeiter    | 1              |
-| `projektleitung` | Projektleitung | 2              |
-| `admin`          | Admin          | 3              |
+| `mitarbeiter`    | Mitarbeiter    | 1 (Jonas Becker)   |
+| `projektleitung` | Projektleitung | 2 (Lena Schröder)  |
+| `admin`          | Admin          | 3 (Paul Hartmann)  |
 
-Das Passwort ist für alle drei `timecraft` (Entwicklungswert, steht in `application.properties`). Die Sitzung endet nach 30 Minuten ohne Aktivität.
+Das Passwort ist für alle Demo-Benutzer `timecraft1` (Entwicklungswert `timecraft.demo.passwort` in `application.properties`; Passwörter brauchen mindestens 8 Zeichen und eine Ziffer). Die Mitarbeiter-IDs 1 bis 3 gelten nur für eine neue, leere Datenbank. Die Sitzung endet nach 30 Minuten ohne Aktivität.
+
+## E-Mail-Versand (Einmalpasswörter, M1)
+
+Beim Anlegen eines Mitarbeiters und bei „Einmalpasswort senden“ verschickt TimeCraft eine E-Mail über SMTP. Dafür gibt es ein GMX-Postfach nur für das Projekt (Adresse und App-Passwort im Team erfragen). Die Zugangsdaten stehen **nie im Repository**. Jede Person legt dafür außerhalb des Projektordners die Datei `~/.timecraft/mail.properties` an:
+
+```
+MAIL_HOST=mail.gmx.net
+MAIL_PORT=587
+MAIL_USER=<Projektadresse>@gmx.de
+MAIL_PASSWORD=<App-Passwort, im Team erfragen>
+MAIL_ABSENDER=<Projektadresse>@gmx.de
+```
+
+Statt der Datei gehen auch Umgebungsvariablen mit denselben Namen. Ohne Zugangsdaten schlägt der Versand fehl (verständliche Meldung, das alte Passwort bleibt gültig). Wer keine echte Mail braucht, startet mit dem Profil `fake`: Dann steht die Mail samt Einmalpasswort nur im Log.
 
 ## Tests
 
@@ -60,10 +74,11 @@ Basispaket `de.timecraft`:
 de.timecraft
 ├─ TimeCraftApplication
 ├─ geruest
-│  ├─ config    ClockKonfiguration, SicherheitsKonfiguration, PlatzhalterBenutzer
-│  ├─ layout    HauptLayout, SeitenMenue, MenuEintrag, StartView, LoginView
+│  ├─ config    ClockKonfiguration, SicherheitsKonfiguration
+│  ├─ layout    HauptLayout, SeitenMenue, MenuEintrag, StartView
 │  └─ common    Fehlerklassen, AktuelleSitzung, TimeCraftBenutzer, Meldungen
-├─ benutzer.api Rolle            (Besitzer wird M1)
+├─ benutzer    M1: api (Rolle, MitarbeiterAuskunft), model, repository, service,
+│               view (u. a. AnmeldeView = Anmeldeseite, Passwort ändern/festlegen)
 └─ beispiel     model, repository, service, view   (Vorlage, siehe unten)
 ```
 

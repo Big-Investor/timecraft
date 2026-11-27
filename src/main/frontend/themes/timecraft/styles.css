@@ -146,20 +146,34 @@ vaadin-login-form-wrapper::part(error-message-description) {
 
 /* Eingabefelder: weiss mit Rahmen, Beschriftung fett, ohne Pflichtfeld-Punkt */
 vaadin-text-field::part(input-field),
-vaadin-password-field::part(input-field) {
+vaadin-password-field::part(input-field),
+vaadin-date-picker::part(input-field),
+vaadin-select::part(input-field),
+vaadin-integer-field::part(input-field),
+vaadin-big-decimal-field::part(input-field) {
   background: #ffffff;
   border: 1px solid #c5ccd6;
   border-radius: 0.5rem;
 }
 
 vaadin-text-field::part(label),
-vaadin-password-field::part(label) {
+vaadin-password-field::part(label),
+vaadin-date-picker::part(label),
+vaadin-select::part(label),
+vaadin-integer-field::part(label),
+vaadin-big-decimal-field::part(label),
+vaadin-checkbox-group::part(label) {
   font-weight: 700;
   color: var(--tc-text);
 }
 
 vaadin-text-field::part(required-indicator),
-vaadin-password-field::part(required-indicator) {
+vaadin-password-field::part(required-indicator),
+vaadin-date-picker::part(required-indicator),
+vaadin-select::part(required-indicator),
+vaadin-integer-field::part(required-indicator),
+vaadin-big-decimal-field::part(required-indicator),
+vaadin-checkbox-group::part(required-indicator) {
   display: none;
 }
 
