@@ -1,0 +1,209 @@
+package de.timecraft.projekte.view;
+
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
+import de.timecraft.benutzer.api.Rolle;
+import de.timecraft.geruest.common.AktuelleSitzung;
+import de.timecraft.geruest.common.Meldungen;
+import de.timecraft.geruest.layout.HauptLayout;
+import de.timecraft.projekte.model.Projekt;
+import de.timecraft.projekte.model.ProjektFilter;
+import de.timecraft.projekte.model.ProjektStatus;
+import de.timecraft.projekte.service.ProjektService;
+import jakarta.annotation.security.PermitAll;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * Die Projektliste mit Filterleiste (Mockup "Projektliste"). Welche Projekte eine Rolle sehen darf,
+ * entscheidet allein der {@link ProjektService}; die View zeigt nur an, was er liefert. Jede Änderung
+ * an einem Filterfeld lädt die Liste neu, "Filter zurücksetzen" leert alle Felder.
+ *
+ * @author Tim Stukenbröker
+ */
+@Route(value = ProjektListeView.ROUTE, layout = HauptLayout.class)
+@PageTitle("Projekte")
+@PermitAll
+public class ProjektListeView extends Div {
+
+    static final String ROUTE = "projekte";
+
+    private static final String GRAU = "var(--lumo-secondary-text-color)";
+
+    private final ProjektService service;
+    private final AktuelleSitzung sitzung;
+
+    private final TextField name = new TextField("Projektname");
+    private final Select<ProjektStatus> status = new Select<>();
+    private final DatePicker startVon = new DatePicker();
+    private final DatePicker startBis = new DatePicker();
+    private final DatePicker zielVon = new DatePicker();
+    private final DatePicker zielBis = new DatePicker();
+    private final Span anzahl = new Span();
+    private final Grid<Projekt> liste = new Grid<>();
+    private final Div keineTreffer = new Div("Keine Projekte gefunden");
+
+    private Map<Long, String> projektleitungen = Map.of();
+
+    public ProjektListeView(ProjektService service, AktuelleSitzung sitzung) {
+        this.service = service;
+        this.sitzung = sitzung;
+        add(filterKarte(), kopfzeile(), tabellenKarte());
+        aktualisieren();
+    }
+
+    private Div filterKarte() {
+        name.setPlaceholder("z. B. Küche");
+        name.setValueChangeMode(ValueChangeMode.LAZY);
+        name.setWidth("18rem");
+        name.addValueChangeListener(ereignis -> aktualisieren());
+
+        status.setItems(ProjektStatus.AKTIV, ProjektStatus.ARCHIVIERT);
+        // Der Generator wird auch für den leeren Eintrag (null) gefragt: Dort steht "Alle".
+        status.setItemLabelGenerator(wert -> wert == null ? "Alle" : wert == ProjektStatus.AKTIV ? "Aktiv" : "Archiviert");
+        status.setAriaLabel("Status");
+        status.setWidth("8rem");
+        status.setEmptySelectionAllowed(true);
+        status.setEmptySelectionCaption("Alle");
+        status.addValueChangeListener(ereignis -> aktualisieren());
+
+        Button zuruecksetzen = new Button("Filter zurücksetzen", ereignis -> zuruecksetzen());
+        zuruecksetzen.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        HorizontalLayout felder = new HorizontalLayout(name, ProjektAnzeige.feldMitTitel("Status", status),
+                zeitraum("Start von – bis", startVon, startBis, "Start"),
+                zeitraum("Ziel von – bis", zielVon, zielBis, "Ziel"));
+        felder.setAlignItems(FlexComponent.Alignment.END);
+        felder.setWrap(true);
+
+        Div karte = new Div(felder, zuruecksetzen);
+        karte.addClassName("karte");
+        return karte;
+    }
+
+    /** Ein Zeitraumfilter: Überschrift und darunter die beiden Datumsfelder "von" und "bis". */
+    private Div zeitraum(String ueberschrift, DatePicker von, DatePicker bis, String ariaName) {
+        for (DatePicker feld : new DatePicker[] {von, bis}) {
+            feld.setLocale(Locale.GERMANY);
+            feld.setWidth("10rem");
+            feld.addValueChangeListener(ereignis -> aktualisieren());
+        }
+        von.setPlaceholder("von");
+        von.setAriaLabel(ariaName + " von");
+        bis.setPlaceholder("bis");
+        bis.setAriaLabel(ariaName + " bis");
+        return ProjektAnzeige.feldMitTitel(ueberschrift, new HorizontalLayout(von, bis));
+    }
+
+    private HorizontalLayout kopfzeile() {
+        HorizontalLayout zeile = new HorizontalLayout(anzahl);
+        if (sitzung.rolle() == Rolle.ADMIN) {
+            Button neu = new Button("+ Neues Projekt", ereignis -> neuesProjekt());
+            neu.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            zeile.add(neu);
+        }
+        zeile.setWidthFull();
+        zeile.setAlignItems(FlexComponent.Alignment.CENTER);
+        zeile.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        zeile.getStyle().set("padding", "0 1.5rem").set("box-sizing", "border-box");
+        return zeile;
+    }
+
+    private Div tabellenKarte() {
+        liste.addComponentColumn(projekt -> text(ProjektAnzeige.id(projekt.getProjektId()), projekt))
+                .setHeader("Projekt-ID").setAutoWidth(true).setFlexGrow(0);
+        liste.addComponentColumn(this::namenLink).setHeader("Name").setFlexGrow(2);
+        liste.addComponentColumn(projekt -> text(ProjektAnzeige.datum(projekt.getStartdatum()), projekt))
+                .setHeader("Start").setAutoWidth(true).setFlexGrow(0);
+        liste.addComponentColumn(projekt -> text(ProjektAnzeige.datum(projekt.getZieldatum()), projekt))
+                .setHeader("Ziel").setAutoWidth(true).setFlexGrow(0);
+        liste.addComponentColumn(projekt -> text(
+                        projektleitungen.getOrDefault(projekt.getProjektleitungId(), ""), projekt))
+                .setHeader("Projektleitung").setFlexGrow(1);
+        liste.addComponentColumn(projekt -> ProjektAnzeige.statusMarke(projekt.getStatus()))
+                .setHeader("Status").setAutoWidth(true).setFlexGrow(0);
+        liste.setAllRowsVisible(true);
+        // Das gemeinsame Theme setzt über Tabellen in einer Karte einen Abstand, hier liegt die Tabelle direkt in der Karte.
+        liste.getStyle().set("margin-top", "0");
+
+        keineTreffer.getStyle().set("padding", "1.5rem").set("color", GRAU);
+        Div karte = new Div(liste, keineTreffer);
+        karte.addClassName("karte");
+        karte.getStyle().set("padding", "0").set("overflow", "hidden");
+        return karte;
+    }
+
+    /** Ein Textfeld der Zeile. Archivierte Projekte erscheinen in Grau. */
+    private Span text(String inhalt, Projekt projekt) {
+        Span zelle = new Span(inhalt);
+        if (projekt.getStatus() == ProjektStatus.ARCHIVIERT) {
+            zelle.getStyle().set("color", GRAU);
+        }
+        return zelle;
+    }
+
+    /** Der Name führt zum Detailfenster des Projekts. Archivierte Projekte erscheinen auch hier in Grau. */
+    private Anchor namenLink(Projekt projekt) {
+        Anchor link = ProjektAnzeige.link(ProjektAnzeige.detailRoute(projekt.getProjektId()), projekt.getName());
+        link.getStyle().set("font-weight", "700");
+        if (projekt.getStatus() == ProjektStatus.ARCHIVIERT) {
+            link.getStyle().set("color", GRAU);
+        }
+        return link;
+    }
+
+    /** Der Admin legt ein Projekt im Formular an; danach erscheint es in der Liste. */
+    private void neuesProjekt() {
+        new ProjektFormular(service, sitzung, null, projekt -> aktualisieren()).open();
+    }
+
+    private void zuruecksetzen() {
+        // Jedes Leeren lädt die Liste neu; zum Schluss steht sie ohne Filter da.
+        name.clear();
+        status.clear();
+        startVon.clear();
+        startBis.clear();
+        zielVon.clear();
+        zielBis.clear();
+    }
+
+    private ProjektFilter aktuellerFilter() {
+        ProjektFilter filter = new ProjektFilter();
+        filter.setName(name.getValue());
+        filter.setStatus(status.getValue());
+        filter.setStartVon(startVon.getValue());
+        filter.setStartBis(startBis.getValue());
+        filter.setZielVon(zielVon.getValue());
+        filter.setZielBis(zielBis.getValue());
+        return filter;
+    }
+
+    private void aktualisieren() {
+        try {
+            List<Projekt> projekte = service.projekteSehen(sitzung.mitarbeiterId(), sitzung.rolle(), aktuellerFilter());
+            Set<Long> leitungIds = projekte.stream().map(Projekt::getProjektleitungId).collect(Collectors.toSet());
+            projektleitungen = service.namenDerPersonen(sitzung.mitarbeiterId(), sitzung.rolle(), leitungIds);
+            liste.setItems(projekte);
+            anzahl.setText(projekte.size() == 1 ? "1 Projekt" : projekte.size() + " Projekte");
+            liste.setVisible(!projekte.isEmpty());
+            keineTreffer.setVisible(projekte.isEmpty());
+        } catch (RuntimeException fehler) {
+            Meldungen.fehler(fehler);
+        }
+    }
+}

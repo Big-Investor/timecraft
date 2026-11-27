@@ -29,6 +29,14 @@ class AktuelleSitzungTest {
         assertThat(sitzung.mitarbeiterId()).isEqualTo(2);
         assertThat(sitzung.benutzername()).isEqualTo("projektleitung");
         assertThat(sitzung.rolle()).isEqualTo(Rolle.PROJEKTLEITUNG);
+        assertThat(sitzung.name()).isEqualTo("projektleitung");
+    }
+
+    @Test
+    void liefertDenKlarnamenWennErBekanntIst() {
+        anmelden(new TimeCraftBenutzer(2, "projektleitung", "", Rolle.PROJEKTLEITUNG, "Lena Schröder"));
+
+        assertThat(sitzung.name()).isEqualTo("Lena Schröder");
     }
 
     @Test
