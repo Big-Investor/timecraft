@@ -32,6 +32,7 @@ import de.timecraft.geruest.common.FachlicheException;
 import de.timecraft.geruest.common.NichtAngemeldetException;
 import de.timecraft.geruest.common.NichtGefundenException;
 import de.timecraft.geruest.common.ZugriffVerweigertException;
+import de.timecraft.projekte.api.ProjektInfo;
 import de.timecraft.zeiterfassung.api.AbwesenheitsArt;
 import de.timecraft.zeiterfassung.api.BuchungInfo;
 import de.timecraft.zeiterfassung.api.Standort;
@@ -337,7 +338,7 @@ class AntragServiceTest {
         assertThatThrownBy(() -> service.zurueckziehen(JONAS, null, id)).isInstanceOf(NichtAngemeldetException.class);
         assertThatThrownBy(() -> service.eigeneAntraege(JONAS, null)).isInstanceOf(NichtAngemeldetException.class);
         assertThatThrownBy(() -> service.antrag(JONAS, null, id)).isInstanceOf(NichtAngemeldetException.class);
-        assertThatThrownBy(() -> service.aktiveProjekte(JONAS, null)).isInstanceOf(NichtAngemeldetException.class);
+        assertThatThrownBy(() -> service.projektauswahl(JONAS, null, null)).isInstanceOf(NichtAngemeldetException.class);
         assertThat(repository.findById(id).orElseThrow().getStatus()).isEqualTo(Antragsstatus.OFFEN);
     }
 
@@ -389,7 +390,10 @@ class AntragServiceTest {
 
         assertThat(service.buchungenAmTag(JONAS, Rolle.MITARBEITER, DI_VORWOCHE)).containsExactly(buchung);
         assertThat(service.buchungenAmTag(JONAS, Rolle.MITARBEITER, null)).isEmpty();
-        assertThat(service.aktiveProjekte(JONAS, Rolle.MITARBEITER)).hasSize(2);
+        assertThat(service.projektauswahl(JONAS, Rolle.MITARBEITER, null)).hasSize(2);
+        assertThat(service.projektauswahl(JONAS, Rolle.MITARBEITER, FakeProjektAuskunft.KUECHE)).hasSize(2);
+        assertThat(service.projektauswahl(JONAS, Rolle.MITARBEITER, FakeProjektAuskunft.ARCHIVIERT))
+                .extracting(ProjektInfo::projektId).contains(FakeProjektAuskunft.ARCHIVIERT).hasSize(3);
         assertThat(service.zugeordneteMitarbeiter(LENA, Rolle.PROJEKTLEITUNG)).extracting(MitarbeiterInfo::mitarbeiterId)
                 .containsExactly(JONAS, FELIX, MEHMET);
         assertThatThrownBy(() -> service.zugeordneteMitarbeiter(JONAS, Rolle.MITARBEITER))

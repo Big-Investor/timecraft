@@ -22,6 +22,7 @@ import de.timecraft.zeiterfassung.api.BuchungsAuskunft;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -228,9 +229,18 @@ public class AntragService {
                 .toList();
     }
 
-    public List<ProjektInfo> aktiveProjekte(long mitarbeiterId, Rolle rolle) {
+    /**
+     * Projekte fuer die Auswahl einer Zeitkorrektur: die aktiven Projekte der Person und das bisherige
+     * Projekt der Buchung, auch wenn es inzwischen archiviert ist (es darf unveraendert bleiben).
+     */
+    public List<ProjektInfo> projektauswahl(long mitarbeiterId, Rolle rolle, Long bisherigesProjektId) {
         AntragRechte.pruefeAntragsteller(rolle);
-        return projektAuskunft.aktiveProjekteVon(mitarbeiterId);
+        List<ProjektInfo> auswahl = new ArrayList<>(projektAuskunft.aktiveProjekteVon(mitarbeiterId));
+        boolean fehlt = auswahl.stream().noneMatch(info -> Objects.equals(info.projektId(), bisherigesProjektId));
+        if (bisherigesProjektId != null && fehlt) {
+            projektAuskunft.finde(bisherigesProjektId).ifPresent(auswahl::add);
+        }
+        return auswahl;
     }
 
     /**
