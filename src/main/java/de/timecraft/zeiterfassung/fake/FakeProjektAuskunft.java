@@ -7,20 +7,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-
 import de.timecraft.projekte.api.ProjektAuskunft;
 import de.timecraft.projekte.api.ProjektInfo;
 
 /**
- * Ersatz fuer M3, solange das echte Modul fehlt (Profil "fake" und Tests):
+ * Ersatz fuer M3 in Tests (keine Bean: Die laufende Anwendung nutzt das echte Modul):
  * drei Projekte von Paul Hartmann (ID 2, zwei aktiv, eins archiviert) und ein aktives von Sabine Engel (ID 10).
  *
  * @author Noah Cipa
  */
-@Component
-@Profile("fake")
 public class FakeProjektAuskunft implements ProjektAuskunft {
 
     public static final long EINBAUKUECHE_WAGNER = 1024;

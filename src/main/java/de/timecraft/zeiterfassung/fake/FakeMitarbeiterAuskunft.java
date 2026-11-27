@@ -8,10 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-
 import de.timecraft.benutzer.api.MitarbeiterAuskunft;
 import de.timecraft.benutzer.api.MitarbeiterInfo;
 import de.timecraft.benutzer.api.Rolle;
@@ -19,14 +15,11 @@ import de.timecraft.benutzer.api.UrlaubsDaten;
 import de.timecraft.geruest.common.NichtAngemeldetException;
 
 /**
- * Ersatz fuer M1, solange das echte Modul fehlt (Profil "fake" und Tests). Die IDs 1 bis 3 passen
- * zu den Platzhalter-Benutzern des Geruests (mitarbeiter, projektleitung, admin).
- * Die angemeldete Person waehlt die Property {@code timecraft.fake.rolle}.
+ * Ersatz fuer M1 in Tests (keine Bean: Die laufende Anwendung nutzt das echte Modul). Die IDs 1 bis 3
+ * passen zu den Platzhalter-Benutzern des Geruests (mitarbeiter, projektleitung, admin).
  *
  * @author Noah Cipa
  */
-@Component
-@Profile("fake")
 public class FakeMitarbeiterAuskunft implements MitarbeiterAuskunft {
 
     public static final long JONAS_BECKER = 1;
@@ -77,7 +70,7 @@ public class FakeMitarbeiterAuskunft implements MitarbeiterAuskunft {
     private final Rolle angemeldeteRolle;
 
     /** {@code angemeldeteRolle == null}: niemand ist angemeldet. */
-    public FakeMitarbeiterAuskunft(@Value("${timecraft.fake.rolle:MITARBEITER}") Rolle angemeldeteRolle) {
+    public FakeMitarbeiterAuskunft(Rolle angemeldeteRolle) {
         this.angemeldeteRolle = angemeldeteRolle;
     }
 

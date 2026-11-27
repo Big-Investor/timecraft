@@ -41,7 +41,6 @@ public class FakeDemoDaten implements CommandLineRunner {
         if (projektRepository.count() > 0) {
             return;
         }
-        // Das erste gespeicherte Projekt bekommt die ID 1: Darauf laufen die Beispielbuchungen im Profil "fake" (M6).
         Projekt kueche = speichern(2, "Einbauküche Familie Wagner", "Küche aus Eiche mit Kochinsel.",
                 LocalDate.of(2026, 10, 5), LocalDate.of(2026, 11, 13));
         Projekt treppe = speichern(2, "Treppe Altbau Lindenstraße", "Wangentreppe, Buche geölt.",

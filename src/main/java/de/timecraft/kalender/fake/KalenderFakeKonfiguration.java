@@ -16,20 +16,13 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 /**
- * Nur fuer den lokalen Start ohne M2 (Profil "fake"): stellt die Buchungen mit Beispieldaten als Beans
- * bereit. Personen und Projekte kommen aus M1 und M3; die IDs passen zu deren Demodaten
- * (DemoDaten und FakeDemoDaten auf leerer Datenbank).
+ * Beispieldaten fuer Tests (keine Beans: Die laufende Anwendung nutzt M1, M2 und M3).
  * Die Buchungen liegen relativ zum heutigen Tag, damit die aktuelle Woche immer gefuellt ist.
  *
  * @author Bennet Antonio Brinkmeier
  */
-@Configuration
-@Profile("fake")
 public class KalenderFakeKonfiguration {
 
     static final long JONAS = 1;
@@ -71,14 +64,9 @@ public class KalenderFakeKonfiguration {
         return projekte;
     }
 
-    @Bean
+    /** Keine Bean: M2 liefert die echte Auskunft, nur fuer Tests. */
     public FakeBuchungsAuskunft fakeBuchungsAuskunft(Clock clock) {
         return new Demodaten(clock).buchungen();
-    }
-
-    @Bean
-    public FakeBuchungsAenderung fakeBuchungsAenderung(FakeBuchungsAuskunft fakeBuchungsAuskunft, Clock clock) {
-        return new FakeBuchungsAenderung(fakeBuchungsAuskunft, clock);
     }
 
     private static ProjektInfo projekt(long id, String name, long projektleitung, boolean aktiv) {
