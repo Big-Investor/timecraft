@@ -46,6 +46,6 @@ class RollenTest {
     @Test
     void abwesenheitskalenderFuerAlleAngemeldeten() {
         assertThat(KalenderView.class.isAnnotationPresent(PermitAll.class)).isTrue();
-        assertThat(MenuEintraege.kalenderMenuEintrag().erlaubteRollen()).containsExactlyInAnyOrder(Rolle.values());
+        assertThat(MenuEintraege.abwesenheitMenuEintrag().erlaubteRollen()).containsExactlyInAnyOrder(Rolle.values());
     }
 }

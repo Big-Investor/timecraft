@@ -38,7 +38,7 @@ public class MenuEintraege {
     }
 
     @Bean
-    static MenuEintrag kalenderMenuEintrag() {
+    static MenuEintrag abwesenheitMenuEintrag() {
         return new Eintrag("Abwesenheit", "abwesenheit", 140, Set.of(Rolle.values()));
     }
 
