@@ -1,4 +1,6 @@
+
 // Schnittstellenvertrag des Teams (bestätigt am 04.11.2026) – nur nach Absprache ändern, Besitzer ist Modul M1.
+
 package de.timecraft.benutzer.api;
 
 import java.math.BigDecimal;
@@ -7,6 +9,7 @@ import java.util.Optional;
 
 /** Keine Rechteprüfung hier: Die aufrufende Service-Schicht prüft die Rechte.
  * @author Leon-Selim Kannenberg */
+
 public interface MitarbeiterAuskunft {
     /** Angemeldete Person (aus der Sitzung). Wirft eine Fachausnahme, wenn niemand angemeldet ist. */
     MitarbeiterInfo angemeldetePerson();
