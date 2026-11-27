@@ -15,8 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Legt beim Start im Profil "fake" erfundene Demoprojekte an, aber nur, wenn es noch kein Projekt gibt.
- * Die Personen stammen aus {@link FakeMitarbeiterAuskunft}: Lena Schröder (2) und Sabine Keller (7) sind
- * Projektleitungen, Jonas (1), Mehmet (4), Felix (5) und Anna (6) sind Mitarbeiter.
+ * Die IDs passen zu den Demo-Personen von M1 auf leerer Datenbank: Lena Schröder (2) ist
+ * Projektleitung, Jonas (1), Mehmet (4), Anna (5) und Felix (6) sind Mitarbeiter.
  *
  * @author Tim Stukenbröker
  */
@@ -41,12 +41,12 @@ public class FakeDemoDaten implements CommandLineRunner {
         if (projektRepository.count() > 0) {
             return;
         }
-        // Das erste gespeicherte Projekt bekommt die ID 1: Darauf laufen die Buchungen der FakeBuchungsAuskunft.
+        // Das erste gespeicherte Projekt bekommt die ID 1: Darauf laufen die Beispielbuchungen im Profil "fake" (M6).
         Projekt kueche = speichern(2, "Einbauküche Familie Wagner", "Küche aus Eiche mit Kochinsel.",
                 LocalDate.of(2026, 10, 5), LocalDate.of(2026, 11, 13));
         Projekt treppe = speichern(2, "Treppe Altbau Lindenstraße", "Wangentreppe, Buche geölt.",
                 LocalDate.of(2026, 10, 12), LocalDate.of(2026, 11, 20));
-        Projekt laden = speichern(7, "Ladenbau Bäckerei Krause", "Verkaufstheke und Regale.",
+        Projekt laden = speichern(2, "Ladenbau Bäckerei Krause", "Verkaufstheke und Regale.",
                 LocalDate.of(2026, 10, 19), LocalDate.of(2026, 12, 18));
         Projekt fenster = speichern(2, "Fenstertausch Grundschule Brake", null,
                 LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 27));

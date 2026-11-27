@@ -54,7 +54,7 @@ class FakeDemoDatenTest {
     void dasErsteProjektDieKuecheHatDieKleinsteIdUndVierZugeordnete() {
         demoDaten.run();
 
-        // Auf einer leeren Datenbank ist das die ID 1, auf die die FakeBuchungsAuskunft ihre Buchungen legt.
+        // Auf einer leeren Datenbank ist das die ID 1, auf die die Beispielbuchungen (M6) gehen.
         Projekt erstes = repository.findAll().stream().min(Comparator.comparing(Projekt::getProjektId)).orElseThrow();
         assertThat(erstes.getName()).isEqualTo("Einbauküche Familie Wagner");
         assertThat(zuordnungRepository.findByProjektId(erstes.getProjektId())).extracting("mitarbeiterId")

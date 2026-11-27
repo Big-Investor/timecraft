@@ -21,9 +21,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 /**
- * Nur fuer den lokalen Start ohne M1, M2 und M3 (Profil "fake"): stellt die Fakes mit Beispieldaten
- * als Beans bereit. Die IDs 1 bis 3 passen zu den Platzhalter-Benutzern des Geruests
- * (mitarbeiter, projektleitung, admin); die Rolle waehlt man also einfach ueber die Anmeldung.
+ * Nur fuer den lokalen Start ohne M2 (Profil "fake"): stellt die Buchungen mit Beispieldaten als Beans
+ * bereit. Personen und Projekte kommen aus M1 und M3; die IDs passen zu deren Demodaten
+ * (DemoDaten und FakeDemoDaten auf leerer Datenbank).
  * Die Buchungen liegen relativ zum heutigen Tag, damit die aktuelle Woche immer gefuellt ist.
  *
  * @author Bennet Antonio Brinkmeier
@@ -36,19 +36,19 @@ public class KalenderFakeKonfiguration {
     static final long LENA_PL = 2;
     static final long SABINE_ADMIN = 3;
     static final long MEHMET = 4;
-    static final long KARL_EHEMALIG = 5;
+    static final long KARL_EHEMALIG = 7;
     static final long MIA = 6;
-    static final long OTTO_PL = 7;
+    static final long OTTO_PL = 5;
 
-    static final long KUECHE = 1024;
-    static final long TREPPE = 1031;
-    static final long DACHSTUHL = 1040;
-    static final long ALTBAU_ARCHIV = 1001;
+    static final long KUECHE = 1;
+    static final long TREPPE = 2;
+    static final long DACHSTUHL = 3;
+    static final long ALTBAU_ARCHIV = 5;
 
     private static final int WOCHEN_ZURUECK = 5;
     private static final DateTimeFormatter DATUM = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
-    @Bean
+    /** Keine Bean: M1 liefert die echte Auskunft, nur fuer Tests. */
     public FakeMitarbeiterAuskunft fakeMitarbeiterAuskunft() {
         FakeMitarbeiterAuskunft personen = new FakeMitarbeiterAuskunft();
         personen.hinzufuegen(JONAS, "Jonas", "Becker", Rolle.MITARBEITER, true);
@@ -61,7 +61,7 @@ public class KalenderFakeKonfiguration {
         return personen;
     }
 
-    @Bean
+    /** Keine Bean: M3 liefert die echte Auskunft, nur fuer Tests. */
     public FakeProjektAuskunft fakeProjektAuskunft() {
         FakeProjektAuskunft projekte = new FakeProjektAuskunft();
         projekte.hinzufuegen(projekt(KUECHE, "Einbauküche Wagner", LENA_PL, true), JONAS, MEHMET, KARL_EHEMALIG, LENA_PL);
