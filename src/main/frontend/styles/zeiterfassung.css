@@ -1,0 +1,384 @@
+/* Autor: Noah Cipa */
+/*
+ * Gestaltung der Seiten von M2 Zeiterfassung nach den Mockups. Farben, Schrift, Menue und die Klasse
+ * .karte kommen aus dem gemeinsamen Theme des Geruests. Alle Klassen hier beginnen mit "m2-".
+ */
+
+/* Status mit Punkt, gedaempfter Zusatztext */
+.m2-status-ein {
+  color: var(--lumo-success-text-color);
+  font-weight: 700;
+}
+
+.m2-status-pause {
+  color: var(--tc-akzent);
+  font-weight: 700;
+}
+
+.m2-status-aus {
+  color: var(--tc-text-gedaempft);
+  font-weight: 700;
+}
+
+.m2-status-seit {
+  color: var(--tc-text-gedaempft);
+  font-size: var(--lumo-font-size-s);
+  font-weight: 500;
+}
+
+.m2-status-ein::before,
+.m2-status-pause::before,
+.m2-status-aus::before {
+  content: "";
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 50%;
+  background-color: currentColor;
+  margin-right: 0.4em;
+}
+
+/* Seitenaufbau */
+.m2-seite {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: 1.5rem;
+}
+
+.m2-zweispaltig {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.m2-start {
+  margin: 1.5rem;
+}
+
+.m2-spalte {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+/* Eine Karte ohne den Aussenabstand der gemeinsamen Klasse .karte */
+.karte.m2-karte {
+  margin: 0;
+  min-width: 0;
+}
+
+.karte.m2-karte vaadin-grid {
+  margin-top: 0;
+}
+
+.m2-dunkel.karte.m2-karte {
+  color: #ffffff;
+  background: var(--tc-dunkel);
+  border-color: var(--tc-dunkel);
+}
+
+/* Schrift */
+.m2-titel {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.m2-kartentitel {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--tc-text-gedaempft);
+}
+
+.m2-fett {
+  font-weight: 700;
+}
+
+.m2-gross {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.m2-positiv {
+  color: var(--lumo-success-text-color);
+}
+
+.m2-negativ {
+  color: var(--lumo-error-text-color);
+}
+
+.m2-fehler {
+  display: block;
+  margin: 0.5rem 0;
+  font-weight: 600;
+  color: var(--lumo-error-text-color);
+}
+
+/* Farbige Schilder */
+.m2-schild {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 0.75rem;
+  font-size: var(--lumo-font-size-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.m2-gruen {
+  color: var(--lumo-success-text-color);
+  background: #e6f4ea;
+}
+
+.m2-orange {
+  color: #9a4a00;
+  background: #fdf0e6;
+}
+
+.m2-blau {
+  color: var(--lumo-primary-text-color);
+  background: #e8f0fb;
+}
+
+.m2-grau {
+  color: var(--tc-text-gedaempft);
+  background: #eceff3;
+}
+
+/* Weisse Knoepfe mit Rahmen */
+vaadin-button.m2-knopf-weiss {
+  background: #ffffff;
+  border: 1px solid #c5ccd6;
+  color: var(--tc-text);
+}
+
+vaadin-button.m2-knopf-rand {
+  background: #ffffff;
+  border: 2px solid var(--lumo-primary-color);
+}
+
+vaadin-button.m2-knopf-rand,
+vaadin-button.m2-knopf-rot {
+  min-height: 3.5rem;
+  font-weight: 700;
+}
+
+vaadin-button.m2-knopf-rot {
+  background: #b3261e;
+}
+
+.m2-rechts {
+  margin-left: auto;
+}
+
+.m2-links {
+  align-self: flex-start;
+}
+
+/* Eingabefelder wie in den Mockups: weiss mit Rahmen, Beschriftung fett */
+:is(.m2-seite, .m2-start, .m2-feiertage) :is(vaadin-date-picker, vaadin-time-picker, vaadin-select)::part(input-field) {
+  background: #ffffff;
+  border: 1px solid #c5ccd6;
+  border-radius: 0.5rem;
+}
+
+:is(.m2-seite, .m2-start, .m2-feiertage) :is(vaadin-date-picker, vaadin-time-picker, vaadin-select)[invalid]::part(input-field) {
+  border: 2px solid #b3261e;
+}
+
+:is(.m2-seite, .m2-start, .m2-feiertage) :is(vaadin-date-picker, vaadin-time-picker, vaadin-select)::part(label) {
+  font-weight: 700;
+  color: var(--tc-text);
+}
+
+/* Alle Felder des Nachtragen-Formulars teilen sich eine Zeile */
+.m2-felder > * {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+
+.m2-felder > vaadin-date-picker {
+  flex-grow: 1.3;
+}
+
+.m2-felder > vaadin-select:last-child {
+  flex-grow: 2;
+}
+
+/* Startseite */
+.m2-arbeitszeit {
+  margin: 1rem 0;
+}
+
+.m2-arbeitszeit-zahl {
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.m2-einheit {
+  margin-left: 0.3rem;
+  font-size: 1.5rem;
+  color: var(--tc-text-gedaempft);
+}
+
+.m2-infokaesten {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.m2-infokasten {
+  min-height: 3.5rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--tc-hintergrund);
+}
+
+.m2-infotitel {
+  display: block;
+  font-size: var(--lumo-font-size-s);
+  color: var(--tc-text-gedaempft);
+}
+
+.m2-infowert {
+  display: block;
+  margin-top: 0.25rem;
+  font-weight: 700;
+}
+
+.m2-trennlinie {
+  margin: 1.5rem 0;
+}
+
+.m2-abstand-links {
+  margin-left: 0.4rem;
+}
+
+/* Tabellen */
+vaadin-grid.m2-tabelle {
+  border: 1px solid var(--tc-rahmen);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+vaadin-grid.m2-tabelle::part(header-cell) {
+  background: var(--tc-hintergrund);
+}
+
+vaadin-grid.m2-tabelle::part(m2-zeile-laufend) {
+  background: #f1f8f2;
+}
+
+vaadin-grid.m2-tabelle::part(m2-zeile-markierung) {
+  background: #f8f9fb;
+}
+
+vaadin-grid.m2-tabelle::part(m2-zeile-summe) {
+  background: var(--tc-hintergrund);
+  border-top: 2px solid #c5ccd6;
+}
+
+/* Zeitkonto */
+.m2-kacheln {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.m2-kacheln-zwei {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.m2-kacheln > .karte.m2-karte {
+  padding: 1rem;
+}
+
+.m2-kacheltitel {
+  display: block;
+  font-size: var(--lumo-font-size-s);
+  color: var(--tc-text-gedaempft);
+}
+
+.m2-dunkel .m2-kacheltitel {
+  color: #ffffff;
+}
+
+.m2-kachelwert {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.m2-wertzeile {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0;
+}
+
+.m2-linie-unten {
+  border-bottom: 1px solid var(--tc-rahmen);
+}
+
+.m2-resturlaub {
+  align-items: center;
+  font-weight: 700;
+}
+
+.m2-resturlaub-wert {
+  font-size: 1.75rem;
+  color: var(--lumo-primary-color);
+}
+
+.m2-fusstext {
+  display: block;
+  margin-top: 1rem;
+}
+
+/* Anwesenheit */
+.m2-zaehler {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.m2-zaehler .m2-schild {
+  padding: 0.35rem 0.75rem;
+  font-size: var(--lumo-font-size-s);
+}
+
+.m2-personen {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.m2-person.karte.m2-karte {
+  padding: 1rem;
+}
+
+.m2-personenkopf {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.m2-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.m2-details {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--tc-text-gedaempft);
+}
