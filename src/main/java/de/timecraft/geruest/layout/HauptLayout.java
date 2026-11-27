@@ -67,10 +67,10 @@ public class HauptLayout extends AppLayout implements AfterNavigationObserver {
         Div seite = new Div(gruppe, titel);
         seite.addClassName("kopfzeile-seite");
 
-        String benutzername = sitzung.benutzername();
-        Span initialen = new Span(benutzername.substring(0, Math.min(2, benutzername.length())).toUpperCase(Locale.GERMAN));
+        String klarname = sitzung.name();
+        Span initialen = new Span(initialen(klarname));
         initialen.addClassName("kopfzeile-initialen");
-        Span name = new Span(benutzername);
+        Span name = new Span(klarname);
         name.addClassName("kopfzeile-name");
         Span rolle = new Span(Rollenanzeige.text(sitzung.rolle()));
         rolle.addClassName("kopfzeile-rolle");
@@ -80,5 +80,22 @@ public class HauptLayout extends AppLayout implements AfterNavigationObserver {
         Div kopfzeile = new Div(seite, person);
         kopfzeile.addClassName("kopfzeile");
         return kopfzeile;
+    }
+
+    /**
+     * Initialen fuer den Kreis in der Kopfzeile: "Paul Hartmann" ergibt "PH".
+     * Besteht der Name nur aus einem Wort, zaehlen dessen erste zwei Buchstaben ("admin" ergibt "AD").
+     */
+    static String initialen(String name) {
+        String[] teile = name.trim().split(" +");
+        String ergebnis;
+        if (teile.length >= 2) {
+            String erster = teile[0];
+            String letzter = teile[teile.length - 1];
+            ergebnis = erster.substring(0, 1) + letzter.substring(0, 1);
+        } else {
+            ergebnis = teile[0].substring(0, Math.min(2, teile[0].length()));
+        }
+        return ergebnis.toUpperCase(Locale.GERMAN);
     }
 }
