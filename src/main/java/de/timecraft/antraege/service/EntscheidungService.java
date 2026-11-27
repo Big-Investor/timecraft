@@ -4,6 +4,7 @@ import de.timecraft.antraege.model.Abwesenheitsantrag;
 import de.timecraft.antraege.model.Antrag;
 import de.timecraft.antraege.model.Antragsstatus;
 import de.timecraft.antraege.model.Antragstyp;
+import de.timecraft.antraege.model.Stornoantrag;
 import de.timecraft.antraege.model.Zeitkorrekturantrag;
 import de.timecraft.antraege.repository.AntragRepository;
 import de.timecraft.benutzer.api.Rolle;
@@ -80,13 +81,25 @@ public class EntscheidungService {
 
     private void fachdatenUebernehmen(Antrag antrag, long entscheiderId) {
         if (antrag instanceof Abwesenheitsantrag abwesenheit) {
+            if (abwesenheit.getBezugsantragId() != null) {
+                abwesenheitAufheben(abwesenheit.getBezugsantragId());
+            }
             abwesenheitsUebernahme.uebernehmen(abwesenheit.getId(), abwesenheit.getAntragstellerId(),
                     abwesenheit.getArt(), abwesenheit.getVon(), abwesenheit.getBis());
         } else if (antrag instanceof Zeitkorrekturantrag korrektur) {
             buchungsAenderung.aendern(korrektur.getZeiteintragId(), korrektur.getNeuerBeginn(),
                     korrektur.getNeuesEnde(), korrektur.getNeuerStandort(), korrektur.getNeuesProjektId(),
                     AenderungsArt.KORREKTUR, entscheiderId, korrektur.getBegruendung());
+        } else if (antrag instanceof Stornoantrag) {
+            abwesenheitAufheben(antrag.getBezugsantragId());
         }
+    }
+
+    /** Hebt die Abwesenheit eines genehmigten Antrags in M2 auf (Aenderung oder Storno, FA-M5-15). */
+    private void abwesenheitAufheben(long bezugsantragId) {
+        long abwesenheitId = abwesenheitsUebernahme.abwesenheitZuAntrag(bezugsantragId).orElseThrow(
+                () -> new FachlicheException("Die genehmigte Abwesenheit wurde in der Zeiterfassung nicht gefunden."));
+        abwesenheitsUebernahme.aufheben(abwesenheitId);
     }
 
     private void entscheiden(Antrag antrag, Antragsstatus status, long entscheiderId, String hinweis) {

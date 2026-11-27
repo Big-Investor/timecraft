@@ -4,6 +4,7 @@ import de.timecraft.antraege.model.Abwesenheitsantrag;
 import de.timecraft.antraege.model.Antrag;
 import de.timecraft.antraege.model.Antragsstatus;
 import de.timecraft.antraege.model.Antragstyp;
+import de.timecraft.antraege.model.Stornoantrag;
 import de.timecraft.antraege.model.Urlaubsart;
 import de.timecraft.antraege.model.Zeitkorrekturantrag;
 import de.timecraft.antraege.repository.AntragRepository;
@@ -60,29 +61,59 @@ public class AntragService {
     @Transactional
     public Abwesenheitsantrag abwesenheitBeantragen(long mitarbeiterId, Rolle rolle, AbwesenheitsDaten daten) {
         AntragRechte.pruefeAntragsteller(rolle);
-        Abwesenheitsantrag antrag = new Abwesenheitsantrag();
-        antrag.setAntragstellerId(mitarbeiterId);
-        antrag.setEingereichtAm(clock.instant());
-        uebernehmen(antrag, daten);
-        regeln.pruefe(antrag);
-        return repository.save(antrag);
+        return neueAbwesenheit(mitarbeiterId, daten, null);
     }
 
     /** Die alten Werte liest das System aus M2 (FA-M5-03). */
     @Transactional
     public Zeitkorrekturantrag zeitkorrekturBeantragen(long mitarbeiterId, Rolle rolle, ZeitkorrekturDaten daten) {
         AntragRechte.pruefeAntragsteller(rolle);
-        BuchungInfo buchung = regeln.korrigierbareBuchung(mitarbeiterId, daten.zeiteintragId());
-        Zeitkorrekturantrag antrag = new Zeitkorrekturantrag();
+        return neueZeitkorrektur(mitarbeiterId, daten, null);
+    }
+
+    // ---------- Aenderung und Storno genehmigter Antraege (UC-M5-10, FA-M5-15) ----------
+
+    /** Aenderung einer genehmigten Abwesenheit: neuer, verknuepfter Antrag; das Original bleibt unveraendert. */
+    @Transactional
+    public Abwesenheitsantrag abwesenheitAendern(long mitarbeiterId, Rolle rolle, Long bezugsantragId,
+            AbwesenheitsDaten daten) {
+        AntragRechte.pruefeAntragsteller(rolle);
+        return neueAbwesenheit(mitarbeiterId, daten, bezugsantragId);
+    }
+
+    /** Aenderung einer genehmigten Zeitkorrektur derselben Buchung; alte Werte sind der heutige Stand in M2. */
+    @Transactional
+    public Zeitkorrekturantrag zeitkorrekturAendern(long mitarbeiterId, Rolle rolle, Long bezugsantragId,
+            ZeitkorrekturDaten daten) {
+        AntragRechte.pruefeAntragsteller(rolle);
+        return neueZeitkorrektur(mitarbeiterId, daten, bezugsantragId);
+    }
+
+    /** Storno einer genehmigten Abwesenheit; der Grund steht in der Begruendung. */
+    @Transactional
+    public Stornoantrag stornoBeantragen(long mitarbeiterId, Rolle rolle, Long bezugsantragId, String grund) {
+        AntragRechte.pruefeAntragsteller(rolle);
+        Stornoantrag antrag = new Stornoantrag();
         antrag.setAntragstellerId(mitarbeiterId);
         antrag.setEingereichtAm(clock.instant());
-        antrag.setZeiteintragId(buchung.zeiteintragId());
-        antrag.setAlterBeginn(buchung.beginn());
-        antrag.setAltesEnde(buchung.ende());
-        antrag.setAlterStandort(buchung.standort());
-        uebernehmen(antrag, daten);
+        antrag.setBezugsantragId(bezugsantragId);
+        antrag.setBegruendung(bereinigt(grund));
         regeln.pruefe(antrag);
         return repository.save(antrag);
+    }
+
+    /** Eigene genehmigte Antraege, die noch geaendert oder storniert werden koennen (Auswahl im Formular). */
+    @Transactional(readOnly = true)
+    public List<AntragAnsicht> aenderbareAntraege(long mitarbeiterId, Rolle rolle) {
+        AntragRechte.pruefeAntragsteller(rolle);
+        return repository.findByAntragstellerIdOrderByEingereichtAmDesc(mitarbeiterId).stream()
+                .filter(antrag -> antrag.getStatus() == Antragsstatus.GENEHMIGT)
+                .filter(antrag -> antrag instanceof Abwesenheitsantrag || antrag instanceof Zeitkorrekturantrag)
+                .filter(antrag -> repository.findByBezugsantragId(antrag.getId()).stream()
+                        .noneMatch(folge -> folge.getStatus() == Antragsstatus.OFFEN
+                                || folge.getStatus() == Antragsstatus.GENEHMIGT))
+                .map(antrag -> ansicht(antrag, false))
+                .toList();
     }
 
     // ---------- Bearbeiten und Zurueckziehen (UC-M5-05, UC-M5-06) ----------
@@ -111,6 +142,18 @@ public class AntragService {
                     + "Bitte stellen Sie dafür einen neuen Antrag.");
         }
         uebernehmen(antrag, daten);
+        regeln.pruefe(antrag);
+        return antrag;
+    }
+
+    /** Bei einem offenen Storno laesst sich nur der Grund aendern. */
+    @Transactional
+    public Stornoantrag stornoBearbeiten(long mitarbeiterId, Rolle rolle, long antragId, String grund) {
+        AntragRechte.pruefeAntragsteller(rolle);
+        if (!(eigenerOffenerAntrag(mitarbeiterId, antragId) instanceof Stornoantrag antrag)) {
+            throw new FachlicheException("Dieser Antrag ist kein Storno.");
+        }
+        antrag.setBegruendung(bereinigt(grund));
         regeln.pruefe(antrag);
         return antrag;
     }
@@ -213,6 +256,31 @@ public class AntragService {
     }
 
     // ---------- intern ----------
+
+    private Abwesenheitsantrag neueAbwesenheit(long mitarbeiterId, AbwesenheitsDaten daten, Long bezugsantragId) {
+        Abwesenheitsantrag antrag = new Abwesenheitsantrag();
+        antrag.setAntragstellerId(mitarbeiterId);
+        antrag.setEingereichtAm(clock.instant());
+        antrag.setBezugsantragId(bezugsantragId);
+        uebernehmen(antrag, daten);
+        regeln.pruefe(antrag);
+        return repository.save(antrag);
+    }
+
+    private Zeitkorrekturantrag neueZeitkorrektur(long mitarbeiterId, ZeitkorrekturDaten daten, Long bezugsantragId) {
+        BuchungInfo buchung = regeln.korrigierbareBuchung(mitarbeiterId, daten.zeiteintragId());
+        Zeitkorrekturantrag antrag = new Zeitkorrekturantrag();
+        antrag.setAntragstellerId(mitarbeiterId);
+        antrag.setEingereichtAm(clock.instant());
+        antrag.setBezugsantragId(bezugsantragId);
+        antrag.setZeiteintragId(buchung.zeiteintragId());
+        antrag.setAlterBeginn(buchung.beginn());
+        antrag.setAltesEnde(buchung.ende());
+        antrag.setAlterStandort(buchung.standort());
+        uebernehmen(antrag, daten);
+        regeln.pruefe(antrag);
+        return repository.save(antrag);
+    }
 
     /** Liest und sperrt einen eigenen offenen Antrag (US-M5-07: nur eigene offene sind aenderbar). */
     private Antrag eigenerOffenerAntrag(long mitarbeiterId, long antragId) {
