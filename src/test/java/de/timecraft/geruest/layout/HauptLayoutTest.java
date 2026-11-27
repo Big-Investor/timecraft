@@ -39,6 +39,24 @@ class HauptLayoutTest {
         assertThat(text).contains("TimeCraft", "Abmelden");
     }
 
+    @Test
+    void kopfzeileZeigtKlarnameUndInitialenAusVorUndNachname() {
+        anmelden(new TimeCraftBenutzer(3, "admin", "", Rolle.ADMIN, "Paul Hartmann"));
+
+        HauptLayout layout = new HauptLayout(new AktuelleSitzung(), new AuthenticationContext(), List.of());
+        String text = layout.getElement().getTextRecursively();
+
+        assertThat(text).contains("Paul Hartmann", "PH", "Admin");
+    }
+
+    @Test
+    void initialenAusEinemOderMehrerenWoertern() {
+        assertThat(HauptLayout.initialen("Paul Hartmann")).isEqualTo("PH");
+        assertThat(HauptLayout.initialen("Anna Maria Vogt")).isEqualTo("AV");
+        assertThat(HauptLayout.initialen("admin")).isEqualTo("AD");
+        assertThat(HauptLayout.initialen("x")).isEqualTo("X");
+    }
+
     private void anmelden(TimeCraftBenutzer benutzer) {
         SecurityContextHolder.getContext().setAuthentication(
                 UsernamePasswordAuthenticationToken.authenticated(benutzer, null, benutzer.getAuthorities()));

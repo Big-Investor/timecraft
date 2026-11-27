@@ -28,6 +28,11 @@ public class AktuelleSitzung {
         return benutzer().rolle();
     }
 
+    /** Klarname (Vor- und Nachname) der angemeldeten Person. */
+    public String name() {
+        return benutzer().name();
+    }
+
     private TimeCraftBenutzer benutzer() {
         TimeCraftBenutzer benutzer = benutzerOderNull();
         if (benutzer == null) {
