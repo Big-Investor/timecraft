@@ -1,7 +1,8 @@
 package de.timecraft.kalender.service;
 
-import static de.timecraft.kalender.service.Testzeit.BERLIN;
-import static de.timecraft.kalender.service.Testzeit.instant;
+import static de.timecraft.kalender.service.Testdaten.BERLIN;
+import static de.timecraft.kalender.service.Testdaten.instant;
+import static de.timecraft.kalender.service.Testdaten.projekt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -19,14 +20,14 @@ import de.timecraft.kalender.model.KalenderInhalt;
 import de.timecraft.kalender.model.Kalenderansicht;
 import de.timecraft.kalender.model.ProjektAuswahl;
 import de.timecraft.kalender.model.WaehlbarePerson;
-import de.timecraft.projekte.api.ProjektInfo;
 import de.timecraft.zeiterfassung.api.BuchungInfo;
 import de.timecraft.zeiterfassung.api.Standort;
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * „Person wählen“ und fremder Kalender je Rolle (FA-M6-07, FA-M6-11, QA-M6-03, QA-M6-04, UC-M6-04, US-M6-04, US-M6-06).
@@ -206,35 +207,13 @@ class KalenderServicePersonWaehlenTest {
         assertThat(monat.gesamtMinuten()).isEqualTo(240);
     }
 
-    @Test
-    void projektleitungDarfEntferntenMitarbeiterNichtDirektAufrufen() {
-        assertThatThrownBy(() -> woche(PETRA_PL, Rolle.PROJEKTLEITUNG, BEN_ENTFERNT, KalenderFilter.KEINER))
+    /** Entfernt, fremdes Team, nur archiviertes Projekt, deaktiviert, unbekannt (UC-M6-04 1a, 3a). */
+    @ParameterizedTest
+    @ValueSource(longs = {BEN_ENTFERNT, MIA_FREMDES_TEAM, NORA_NUR_ARCHIV, KARL_EHEMALIG, 999})
+    void projektleitungDarfNurIhrTeamDirektAufrufen(long person) {
+        assertThatThrownBy(() -> woche(PETRA_PL, Rolle.PROJEKTLEITUNG, person, KalenderFilter.KEINER))
                 .isInstanceOf(ZugriffVerweigertException.class)
                 .hasMessage("Sie dürfen nur Kalender von Mitarbeitern Ihrer aktiven Projekte öffnen.");
-    }
-
-    @Test
-    void projektleitungDarfFremdesTeamNichtDirektAufrufen() {
-        assertThatThrownBy(() -> woche(PETRA_PL, Rolle.PROJEKTLEITUNG, MIA_FREMDES_TEAM, KalenderFilter.KEINER))
-                .isInstanceOf(ZugriffVerweigertException.class);
-    }
-
-    @Test
-    void projektleitungDarfMitarbeiterNurAusArchiviertemProjektNichtAufrufen() {
-        assertThatThrownBy(() -> woche(PETRA_PL, Rolle.PROJEKTLEITUNG, NORA_NUR_ARCHIV, KalenderFilter.KEINER))
-                .isInstanceOf(ZugriffVerweigertException.class);
-    }
-
-    @Test
-    void projektleitungDarfDeaktiviertenMitarbeiterNichtAufrufen() {
-        assertThatThrownBy(() -> woche(PETRA_PL, Rolle.PROJEKTLEITUNG, KARL_EHEMALIG, KalenderFilter.KEINER))
-                .isInstanceOf(ZugriffVerweigertException.class);
-    }
-
-    @Test
-    void projektleitungDarfUnbekanntePersonNichtAufrufen() {
-        assertThatThrownBy(() -> woche(PETRA_PL, Rolle.PROJEKTLEITUNG, 999, KalenderFilter.KEINER))
-                .isInstanceOf(ZugriffVerweigertException.class);
     }
 
     // ---------- Fremder Kalender: Admin ----------
@@ -307,10 +286,6 @@ class KalenderServicePersonWaehlenTest {
 
     private KalenderInhalt woche(long angemeldet, Rolle rolle, long person, KalenderFilter filter) {
         return service.fremderKalender(angemeldet, rolle, person, Kalenderansicht.WOCHE, MONTAG, filter);
-    }
-
-    private static ProjektInfo projekt(long id, String name, long projektleitung, boolean aktiv) {
-        return new ProjektInfo(id, name, LocalDate.of(2026, 1, 1), null, projektleitung, aktiv, BigDecimal.ZERO);
     }
 
     private void buchung(long id, long person, long projektId, Standort standort, String beginn, String ende) {

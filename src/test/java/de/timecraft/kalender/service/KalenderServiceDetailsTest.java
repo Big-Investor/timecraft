@@ -1,7 +1,8 @@
 package de.timecraft.kalender.service;
 
-import static de.timecraft.kalender.service.Testzeit.BERLIN;
-import static de.timecraft.kalender.service.Testzeit.instant;
+import static de.timecraft.kalender.service.Testdaten.BERLIN;
+import static de.timecraft.kalender.service.Testdaten.instant;
+import static de.timecraft.kalender.service.Testdaten.projekt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -14,15 +15,12 @@ import de.timecraft.kalender.fake.FakeMitarbeiterAuskunft;
 import de.timecraft.kalender.fake.FakeProjektAuskunft;
 import de.timecraft.kalender.model.BuchungDetails;
 import de.timecraft.kalender.model.HistorienEintrag;
-import de.timecraft.projekte.api.ProjektInfo;
 import de.timecraft.zeiterfassung.api.AenderungInfo;
 import de.timecraft.zeiterfassung.api.AenderungsArt;
 import de.timecraft.zeiterfassung.api.BuchungInfo;
 import de.timecraft.zeiterfassung.api.Standort;
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
@@ -206,9 +204,5 @@ class KalenderServiceDetailsTest {
     private void buchung(long id, Long projektId, String beginn, String ende) {
         buchungen.hinzufuegen(new BuchungInfo(id, JONAS, projektId, Standort.BUERO, instant(beginn), instant(ende),
                 0, 60, false));
-    }
-
-    private static ProjektInfo projekt(long id, String name, long projektleitung, boolean aktiv) {
-        return new ProjektInfo(id, name, LocalDate.of(2026, 1, 1), null, projektleitung, aktiv, BigDecimal.ZERO);
     }
 }

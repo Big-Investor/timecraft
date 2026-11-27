@@ -99,21 +99,12 @@ public class KalenderService {
         };
     }
 
-    /** Bezugstag des naechsten Zeitraums („Vor“). */
-    public LocalDate vor(Kalenderansicht ansicht, LocalDate bezugstag) {
+    /** Bezugstag nach „Vor“ (schritte = 1) oder „Zurück“ (schritte = -1). */
+    public LocalDate blaettern(Kalenderansicht ansicht, LocalDate bezugstag, int schritte) {
         return switch (ansicht) {
-            case TAG -> bezugstag.plusDays(1);
-            case WOCHE -> bezugstag.plusWeeks(1);
-            case MONAT -> bezugstag.plusMonths(1);
-        };
-    }
-
-    /** Bezugstag des vorigen Zeitraums („Zurück“). */
-    public LocalDate zurueck(Kalenderansicht ansicht, LocalDate bezugstag) {
-        return switch (ansicht) {
-            case TAG -> bezugstag.minusDays(1);
-            case WOCHE -> bezugstag.minusWeeks(1);
-            case MONAT -> bezugstag.minusMonths(1);
+            case TAG -> bezugstag.plusDays(schritte);
+            case WOCHE -> bezugstag.plusWeeks(schritte);
+            case MONAT -> bezugstag.plusMonths(schritte);
         };
     }
 
@@ -163,17 +154,14 @@ public class KalenderService {
         if (personId == mitarbeiterId) {
             throw new FachlicheException("Ihren eigenen Kalender öffnen Sie über „Mein Kalender“.");
         }
-        return switch (rolle) {
-            case MITARBEITER -> throw new ZugriffVerweigertException(NUR_EIGENER_KALENDER);
-            case PROJEKTLEITUNG -> kalender(personId, ansicht, bezugstag, filter,
+        if (rolle == Rolle.PROJEKTLEITUNG) {
+            return kalender(personId, ansicht, bezugstag, filter,
                     sichtbareProjekteFuerProjektleitung(mitarbeiterId, personId));
-            case ADMIN -> {
-                if (mitarbeiterAuskunft.finde(personId).isEmpty()) {
-                    throw new NichtGefundenException("Diese Person gibt es nicht.");
-                }
-                yield kalender(personId, ansicht, bezugstag, filter, null);
-            }
-        };
+        }
+        if (mitarbeiterAuskunft.finde(personId).isEmpty()) {
+            throw new NichtGefundenException("Diese Person gibt es nicht.");
+        }
+        return kalender(personId, ansicht, bezugstag, filter, null);
     }
 
     /**

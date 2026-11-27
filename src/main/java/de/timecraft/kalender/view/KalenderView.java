@@ -86,11 +86,11 @@ public class KalenderView extends Div {
         ansichtKnoepfe.get(Kalenderansicht.TAG).getStyle().set("border-radius", "0.5rem 0 0 0.5rem");
         ansichtKnoepfe.get(Kalenderansicht.MONAT).getStyle().set("border-radius", "0 0.5rem 0.5rem 0");
 
-        Button zurueck = rahmenKnopf(new Button("‹", klick -> blaettern(kalenderService.zurueck(ansicht, bezugstag))));
+        Button zurueck = rahmenKnopf(new Button("‹", klick -> blaettern(kalenderService.blaettern(ansicht, bezugstag, -1))));
         zurueck.setAriaLabel("Zurück");
         zurueck.setTooltipText("Zurück");
         Button heute = rahmenKnopf(new Button("Heute", klick -> blaettern(kalenderService.heute())));
-        Button vor = rahmenKnopf(new Button("›", klick -> blaettern(kalenderService.vor(ansicht, bezugstag))));
+        Button vor = rahmenKnopf(new Button("›", klick -> blaettern(kalenderService.blaettern(ansicht, bezugstag, 1))));
         vor.setAriaLabel("Vor");
         vor.setTooltipText("Vor");
         zeitraum.getStyle().set("font-weight", "700").set("font-size", "1.125rem").set("margin-left", "0.5rem");

@@ -50,14 +50,12 @@ public class FakeBuchungsAuskunft implements BuchungsAuskunft {
 
     @Override
     public Optional<BuchungInfo> laufendeBuchung(long mitarbeiterId) {
-        return buchungen.stream().filter(b -> b.mitarbeiterId() == mitarbeiterId && b.laeuft()).findFirst();
+        throw new UnsupportedOperationException("Braucht der Kalender nicht.");
     }
 
     @Override
     public List<BuchungInfo> laufendeBuchungenAufProjekt(long projektId) {
-        return buchungen.stream()
-                .filter(b -> b.laeuft() && b.projektId() != null && b.projektId() == projektId)
-                .toList();
+        throw new UnsupportedOperationException("Braucht der Kalender nicht.");
     }
 
     @Override
@@ -82,13 +80,7 @@ public class FakeBuchungsAuskunft implements BuchungsAuskunft {
 
     @Override
     public List<ZeitSegment> segmenteProjekt(long projektId, YearMonth monat) {
-        List<ZeitSegment> ergebnis = new ArrayList<>();
-        for (BuchungInfo buchung : buchungen) {
-            if (!buchung.laeuft() && buchung.projektId() != null && buchung.projektId() == projektId) {
-                ergebnis.addAll(segmenteImMonat(buchung, monat));
-            }
-        }
-        return ergebnis;
+        throw new UnsupportedOperationException("Braucht der Kalender nicht.");
     }
 
     @Override

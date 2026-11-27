@@ -47,6 +47,5 @@ class FakeBuchungsAuskunftTest {
         assertThat(auskunft.segmente(7, YearMonth.of(2026, 10))).isEmpty();
         assertThat(auskunft.buchungen(7, Instant.parse("2026-10-22T00:00:00Z"), Instant.parse("2026-10-23T00:00:00Z")))
                 .hasSize(1);
-        assertThat(auskunft.laufendeBuchung(7)).isPresent();
     }
 }

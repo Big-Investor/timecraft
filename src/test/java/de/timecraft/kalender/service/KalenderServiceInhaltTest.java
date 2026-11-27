@@ -1,7 +1,8 @@
 package de.timecraft.kalender.service;
 
-import static de.timecraft.kalender.service.Testzeit.BERLIN;
-import static de.timecraft.kalender.service.Testzeit.instant;
+import static de.timecraft.kalender.service.Testdaten.BERLIN;
+import static de.timecraft.kalender.service.Testdaten.instant;
+import static de.timecraft.kalender.service.Testdaten.projekt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -14,10 +15,8 @@ import de.timecraft.kalender.model.KalenderEintrag;
 import de.timecraft.kalender.model.KalenderFilter;
 import de.timecraft.kalender.model.KalenderInhalt;
 import de.timecraft.kalender.model.Kalenderansicht;
-import de.timecraft.projekte.api.ProjektInfo;
 import de.timecraft.zeiterfassung.api.BuchungInfo;
 import de.timecraft.zeiterfassung.api.Standort;
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -41,8 +40,8 @@ class KalenderServiceInhaltTest {
     private final FakeProjektAuskunft projekte = new FakeProjektAuskunft();
 
     KalenderServiceInhaltTest() {
-        projekte.hinzufuegen(projekt(KUECHE, "Einbauküche Wagner"), JONAS);
-        projekte.hinzufuegen(projekt(TREPPE, "Treppe Lindenstraße"), JONAS);
+        projekte.hinzufuegen(projekt(KUECHE, "Einbauküche Wagner", LENA, true), JONAS);
+        projekte.hinzufuegen(projekt(TREPPE, "Treppe Lindenstraße", LENA, true), JONAS);
     }
 
     @Test
@@ -325,9 +324,5 @@ class KalenderServiceInhaltTest {
     private void buchungLaufend(long id, long mitarbeiterId, String beginnOrtszeit) {
         buchungen.hinzufuegen(new BuchungInfo(id, mitarbeiterId, KUECHE, Standort.UNTERWEGS,
                 instant(beginnOrtszeit), null, 0, 0, false));
-    }
-
-    private static ProjektInfo projekt(long id, String name) {
-        return new ProjektInfo(id, name, LocalDate.of(2026, 1, 1), null, LENA, true, BigDecimal.ZERO);
     }
 }

@@ -1,7 +1,8 @@
 package de.timecraft.kalender.service;
 
-import static de.timecraft.kalender.service.Testzeit.BERLIN;
-import static de.timecraft.kalender.service.Testzeit.instant;
+import static de.timecraft.kalender.service.Testdaten.BERLIN;
+import static de.timecraft.kalender.service.Testdaten.instant;
+import static de.timecraft.kalender.service.Testdaten.projekt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -17,16 +18,15 @@ import de.timecraft.kalender.fake.FakeProjektAuskunft;
 import de.timecraft.kalender.model.BuchungAenderungEingabe;
 import de.timecraft.kalender.model.ProjektAuswahl;
 import de.timecraft.kalender.service.UngueltigeAenderungException.Feld;
-import de.timecraft.projekte.api.ProjektInfo;
 import de.timecraft.zeiterfassung.api.AenderungsArt;
 import de.timecraft.zeiterfassung.api.BuchungInfo;
 import de.timecraft.zeiterfassung.api.Standort;
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 /**
  * Aendern einer Buchung je Rolle mit allen Regeln (FA-M6-08, 09, 11, 12, QA-M6-03, QA-A-01,
@@ -178,6 +178,22 @@ class BuchungAenderungServiceTest {
         });
     }
 
+    @Test
+    void unveraenderteZeitInDerDoppeltenStundeDerUmstellungBleibtGleich() {
+        // 25.10.2026, 02:15–02:45 Winterzeit: die zweite Stunde von 2 bis 3 Uhr
+        buchungen.hinzufuegen(new BuchungInfo(120, JONAS, KUECHE, Standort.BUERO,
+                Instant.parse("2026-10-25T01:15:00Z"), Instant.parse("2026-10-25T01:45:00Z"), 0, 30, false));
+        BuchungInfo stand = service.buchungZumAendern(ADMIN, Rolle.ADMIN, 120);
+
+        service.aendern(ADMIN, Rolle.ADMIN, stand, eingabe("2026-10-25T02:15", "2026-10-25T02:45",
+                Standort.HOMEOFFICE, KUECHE, BEGRUENDUNG));
+
+        assertThat(aenderung.aufrufe()).singleElement().satisfies(aufruf -> {
+            assertThat(aufruf.beginn()).isEqualTo(stand.beginn());
+            assertThat(aufruf.ende()).isEqualTo(stand.ende());
+        });
+    }
+
     // --- Rechte je Rolle (QA-M6-03, UC-M6-05 1b) ---
 
     @Test
@@ -323,40 +339,20 @@ class BuchungAenderungServiceTest {
 
     // --- Eingaben (UC-M6-05 4a, 4c) ---
 
-    @Test
-    void ohneBegruendungWirdNichtsGespeichert() {
-        pruefeFeldfehler(eingabe("2026-10-20T07:00", "2026-10-20T15:00", Standort.BUERO, KUECHE, null),
-                Feld.BEGRUENDUNG, "Bitte geben Sie eine Begründung an.");
-        pruefeFeldfehler(eingabe("2026-10-20T07:00", "2026-10-20T15:00", Standort.BUERO, KUECHE, "   "),
-                Feld.BEGRUENDUNG, "Bitte geben Sie eine Begründung an.");
-    }
-
-    @Test
-    void endeVorBeginnWirdAmFeldEndeGemeldet() {
-        pruefeFeldfehler(eingabe("2026-10-20T15:00", "2026-10-20T07:00", Standort.BUERO, KUECHE, BEGRUENDUNG),
-                Feld.ENDE, "Das Ende muss nach dem Beginn liegen.");
-    }
-
-    @Test
-    void endeGleichBeginnIstUngueltig() {
-        pruefeFeldfehler(eingabe("2026-10-20T15:00", "2026-10-20T15:00", Standort.BUERO, KUECHE, BEGRUENDUNG),
-                Feld.ENDE, "Das Ende muss nach dem Beginn liegen.");
-    }
-
-    @Test
-    void endeInDerZukunftWirdAmFeldEndeGemeldet() {
-        pruefeFeldfehler(eingabe("2026-11-02T09:00", "2026-11-02T10:29", Standort.BUERO, KUECHE, BEGRUENDUNG),
-                Feld.ENDE, "Das Ende darf nicht in der Zukunft liegen.");
-    }
-
-    @Test
-    void fehlendeFelderWerdenAmFeldGemeldet() {
-        pruefeFeldfehler(eingabe(null, "2026-10-20T15:00", Standort.BUERO, KUECHE, BEGRUENDUNG),
-                Feld.BEGINN, "Bitte geben Sie den Beginn an.");
-        pruefeFeldfehler(eingabe("2026-10-20T07:00", null, Standort.BUERO, KUECHE, BEGRUENDUNG),
-                Feld.ENDE, "Bitte geben Sie das Ende an.");
-        pruefeFeldfehler(eingabe("2026-10-20T07:00", "2026-10-20T15:00", null, KUECHE, BEGRUENDUNG),
-                Feld.STANDORT, "Bitte wählen Sie einen Standort.");
+    @ParameterizedTest
+    @CsvSource(nullValues = "null", value = {
+        "2026-10-20T07:00, 2026-10-20T15:00, BUERO, null,   BEGRUENDUNG, Bitte geben Sie eine Begründung an.",
+        "2026-10-20T07:00, 2026-10-20T15:00, BUERO, '   ',  BEGRUENDUNG, Bitte geben Sie eine Begründung an.",
+        "2026-10-20T15:00, 2026-10-20T07:00, BUERO, Grund,  ENDE,        Das Ende muss nach dem Beginn liegen.",
+        "2026-10-20T15:00, 2026-10-20T15:00, BUERO, Grund,  ENDE,        Das Ende muss nach dem Beginn liegen.",
+        "2026-11-02T09:00, 2026-11-02T10:29, BUERO, Grund,  ENDE,        Das Ende darf nicht in der Zukunft liegen.",
+        "null,             2026-10-20T15:00, BUERO, Grund,  BEGINN,      Bitte geben Sie den Beginn an.",
+        "2026-10-20T07:00, null,             BUERO, Grund,  ENDE,        Bitte geben Sie das Ende an.",
+        "2026-10-20T07:00, 2026-10-20T15:00, null,  Grund,  STANDORT,    Bitte wählen Sie einen Standort."
+    })
+    void ungueltigeEingabeWirdAmFeldGemeldetUndNichtsGespeichert(String beginn, String ende, Standort standort,
+            String begruendung, Feld feld, String meldung) {
+        pruefeFeldfehler(eingabe(beginn, ende, standort, KUECHE, begruendung), feld, meldung);
     }
 
     // --- Zielprojekt (FA-M6-09) ---
@@ -532,9 +528,5 @@ class BuchungAenderungServiceTest {
     private void buchung(long id, long person, Long projektId, String beginn, String ende) {
         buchungen.hinzufuegen(new BuchungInfo(id, person, projektId, Standort.BUERO, instant(beginn), instant(ende),
                 0, 0, false));
-    }
-
-    private static ProjektInfo projekt(long id, String name, long projektleitung, boolean aktiv) {
-        return new ProjektInfo(id, name, LocalDate.of(2026, 1, 1), null, projektleitung, aktiv, BigDecimal.ZERO);
     }
 }

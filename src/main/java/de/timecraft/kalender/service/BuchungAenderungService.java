@@ -56,15 +56,6 @@ public class BuchungAenderungService {
     }
 
     /**
-     * Aktueller Stand einer Buchung fuer das Aenderungsformular, nur wenn die Person sie aendern darf.
-     * Das Formular braucht dafuer nur die Buchungs-ID (auch ohne Detailfenster, z. B. spaeter fuer K1).
-     * Den Stand merkt sich das Formular und gibt ihn beim Speichern an aendern zurueck (UC-M6-05 4d).
-     */
-    public BuchungInfo buchungZumAendern(long mitarbeiterId, Rolle rolle, long zeiteintragId) {
-        return aenderbareBuchung(mitarbeiterId, rolle, zeiteintragId);
-    }
-
-    /**
      * Startwerte des Aenderungsformulars aus einem Stand: Beginn und Ende als Ortszeit (Zeitzone der Clock),
      * Standort und Projekt wie gebucht, Begruendung leer.
      */
@@ -76,7 +67,7 @@ public class BuchungAenderungService {
     /** Ob „Bearbeiten“ angeboten wird: dieselben Regeln wie buchungZumAendern (UC-M6-05 1a, 1b). */
     public boolean darfAendern(long mitarbeiterId, Rolle rolle, long zeiteintragId) {
         try {
-            aenderbareBuchung(mitarbeiterId, rolle, zeiteintragId);
+            buchungZumAendern(mitarbeiterId, rolle, zeiteintragId);
             return true;
         } catch (FachlicheException | ZugriffVerweigertException | NichtGefundenException
                 | NichtAngemeldetException abgelehnt) {
@@ -91,7 +82,7 @@ public class BuchungAenderungService {
      * (auch wenn es inzwischen archiviert ist oder die Person nicht mehr zugeordnet ist).
      */
     public List<ProjektAuswahl> waehlbareZielprojekte(long mitarbeiterId, Rolle rolle, long zeiteintragId) {
-        BuchungInfo buchung = aenderbareBuchung(mitarbeiterId, rolle, zeiteintragId);
+        BuchungInfo buchung = buchungZumAendern(mitarbeiterId, rolle, zeiteintragId);
         List<ProjektInfo> projekte = new ArrayList<>(projektAuskunft.aktiveProjekteVon(buchung.mitarbeiterId()).stream()
                 .filter(projekt -> rolle == Rolle.ADMIN || projekt.projektleitungId() == mitarbeiterId)
                 .toList());
@@ -115,23 +106,26 @@ public class BuchungAenderungService {
     public void aendern(long mitarbeiterId, Rolle rolle, BuchungInfo stand, BuchungAenderungEingabe eingabe) {
         Objects.requireNonNull(stand, "stand");
         Objects.requireNonNull(eingabe, "eingabe");
-        BuchungInfo aktuell = aenderbareBuchung(mitarbeiterId, rolle, stand.zeiteintragId());
+        BuchungInfo aktuell = buchungZumAendern(mitarbeiterId, rolle, stand.zeiteintragId());
         if (!aktuell.equals(stand)) {
             throw new BuchungInzwischenGeaendertException(aktuell);
         }
-        pruefeEingabe(eingabe);
+        pruefePflichtfelder(eingabe);
+        Instant beginn = zeitpunkt(eingabe.beginn(), aktuell.beginn());
+        Instant ende = zeitpunkt(eingabe.ende(), aktuell.ende());
+        pruefeZeiten(beginn, ende);
         pruefeZielprojekt(mitarbeiterId, rolle, aktuell, eingabe.projektId());
-        buchungsAenderung.aendern(aktuell.zeiteintragId(), alsInstant(eingabe.beginn()), alsInstant(eingabe.ende()),
-                eingabe.standort(), eingabe.projektId(), AenderungsArt.AENDERUNG, mitarbeiterId,
-                eingabe.begruendung().strip());
+        buchungsAenderung.aendern(aktuell.zeiteintragId(), beginn, ende, eingabe.standort(), eingabe.projektId(),
+                AenderungsArt.AENDERUNG, mitarbeiterId, eingabe.begruendung().strip());
     }
 
     /**
-     * Die Buchung, wenn die angemeldete Person sie aendern darf: Projektleitung oder Admin, Buchung einer
-     * anderen Person, abgeschlossen; die Projektleitung nur auf ihre aktiven Projekte, denen die Person
-     * noch zugeordnet ist (dieselben Buchungen, die sie im fremden Kalender sieht).
+     * Aktueller Stand der Buchung, wenn die angemeldete Person sie aendern darf: Projektleitung oder Admin,
+     * Buchung einer anderen Person, abgeschlossen; die Projektleitung nur auf ihre aktiven Projekte, denen
+     * die Person noch zugeordnet ist. Braucht nur die Buchungs-ID (auch ohne Detailfenster, spaeter fuer K1).
+     * Den Stand merkt sich das Formular und gibt ihn beim Speichern an aendern zurueck (UC-M6-05 4d).
      */
-    private BuchungInfo aenderbareBuchung(long mitarbeiterId, Rolle rolle, long zeiteintragId) {
+    public BuchungInfo buchungZumAendern(long mitarbeiterId, Rolle rolle, long zeiteintragId) {
         KalenderRechte.pruefeAngemeldet(rolle);
         if (rolle == Rolle.MITARBEITER) {
             throw new ZugriffVerweigertException(KEINE_AENDERUNG_ALS_MITARBEITER);
@@ -153,25 +147,29 @@ public class BuchungAenderungService {
         return buchung;
     }
 
-    /** Pflichtfelder, Ende nach Beginn, Ende nicht in der Zukunft, Begruendung (UC-M6-05 4a, 4c). */
-    private void pruefeEingabe(BuchungAenderungEingabe eingabe) {
+    /** Pflichtfelder und Begruendung (UC-M6-05 4a, 4c). */
+    private void pruefePflichtfelder(BuchungAenderungEingabe eingabe) {
         if (eingabe.beginn() == null) {
             throw new UngueltigeAenderungException(Feld.BEGINN, "Bitte geben Sie den Beginn an.");
         }
         if (eingabe.ende() == null) {
             throw new UngueltigeAenderungException(Feld.ENDE, "Bitte geben Sie das Ende an.");
         }
-        if (!alsInstant(eingabe.ende()).isAfter(alsInstant(eingabe.beginn()))) {
-            throw new UngueltigeAenderungException(Feld.ENDE, "Das Ende muss nach dem Beginn liegen.");
-        }
-        if (alsInstant(eingabe.ende()).isAfter(clock.instant())) {
-            throw new UngueltigeAenderungException(Feld.ENDE, "Das Ende darf nicht in der Zukunft liegen.");
-        }
         if (eingabe.standort() == null) {
             throw new UngueltigeAenderungException(Feld.STANDORT, "Bitte wählen Sie einen Standort.");
         }
         if (eingabe.begruendung() == null || eingabe.begruendung().isBlank()) {
             throw new UngueltigeAenderungException(Feld.BEGRUENDUNG, "Bitte geben Sie eine Begründung an.");
+        }
+    }
+
+    /** Ende nach Beginn und nicht in der Zukunft (UC-M6-05 4a). */
+    private void pruefeZeiten(Instant beginn, Instant ende) {
+        if (!ende.isAfter(beginn)) {
+            throw new UngueltigeAenderungException(Feld.ENDE, "Das Ende muss nach dem Beginn liegen.");
+        }
+        if (ende.isAfter(clock.instant())) {
+            throw new UngueltigeAenderungException(Feld.ENDE, "Das Ende darf nicht in der Zukunft liegen.");
         }
     }
 
@@ -207,8 +205,12 @@ public class BuchungAenderungService {
         return LocalDateTime.ofInstant(zeitpunkt, clock.getZone());
     }
 
-    /** Ortszeit (Europe/Berlin aus der Clock) als Zeitpunkt; in der Herbst-Umstellungsnacht gilt die Sommerzeit. */
-    private Instant alsInstant(LocalDateTime ortszeit) {
-        return ortszeit.atZone(clock.getZone()).toInstant();
+    /**
+     * Ortszeit (Europe/Berlin aus der Clock) als Zeitpunkt. Eine unveraenderte Ortszeit behaelt den bisherigen
+     * Zeitpunkt, sonst verschoebe sie sich in der doppelten Stunde der Herbst-Umstellung; neue Werte dort
+     * gelten als Sommerzeit.
+     */
+    private Instant zeitpunkt(LocalDateTime ortszeit, Instant bisher) {
+        return ortszeit.equals(ortszeit(bisher)) ? bisher : ortszeit.atZone(clock.getZone()).toInstant();
     }
 }

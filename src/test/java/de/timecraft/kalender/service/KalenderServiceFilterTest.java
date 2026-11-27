@@ -1,7 +1,8 @@
 package de.timecraft.kalender.service;
 
-import static de.timecraft.kalender.service.Testzeit.BERLIN;
-import static de.timecraft.kalender.service.Testzeit.instant;
+import static de.timecraft.kalender.service.Testdaten.BERLIN;
+import static de.timecraft.kalender.service.Testdaten.instant;
+import static de.timecraft.kalender.service.Testdaten.projekt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import de.timecraft.benutzer.api.Rolle;
@@ -13,10 +14,8 @@ import de.timecraft.kalender.model.KalenderFilter;
 import de.timecraft.kalender.model.KalenderInhalt;
 import de.timecraft.kalender.model.Kalenderansicht;
 import de.timecraft.kalender.model.ProjektAuswahl;
-import de.timecraft.projekte.api.ProjektInfo;
 import de.timecraft.zeiterfassung.api.BuchungInfo;
 import de.timecraft.zeiterfassung.api.Standort;
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -41,8 +40,8 @@ class KalenderServiceFilterTest {
             Clock.fixed(Instant.parse("2026-10-22T08:28:00Z"), BERLIN));
 
     KalenderServiceFilterTest() {
-        projekte.hinzufuegen(new ProjektInfo(KUECHE, "Einbauküche Wagner", MONTAG, null, 2, true, BigDecimal.ZERO), JONAS);
-        projekte.hinzufuegen(new ProjektInfo(TREPPE, "Treppe Lindenstraße", MONTAG, null, 2, true, BigDecimal.ZERO), JONAS);
+        projekte.hinzufuegen(projekt(KUECHE, "Einbauküche Wagner", 2, true), JONAS);
+        projekte.hinzufuegen(projekt(TREPPE, "Treppe Lindenstraße", 2, true), JONAS);
         // Montag: Kueche unterwegs 4 h, Dienstag: Treppe Buero 3 h, Mittwoch: Kueche Buero 2 h,
         // Donnerstag: Kueche unterwegs, laeuft seit 07:02 (bis jetzt 10:28 = 206 Minuten)
         buchung(1, KUECHE, Standort.UNTERWEGS, "2026-10-19T08:00", "2026-10-19T12:00");
@@ -98,15 +97,6 @@ class KalenderServiceFilterTest {
         assertThat(inhalt.keineTreffer()).isTrue();
         assertThat(inhalt.gesamtMinuten()).isZero();
         assertThat(inhalt.tagessummen()).hasSize(7);
-    }
-
-    @Test
-    void zuruecksetzenZeigtWiederAlles() {
-        KalenderInhalt gefiltert = woche(new KalenderFilter(TREPPE, null));
-        KalenderInhalt zurueckgesetzt = woche(KalenderFilter.KEINER);
-
-        assertThat(gefiltert.eintraege()).hasSize(1);
-        assertThat(zurueckgesetzt.eintraege()).hasSize(4);
     }
 
     @Test

@@ -25,11 +25,6 @@ class KalenderServiceZeitraumTest {
     private final KalenderService service = serviceMit(DONNERSTAG);
 
     @Test
-    void heuteIstDerTagInBerlin() {
-        assertThat(service.heute()).isEqualTo(LocalDate.of(2026, 10, 22));
-    }
-
-    @Test
     void heuteRichtetSichNachBerlinNichtNachUtc() {
         // 23:30 UTC am 22.10. ist in Berlin schon der 23.10.
         Clock spaet = Clock.fixed(Instant.parse("2026-10-22T23:30:00Z"), ZoneId.of("Europe/Berlin"));
@@ -44,10 +39,6 @@ class KalenderServiceZeitraumTest {
 
         assertThat(service.ersterTag(Kalenderansicht.WOCHE, donnerstag)).isEqualTo(LocalDate.of(2026, 10, 19));
         assertThat(service.letzterTag(Kalenderansicht.WOCHE, donnerstag)).isEqualTo(LocalDate.of(2026, 10, 25));
-    }
-
-    @Test
-    void wocheAmMontagUndAmSonntagIstDieselbe() {
         assertThat(service.ersterTag(Kalenderansicht.WOCHE, LocalDate.of(2026, 10, 19))).isEqualTo(LocalDate.of(2026, 10, 19));
         assertThat(service.ersterTag(Kalenderansicht.WOCHE, LocalDate.of(2026, 10, 25))).isEqualTo(LocalDate.of(2026, 10, 19));
     }
@@ -78,19 +69,19 @@ class KalenderServiceZeitraumTest {
     void vorUndZurueckBlaetternUmEinenZeitraum() {
         LocalDate tag = LocalDate.of(2026, 10, 22);
 
-        assertThat(service.vor(Kalenderansicht.TAG, tag)).isEqualTo(LocalDate.of(2026, 10, 23));
-        assertThat(service.zurueck(Kalenderansicht.TAG, tag)).isEqualTo(LocalDate.of(2026, 10, 21));
-        assertThat(service.vor(Kalenderansicht.WOCHE, tag)).isEqualTo(LocalDate.of(2026, 10, 29));
-        assertThat(service.zurueck(Kalenderansicht.WOCHE, tag)).isEqualTo(LocalDate.of(2026, 10, 15));
-        assertThat(service.vor(Kalenderansicht.MONAT, tag)).isEqualTo(LocalDate.of(2026, 11, 22));
-        assertThat(service.zurueck(Kalenderansicht.MONAT, tag)).isEqualTo(LocalDate.of(2026, 9, 22));
+        assertThat(service.blaettern(Kalenderansicht.TAG, tag, 1)).isEqualTo(LocalDate.of(2026, 10, 23));
+        assertThat(service.blaettern(Kalenderansicht.TAG, tag, -1)).isEqualTo(LocalDate.of(2026, 10, 21));
+        assertThat(service.blaettern(Kalenderansicht.WOCHE, tag, 1)).isEqualTo(LocalDate.of(2026, 10, 29));
+        assertThat(service.blaettern(Kalenderansicht.WOCHE, tag, -1)).isEqualTo(LocalDate.of(2026, 10, 15));
+        assertThat(service.blaettern(Kalenderansicht.MONAT, tag, 1)).isEqualTo(LocalDate.of(2026, 11, 22));
+        assertThat(service.blaettern(Kalenderansicht.MONAT, tag, -1)).isEqualTo(LocalDate.of(2026, 9, 22));
     }
 
     @Test
     void monatBlaetternAmMonatsendeBleibtImZielmonat() {
         LocalDate einunddreissigster = LocalDate.of(2026, 1, 31);
 
-        assertThat(service.vor(Kalenderansicht.MONAT, einunddreissigster)).isEqualTo(LocalDate.of(2026, 2, 28));
+        assertThat(service.blaettern(Kalenderansicht.MONAT, einunddreissigster, 1)).isEqualTo(LocalDate.of(2026, 2, 28));
     }
 
     private static KalenderService serviceMit(Clock uhr) {
